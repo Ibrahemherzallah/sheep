@@ -1,0 +1,47 @@
+import mongoose from 'mongoose';
+
+const pregnancySchema = new mongoose.Schema({
+    sheepId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Sheep',
+        required: true,
+    },
+    pregnantDate: {
+        type: Date,
+        required: true,
+    },
+    bornDate: {
+        type: Date,
+        required: true,
+    },
+    expectedBornDate: {
+        type: Date,
+        required: true,
+    },
+    numberOfMaleLamb: {
+        type: Number,
+        required: false,
+        default: 0,
+    },
+    numberOfFemaleLamb: {
+        type: Number,
+        required: false,
+        default: 0,
+    },
+    milkAmount: {
+        type: Number,
+        required: false,
+        default: 0,
+    },
+    order: {
+        type: Number,
+        required: true
+    }
+
+
+
+},{timestamps: true});
+
+const Pregnancy = mongoose.model('Pregnancy', pregnancySchema);
+
+export default Pregnancy;
