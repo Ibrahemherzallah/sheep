@@ -144,7 +144,7 @@ const CycleManagement = () => {
     }
 
     // In a real app, this would save to a database
-    toast.success(`${medicineTab === 'medicines' ? 'Medicine' : 'Injection'} added to cycle successfully`);
+    toast.success(`${medicineTab === 'medicines' ? 'Medicine' : 'InjectionModel'} added to cycle successfully`);
     
     // Reset form
     setSelectedMedicine('');
