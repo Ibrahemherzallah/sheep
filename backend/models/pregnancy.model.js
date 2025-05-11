@@ -12,7 +12,7 @@ const pregnancySchema = new mongoose.Schema({
     },
     bornDate: {
         type: Date,
-        required: true,
+        required: false,
     },
     expectedBornDate: {
         type: Date,
@@ -33,13 +33,19 @@ const pregnancySchema = new mongoose.Schema({
         required: false,
         default: 0,
     },
+    startMilkDate: {
+        type: Date,
+        required: false,
+    },
+    endMilkDate: {
+        type: Date,
+        required: false,
+    },
     order: {
         type: Number,
         required: true
-    }
-
-
-
+    },
+    
 },{timestamps: true});
 
 const Pregnancy = mongoose.model('Pregnancy', pregnancySchema);

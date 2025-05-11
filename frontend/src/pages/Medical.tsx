@@ -106,7 +106,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-// Injection card component
+// InjectionModel card component
 const InjectionCard = ({ injection }: { injection: typeof injectionsData[0] }) => {
   const getInjectionTypeLabel = (type: string) => {
     switch (type) {
@@ -255,7 +255,7 @@ const NewTreatmentModal = () => {
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          {/* Injection Type Selection */}
+          {/* InjectionModel Type Selection */}
           <div className="space-y-2">
             <Label htmlFor="injection-type">Injection Type</Label>
             <Select 

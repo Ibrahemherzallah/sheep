@@ -1,19 +1,25 @@
 import mongoose from 'mongoose';
 
 const patientSchema = new mongoose.Schema({
-    patientType: { type: mongoose.Schema.Types.ObjectId, ref: 'PatientType', required: true },
-    notes: { type: String },
+    patientName: {
+        type: String,
+        required: true,
+    },
     drugs: [{
-        drug: { type: mongoose.Schema.Types.ObjectId, ref: 'Drug', required: true },
+        drug: { type: mongoose.Schema.Types.ObjectId, ref: 'DrugType', required: true },
         order: {
             type: Number,
             required: true
         },
     }],
-    startDate: {
+    patientDate: {
         type: Date,
         required: true
     },
+    notes: {
+        type: String,
+        required: false,
+    }
 },{timestamps: true});
 
 const Patient = mongoose.model('Patient', patientSchema);

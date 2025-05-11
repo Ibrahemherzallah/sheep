@@ -1,22 +1,21 @@
 import mongoose from 'mongoose';
 
-
-const drugTypeSchema = new mongoose.Schema({
+const injectionTypeModel = new mongoose.Schema({
     name: {
         type: String,
         required: true,
         unique: true
     },
-    patientTakeFor: {
+    reputation: {
         type: String,
         required: true,
     },
     notes: {
-        type:String,
+        type: String,
         required: false
     }
-});
+})
 
-    const DrugType = mongoose.model('DrugType', drugTypeSchema);
+const InjectionType = mongoose.model('InjectionType', injectionTypeModel);
 
-export default DrugType;
+export default InjectionType;
