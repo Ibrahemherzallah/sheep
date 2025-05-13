@@ -1,12 +1,21 @@
 import mongoose from 'mongoose';
 
 const patientSchema = new mongoose.Schema({
+    sheepId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Sheep',
+        required: true,
+    },
     patientName: {
         type: String,
         required: true,
     },
     drugs: [{
-        drug: { type: mongoose.Schema.Types.ObjectId, ref: 'DrugType', required: true },
+        drug: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'DrugType',
+            required: true
+        },
         order: {
             type: Number,
             required: true

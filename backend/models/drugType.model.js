@@ -11,12 +11,20 @@ const drugTypeSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    quantity: {
+        type: Number,
+        required: true,
+    },
+    unit: {
+        type: String,
+        required: true,
+    },
     notes: {
         type:String,
         required: false
     }
-});
+},{timestamps: true});
 
-    const DrugType = mongoose.model('DrugType', drugTypeSchema);
+const DrugType = mongoose.model('DrugType', drugTypeSchema);
 
 export default DrugType;

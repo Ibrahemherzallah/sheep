@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
-import Patient from "./patient.model";
-import InjectionModel from "./injection.model.js";
+import Patient from "./patient.model.js";
 import Pregnancy from "./pregnancy.model.js";
 
 const SheepSchema = new mongoose.Schema({
     sheepNumber: {
         type: Number,
         required: true,
+        unique: true
     },
     sheepGender: {
         type: String,
@@ -22,16 +22,18 @@ const SheepSchema = new mongoose.Schema({
         type: Boolean,
         required: true,
     },
-    pregnantCases: [
-        Pregnancy
-    ],
+    pregnantCases: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Pregnancy',
+    }],
+    patientCases: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Patient',
+    }],
     isPatient: {
         type: Boolean,
         required: true,
     },
-    patientCases: [
-        Patient
-    ],
     status: {
         type: String,
         required: true,

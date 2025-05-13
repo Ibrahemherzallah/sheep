@@ -1,13 +1,12 @@
 import mongoose from 'mongoose';
 
-const injectionTypeModel = new mongoose.Schema({
-    name: {
+const vitaminsSchema = new mongoose.Schema({
+    vitaminName: {
         type: String,
         required: true,
-        unique: true
     },
-    reputation: {
-        type: String,
+    vitaminPrice: {
+        type: Number,
         required: true,
     },
     quantity: {
@@ -22,8 +21,8 @@ const injectionTypeModel = new mongoose.Schema({
         type: String,
         required: false
     }
-},{timestamps: true});
+},{timestamps: true})
 
-const InjectionType = mongoose.model('InjectionType', injectionTypeModel);
+const Vitamins = mongoose.model('Vitamins', vitaminsSchema)
 
-export default InjectionType;
+export default Vitamins;

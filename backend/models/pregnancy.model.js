@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import {createBirthRelatedTasks} from "../services/taskService.js";
 
 const pregnancySchema = new mongoose.Schema({
     sheepId: {
@@ -37,6 +38,10 @@ const pregnancySchema = new mongoose.Schema({
         type: Date,
         required: false,
     },
+    milkNotes: {
+        type: String,
+        required: false
+    },
     endMilkDate: {
         type: Date,
         required: false,
@@ -47,6 +52,7 @@ const pregnancySchema = new mongoose.Schema({
     },
     
 },{timestamps: true});
+
 
 const Pregnancy = mongoose.model('Pregnancy', pregnancySchema);
 
