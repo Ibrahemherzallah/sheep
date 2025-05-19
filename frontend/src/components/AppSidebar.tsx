@@ -8,7 +8,8 @@ import {
   Boxes, 
   BarChart3, 
   Settings, 
-  FileText
+  FileText,
+  Milk
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -45,14 +46,13 @@ export const AppSidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const currentPath = location.pathname;
   
   const navItems = [
-    { to: "/", icon: BarChart3, label: "Dashboard" },
-    { to: "/sheep", icon: Ear, label: "Sheep Management" },
-    { to: "/medical", icon: Syringe, label: "Medical Records" },
-    { to: "/cycles", icon: Calendar, label: "Cycle Management" },
-    { to: "/breeding", icon: Activity, label: "Breeding" },
-    { to: "/stock", icon: Boxes, label: "Stock" },
-    { to: "/reports", icon: FileText, label: "Reports" },
-    { to: "/settings", icon: Settings, label: "Settings" },
+    { to: "/", icon: BarChart3, label: "الرئيسية" },
+    { to: "/sheep", icon: Ear, label: "ادارة الأغنام" },
+    { to: "/medical", icon: Syringe, label: "التسجيلات الطبية" },
+    { to: "/cycles", icon: Calendar, label: "ادارة الدورات" },
+    { to: "/milk", icon: Milk, label: "انتاج الحليب" },
+    { to: "/stock-management", icon: Boxes, label: "المخزون" },
+    { to: "/profile", icon: Settings, label: "الاعدادات" },
   ];
 
   return (
