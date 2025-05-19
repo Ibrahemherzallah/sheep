@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Medicine, Disease, Vitamin } from '@/types';
 import { Card } from '@/components/ui/card';
@@ -88,11 +87,7 @@ const MedicineManagement = () => {
         />
       </div>
 
-      <MedicineTabContent 
-        medicines={medicines}
-        injections={injections}
-        vitamins={vitamins}
-        diseases={diseases}
+      <MedicineTabContent medicines={medicines} injections={injections} vitamins={vitamins} diseases={diseases}
         onAddItem={(tab, item) => {
           setActiveTab(tab);
           handleAddItem(item, `${tab.charAt(0)}${Math.floor(Math.random() * 1000)}`);

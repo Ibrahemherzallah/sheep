@@ -1,11 +1,11 @@
 import mongoose from 'mongoose'
 
 const injectionSchema = new mongoose.Schema({
-    sheepId: {
+    sheepId: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Sheep',
         required: true
-    },
+    }],
     injectionType: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'InjectionType',
