@@ -50,6 +50,10 @@ const pregnancySchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    notes: {
+        type: String,
+        required: false
+    }
     
 },{timestamps: true});
 

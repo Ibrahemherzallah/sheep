@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -46,14 +46,6 @@ import {
 import {useForm} from "react-hook-form";
 
 // Mock data - in a real app, this would come from an API
-const sheepData = [
-  { id: '1001', number: '1001', status: 'healthy', sex: 'female', origin: 'farm-produced', birthDate: '2023-01-15', isPregnant: true, pregnantSince: '2024-04-10', expectedBirthDate: '2024-09-07', milkProductionCapacity: 2.5, notes: 'صحة جيدة وحليب كثيف وممتاز' },
-  { id: '1002', number: '1002', status: 'healthy', sex: 'female', origin: 'farm-produced', birthDate: '2023-02-10', isPregnant: false, milkProductionCapacity: 1.8, notes: 'Average production, had illness in February' },
-  { id: '1003', number: '1003', status: 'sick', sex: 'male', origin: 'bought', birthDate: '2023-01-05', isPregnant: false, notes: 'Currently treating for respiratory infection' },
-  { id: '1004', number: '1004', status: 'giving-birth-soon', sex: 'female', origin: 'bought', birthDate: '2022-11-20', isPregnant: true, pregnantSince: '2024-03-20', expectedBirthDate: '2024-08-17', milkProductionCapacity: 3.2, notes: 'High producer, second pregnancy' },
-  { id: '1005', number: '1005', status: 'healthy', sex: 'male', origin: 'farm-produced', birthDate: '2022-12-05', isPregnant: false, notes: 'Strong breeding male' },
-  { id: '1006', number: '1006', status: 'healthy', sex: 'female', origin: 'bought', birthDate: '2023-03-14', isPregnant: false, milkProductionCapacity: 2.1, notes: 'First-time mother last year' },
-];
 
 const medicalHistory = [
   { id: 'm1', sheepId: '1001', type: 'routine-injection', date: '2024-01-15', description: 'Semi-annual routine injection', notes: 'No adverse reactions' },
@@ -73,96 +65,191 @@ const SheepDetails = () => {
   const [milkAmountModal, setMilkAmountModal] = useState(false)
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
-  
+  const [allSheep,setAllSheep] = useState([]);
+  const [tab, setTab] = useState("death") // Tabs: death | sale | delete
+  const [loading, setLoading] = useState(true);
+  const [injectionTypes,setInjectionTypes] = useState([]);
+  const [sheepInjections,setSheepInjections] = useState([]);
+  const [nextTask,setNextTask] = useState('');
   // Find the sheep with the matching ID
-  const sheep = sheepData.find(s => s.id === id);
-  
   // Find medical events for this sheep
+
   const sheepMedicalHistory = medicalHistory.filter(record => record.sheepId === id);
-  
-  // Find birth records for this sheep (if female)
+  const sheep = allSheep.find(s => s._id === id);
   const sheepBirthRecords = sheep?.sex === 'female' ? birthRecords.filter(record => record.motherId === id) : [];
-  
-  if (!sheep) {
-    return (
-      <div className="p-6 text-center">
-        <h2 className="text-xl font-semibold mb-4">Sheep Not Found</h2>
-        <p>The sheep with ID {id} could not be found.</p>
-        <Button asChild className="mt-4">
-          <Link to="/sheep">Back to Sheep Management</Link>
-        </Button>
-      </div>
-    );
-  }
+  // Find birth records for this sheep (if female)
+  useEffect(() => {
+    const fetchSheep = async () => {
+      try {
+        const response = await fetch('http://localhost:3030/api/sheep');
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'فشل في جلب البيانات');
+        setAllSheep(result);
+      } catch (error) {
+        console.error('فشل في جلب النعاج:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSheep();
+  }, [id]);
+
+  useEffect(() => {
+    if (activeTab === 'injection'){
+
+      const fetchData = async () => {
+        const res = await fetch(`http://localhost:3030/api/sheep/${id}/injection-history`);
+        const { injectionTypes, injections } = await res.json();
+        setInjectionTypes(injectionTypes);
+        setSheepInjections(injections);
+      };
+
+      const fetchNextInjectionTask = async () => {
+        try {
+          const res = await fetch(`http://localhost:3030/api/tasks/next-injection/${id}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          setNextTask(data);
+        } catch (err) {
+          console.error('Error loading next task:', err);
+        }
+      };
+
+      fetchData();
+      fetchNextInjectionTask();
+
+    }
+  }, [activeTab]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'healthy':
-        return <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Healthy</span>;
-      case 'sick':
-        return <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">Sick</span>;
-      case 'giving-birth-soon':
-        return <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">Birth Soon</span>;
+      case 'سليمة':
+        return <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">سليمة</span>;
+      case 'مريض':
+        return <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">مريضة</span>;
       default:
-        return <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Healthy</span>;
+        return <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">سليمة</span>;
     }
   };
-
-
-
-  interface BirthFormData { sex: string; sheepNumber: number; birthDetails: Record<string, { maleCount: number, femaleCount: number }>;birthDate: string;notes: string;}
-  const handleSubmitEdit = (data: BirthFormData) => {
-    toast({title: "تم التعديل", description: `تم تعديل النعجة بنجاح`});
-    setEditSheep(false);
-    form.reset();
-  };
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const form = useForm<BirthFormData>({
-    defaultValues: {birthDetails: {}, sex: '', birthDate: new Date().toISOString().split('T')[0], notes: '', sheepNumber:0},
-  });
-
-
-
-  interface DisposalFormData { sheepId: string; sellPrice: number; }
-  const handleSubmitDisposal = () => {
-      // handle based on tab
-      if (tab === "death") {
-        // handle death logic
-      } else if (tab === "sale") {
-        // handle sale with values.sellPrice
-      } else if (tab === "delete") {
-        // handle delete
-      }
-    toast({title: "تم التصريف بنجاح"});
-    setDisposalModal(false);
-    disposalForm.reset();
-  };
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const disposalForm = useForm<DisposalFormData>({
-    defaultValues: {sheepId: '' , sellPrice: 0}
-  });
-
-
-
   interface MilkFormData { milkProduceDate: string; milkStopDate: string; milkAmount: number; notes: string }
-  const handleSubmitMilkAmount = () => {
-    toast({title: "تم إضافة الحليب بنجاح"});
-    setMilkAmountModal(false);
-    disposalForm.reset();
-  };
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const milkForm = useForm<MilkFormData>({
     defaultValues: {milkProduceDate: '' ,milkStopDate: '' , milkAmount: 0 , notes: ''}
   });
 
+  const handleSubmitMilkAmount = async (data: MilkFormData) => {
+    try {
+      const response = await fetch("http://localhost:3030/api/pregnancies/update-milk", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, sheepId: sheep._id })
+      });
 
+      const result = await response.json();
 
+      if (!response.ok) throw new Error(result.error || "فشل في تحديث البيانات");
 
+      toast({ title: "تم إضافة الحليب بنجاح" });
+      setMilkAmountModal(false);
+      milkForm.reset();
+    } catch (error) {
+      console.error("Error submitting milk data:", error);
+      toast({ title: "خطأ", description: error.message });
+    }
+  };
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [tab, setTab] = useState("death") // Tabs: death | sale | delete
+
+  interface DisposalFormData { sheepId: string; sellPrice: number; }
+  const handleSubmitDisposal = async (data: DisposalFormData) => {
+    console.log("sheepId is :" , id);
+    const sellPrice = disposalForm.getValues().sellPrice;
+
+    try {
+      if (tab === "death") {
+        await fetch(`http://localhost:3030/api/sheep/${id}/status`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "نافقة" }),
+        });
+      } else if (tab === "sell") {
+        await fetch(`http://localhost:3030/api/sheep/${id}/status`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "مباعة", sellPrice }),
+        });
+      } else if (tab === "delete") {
+        await fetch(`http://localhost:3030/api/sheep/${id}`, {
+          method: "DELETE",
+        });
+      }
+
+      toast({ title: "تم التصريف بنجاح" });
+      setDisposalModal(false);
+      disposalForm.reset();
+    } catch (error) {
+      console.error(error);
+      toast({ title: "حدث خطأ", description: "فشل في التصريف" });
+    }
+  };  const disposalForm = useForm<DisposalFormData>({
+    defaultValues: {sheepId: '' , sellPrice: 0}
+  });
+
+  interface EditSheepData { sheepNumber: number; notes: string;}
+  const handleSubmitEdit = async (data: EditSheepData) => {
+    try {
+      const response = await fetch(`http://localhost:3030/api/sheep/${sheep._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update');
+      }
+
+      const updatedSheep = await response.json();
+      toast({
+        title: "تم التعديل",
+        description: `تم تعديل النعجة بنجاح (رقم: ${updatedSheep.sheepNumber})`
+      });
+      setEditSheep(false);
+      form.reset();
+    } catch (error) {
+      console.error(error);
+      toast({ title: "خطأ", description: "فشل في تعديل النعجة" });
+    }
+  };
+  const form = useForm<EditSheepData>({
+    defaultValues: {notes: sheep?.notes, sheepNumber: sheep?.sheepNumber},
+  });
+
+  if (loading) {
+    return <div className="p-6 text-center">جارٍ تحميل البيانات...</div>;
+  }
+  if (!sheep) {
+    return (
+        <div className="p-6 text-center">
+          <h2 className="text-xl font-semibold mb-4">Sheep Not Found</h2>
+          <p>النعجة ذات الرقم {id} غير موجودة.</p>
+          <Button asChild className="mt-4">
+            <Link to="/sheep">العودة</Link>
+          </Button>
+        </div>
+    );
+  }
 
 
+  const sortedPregnancies = [...(sheep.pregnantCases || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const latestPregnancy = sortedPregnancies[0] || null;
+  const previousPregnancy = sortedPregnancies[1] || null;
+  const pregnantSince = latestPregnancy ? new Date(latestPregnancy.pregnantDate).toLocaleDateString() : 'N/A';
+  const expectedBirthDate = latestPregnancy ? new Date(latestPregnancy.expectedBornDate).toLocaleDateString() : 'N/A';
+  const daysLeft = latestPregnancy ? Math.ceil((new Date(latestPregnancy.expectedBornDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
 
+  console.log("The nextTask si : " , nextTask);
+console.log("sheep.status : " , sheep.medicalStatus);
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -173,7 +260,7 @@ const SheepDetails = () => {
               <span>الرجوع إلى إدارة الأغنام</span>
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight"> النعجة {sheep.number}</h1>
+          <h1 className="text-2xl font-bold tracking-tight"> معلومات النعجة {sheep.sheepNumber}</h1>
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={() => setEditSheep(true)} variant="outline" className="gap-1">
@@ -198,7 +285,7 @@ const SheepDetails = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center justify-between">
                   <span>المعلومات العامة</span>
-                  {getStatusBadge(sheep.status)}
+                  {getStatusBadge(sheep.medicalStatus)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -207,16 +294,16 @@ const SheepDetails = () => {
                     <p className="text-sm font-medium text-muted-foreground">رقم النعجة</p>
                     <p className="flex items-center gap-1.5">
                       <Tag size={14} className="text-muted-foreground" />
-                      <span>{sheep.number}</span>
+                      <span>{sheep.sheepNumber}</span>
                     </p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">الجنس</p>
-                    <p>{sheep.sex === 'male' ? 'ذكر' : 'أنثى'}</p>
+                    <p>{ sheep.sheepGender }</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">المصدر</p>
-                    <p>{sheep.origin === 'farm-produced' ? 'إنتاج المزرعة' : 'شراء'}</p>
+                    <p>{sheep.source}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">الملاحظات</p>
@@ -230,64 +317,118 @@ const SheepDetails = () => {
             </Card>
 
             {sheep.isPregnant && (
-              <Card className="border-purple-200" dir={'rtl'}>
-                <CardHeader className="pb-2 bg-purple-50 rounded-t-lg">
-                  <CardTitle className="text-lg font-medium flex items-center gap-2">
-                    <Baby size={18} />
-                    <span>حالة الحمل</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4 space-y-3">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">حامل منذ</p>
-                    <p>{sheep.pregnantSince || 'N/A'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">التاريخ المتوقع للولادة</p>
-                    <p className="font-medium">{sheep.expectedBirthDate || 'N/A'}</p>
-                  </div>
-                  <div className="pt-2">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: '65%' }}></div>
+                <Card className="border-purple-200" dir="rtl">
+                  <CardHeader className="pb-2 bg-purple-50 rounded-t-lg">
+                    <CardTitle className="text-lg font-medium flex items-center gap-2">
+                      <Baby size={18} />
+                      <span>حالة الحمل</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">حامل منذ</p>
+                      <p>{pregnantSince}</p>
                     </div>
-                    <p className="text-xs text-right mt-1 text-muted-foreground">باقي 98 يوم للولادة</p>
-                  </div>
-                </CardContent>
-              </Card>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">التاريخ المتوقع للولادة</p>
+                      <p className="font-medium">{expectedBirthDate}</p>
+                    </div>
+                    <div className="pt-2">
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: `${100 - daysLeft / 1.5}%` }}></div>
+                      </div>
+                      <p className="text-xs text-right mt-1 text-muted-foreground">باقي {daysLeft} يوم للولادة</p>
+                    </div>
+                  </CardContent>
+                </Card>
             )}
 
-            {sheep.sex === 'female' && (
+            { latestPregnancy  && (
+
               <Card dir={'rtl'}>
                 <div className="flex items-center justify-between">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg font-medium">إنتاج الحليب</CardTitle>
                   </CardHeader>
-                  <Button style={{margin: '1rem'}} onClick={() => setMilkAmountModal(true)}>
-                    إدخال انتاج الحليب
-                  </Button>
+                  {
+                      latestPregnancy.bornDate && latestPregnancy.milkAmount === 0 && (
+                          <Button style={{margin: '1rem'}} onClick={() => setMilkAmountModal(true)}>
+                            إدخال انتاج الحليب
+                          </Button>
+                      )
+                  }
                 </div>
+                {
+                  sheep.isPregnant ? (
+                          previousPregnancy ? <CardContent className="pt-4">
+                                    <div className="flex justify-between">
+                                      <div>
+                                        <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعدد اخر عملية ولادة</p>
+                                        <div className="flex items-end">
+                                          <span className="text-2xl font-bold">{ previousPregnancy?.milkAmount }</span>
+                                          <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
+                                        </div>
+                                      </div>
+                                      <div>
+                                      <p>تاريخ البداية</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {previousPregnancy?.startMilkDate
+                                              ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0]
+                                              : 'غير متوفر'}
+                                        </p>
+                                      <p>تاريخ التنشيف</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {previousPregnancy?.endMilkDate
+                                              ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0]
+                                              : 'غير متوفر'}
+                                        </p>
+                                    </div>
+                                    </div>
+                                  </CardContent>
+                                   : <CardContent className="pt-4">
+                                      <div>
+                                        <p className="text-sm font-medium text-muted-foreground">لا يوجد تسجيلات حليب سابقة</p>
+                                      </div>
+                                    </CardContent>
 
-                <CardContent className="pt-4">
-
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعدد اخر عملية ولادة</p>
-                      <div className="flex items-end">
-                        <span className="text-2xl font-bold">{sheep.milkProductionCapacity || 0}</span>
-                        <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
-                      </div>
-                      {sheep.isPregnant && (
-                          <p className="text-xs text-muted-foreground mt-1">الانتاج متوقف بسبب الحمل</p>
-                      )}
-                    </div>
-                    <div>
-                      <p>تاريخ البداية</p>
-                      <p className="text-xs text-muted-foreground">12-2-2029</p>
-                      <p>تاريخ التنشيف</p>
-                      <p className="text-xs text-muted-foreground">12-2-2029</p>
-                    </div>
-                  </div>
-                </CardContent>
+                  ) :
+                      latestPregnancy.milkAmount === 0 ?
+                          (
+                                  <CardContent className="pt-4">
+                                    <div className="flex justify-between">
+                                      <div>
+                                        <p className="text-sm font-medium text-muted-foreground">قم بإدخال انتاج النعجة للحليب لاخر ولادة</p>
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                          ) :
+                            (
+                                <CardContent className="pt-4">
+                                  <div className="flex justify-between">
+                                    <div>
+                                      <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعدد اخر عملية ولادة</p>
+                                      <div className="flex items-end">
+                                        <span className="text-2xl font-bold">{ latestPregnancy?.milkAmount }</span>
+                                        <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <p>تاريخ البداية</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {latestPregnancy?.endMilkDate
+                                            ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0]
+                                            : 'غير متوفر'}
+                                      </p>
+                                      <p>تاريخ التنشيف</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {latestPregnancy?.endMilkDate
+                                            ? new Date(latestPregnancy.endMilkDate).toISOString().split('T')[0]
+                                            : 'غير متوفر'}
+                                      </p>                                    </div>
+                                  </div>
+                                </CardContent>
+                            )
+                }
               </Card>
             )}
 
@@ -299,7 +440,7 @@ const SheepDetails = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4">
-                <p>{sheep.notes || 'No notes available for this sheep.'}</p>
+                <p>{sheep.notes || 'لا يوجد ملاحظات لهذه النعجة .'}</p>
               </CardContent>
             </Card>
             <Button asChild onClick={() => setDisposalModal(true)} style={{cursor:'pointer', width:'25%'}}>
@@ -307,7 +448,6 @@ const SheepDetails = () => {
             </Button>
           </div>
         </TabsContent>
-
         <TabsContent value="medical" className="space-y-4">
           <Card dir={'rtl'}>
             <CardHeader className="pb-2">
@@ -318,27 +458,35 @@ const SheepDetails = () => {
               <CardDescription style={{fontWeight:'bold'}}>السجل الطبي الكامل للنعجة يشمل الأدوية والعلاجات</CardDescription>
             </CardHeader>
             <CardContent>
-              {sheepMedicalHistory.length > 0 ? (
+              {sheep?.patientCases?.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead style={{textAlign:"start"}}>التاريخ</TableHead>
-                      <TableHead style={{textAlign:"start"}}>نوع العلاج</TableHead>
-                      <TableHead style={{textAlign:"start"}}>التفاصيل</TableHead>
+                      <TableHead style={{textAlign:"start"}}>إسم المرض</TableHead>
+                      <TableHead style={{textAlign:"start"}}>إسم الدواء</TableHead>
                       <TableHead style={{textAlign:"start"}}>الملاحظات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sheepMedicalHistory.map((event) => (
-                      <TableRow key={event.id}>
-                        <TableCell>{event.date}</TableCell>
+                    {sheep?.patientCases?.map((event) => (
+                      <TableRow key={event._id}>
+                        { event.patientDate ?
+                            <TableCell>{new Date(event.patientDate).toISOString().split('T')[0]}</TableCell>
+                            : 'غير متوفر'
+                        }
                         <TableCell>
-                          تسمم غذائي
+                          {event.patientName}
                         </TableCell>
                         <TableCell>
-                         جرعة اولى
+                          {event.drugs.map((item, idx) => (
+                              <span key={idx}>
+                                {item.drug?.name || "اسم غير متاح"}
+                                {idx < event.drugs.length - 1 && ', '}
+                              </span>
+                          ))}
                         </TableCell>
-                        <TableCell>تم العلاج من المرة الاولى</TableCell>
+                        <TableCell>{event.notes}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -361,7 +509,7 @@ const SheepDetails = () => {
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-medium flex items-center gap-2">
-                      {getStatusBadge(sheep.status)}
+                      {getStatusBadge(sheep.medicalStatus)}
                     </p>
                     <p className="text-muted-foreground mt-1">أخر تحديث : اليوم</p>
                   </div>
@@ -380,31 +528,35 @@ const SheepDetails = () => {
               <CardDescription style={{fontWeight:'bold'}}>سجل الطعومات الفائتة والقادمة لهذه النعجة</CardDescription>
             </CardHeader>
             <CardContent>
-              {sheepMedicalHistory.length > 0 ? (
+              {sheep?.injectionCases.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead style={{textAlign:"start"}}>اسم الطعم</TableHead>
-                        <TableHead style={{textAlign:"start"}}>الوصف</TableHead>
-                        <TableHead style={{textAlign:"start"}}>التكرار</TableHead>
-                        <TableHead style={{textAlign:"start"}}>الحالة</TableHead>
+                        <TableHead style={{textAlign:"start"}}>تاريخ الاعطاء</TableHead>
+                        <TableHead style={{textAlign:"start"}}>الجرعة</TableHead>
+                        <TableHead style={{textAlign:"start"}}>الملاحظات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sheepMedicalHistory.map((event) => (
-                          <TableRow key={event.id}>
-                            <TableCell>تسمم غذائي</TableCell>
-                            <TableCell>
-                              دواء مرة واحدة كل سنة
-                            </TableCell>
-                            <TableCell>
-                              سنوي
-                            </TableCell>
-                            <TableCell>
-                              تم
-                            </TableCell>
-                          </TableRow>
-                      ))}
+                      {injectionTypes.map((type) => {
+                        const givenInjection = sheepInjections.find(
+                            inj => inj.injectionType?._id === type._id
+                        );
+
+                        return (
+                            <TableRow key={type._id}>
+                              <TableCell>{type.name}</TableCell>
+                              <TableCell>
+                                {givenInjection?.injectDate
+                                    ? new Date(givenInjection.injectDate).toLocaleDateString('en-CA')
+                                    : 'لم يتم إعطاؤه'}
+                              </TableCell>
+                              <TableCell>{givenInjection?.numOfInject === 1 ? 'جرعة ولى' :  givenInjection?.numOfInject === 2 ? "جرعة ثانية" : '-'}</TableCell>
+                              <TableCell>{givenInjection?.notes || '—'}</TableCell>
+                            </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
               ) : (
@@ -415,20 +567,24 @@ const SheepDetails = () => {
               )}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2" dir={'rtl'}>
-              <CardTitle className="text-lg">الحقنة القادمة </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <div className="flex justify-between items-center" dir={'rtl'}>
-                <div>
-                  <p className="text-sm font-medium">تسمم غذائي</p>
-                  <p className="text-muted-foreground">خلال 45 يوم</p>
-                </div>
-                <Button variant="outline" size="sm">الإعطاء</Button>
-              </div>
-            </CardContent>
-          </Card>
+          {nextTask && (
+              <Card>
+                <CardHeader className="pb-2" dir="rtl">
+                  <CardTitle className="text-lg">الحقنة القادمة</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <div className="flex justify-between items-center" dir="rtl">
+                    <div>
+                      <p className="text-sm font-medium">{nextTask.title}</p>
+                      <p className="text-muted-foreground">
+                        خلال {Math.ceil((new Date(nextTask.dueDate) - new Date()) / (1000 * 60 * 60 * 24))} يوم
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">الإعطاء</Button>
+                  </div>
+                </CardContent>
+              </Card>
+          )}
 
         </TabsContent>
         <TabsContent value="births" className="space-y-4" dir={'rtl'}>
@@ -449,7 +605,7 @@ const SheepDetails = () => {
                   <CardDescription>تاريخ لجميع حالات الولادة لهذه النعجة</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {sheepBirthRecords.length > 0 ? (
+                  {sheep?.pregnantCases?.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -462,14 +618,18 @@ const SheepDetails = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {sheepBirthRecords.map((record) => (
+                        {sheep?.pregnantCases.filter(record => record.bornDate).map((record) => (
                           <TableRow key={record.id}>
-                            <TableCell>{record.date}</TableCell>
-                            <TableCell>{record.childrenCount}</TableCell>
-                            <TableCell>{record.maleCount} L</TableCell>
-                            <TableCell>{record.femaleCount}</TableCell>
-                            <TableCell>5</TableCell>
-                            <TableCell>ملاحظات ملاحظات ملاحظات</TableCell>
+                            {
+                              record.bornDate
+                                ?<TableCell>{new Date(record.bornDate).toISOString().split('T')[0]}</TableCell>
+                                : 'غير متوفر'
+                            }
+                            <TableCell>{record.numberOfFemaleLamb + record.numberOfMaleLamb}</TableCell>
+                            <TableCell> {record.milkAmount} L</TableCell>
+                            <TableCell>{record.numberOfMaleLamb} </TableCell>
+                            <TableCell>{record.numberOfFemaleLamb}</TableCell>
+                            <TableCell>{record.notes || 'لا يوجد ملاحظات'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -493,11 +653,15 @@ const SheepDetails = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">التاريخ المتوقع</p>
-                        <p className="font-medium">{sheep.expectedBirthDate}</p>
+                        {
+                          latestPregnancy?.expectedBornDate ?
+                              <p className="font-medium">{new Date(latestPregnancy?.expectedBornDate).toISOString().split('T')[0]}</p>
+                              : 'غير متوفر'
+                        }
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">الأيام الباقية</p>
-                        <p className="font-medium">تقريبا 98 يوم</p>
+                        <p className="font-medium">تقريبا {daysLeft} يوم</p>
                       </div>
                     </div>
                   </CardContent>
@@ -506,7 +670,6 @@ const SheepDetails = () => {
             </>
           )}
         </TabsContent>
-
 
       </Tabs>
 
@@ -524,19 +687,10 @@ const SheepDetails = () => {
               <div className="space-y-4 py-2 max-h-[400px]  overflow-y-auto pr-2">
                   <div className="flex justify-between">
                       <FormField control={form.control} name="sheepNumber" render={({ field }) => (
-                          <FormItem>
+                          <FormItem className={'w-full'}>
                               <FormLabel>الرقم</FormLabel>
                               <FormControl>
                                   <Input type="number" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
-                      )}/>
-                      <FormField control={form.control} name="sex" render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>الجنس</FormLabel>
-                              <FormControl>
-                                  <Input {...field} />
                               </FormControl>
                               <FormMessage />
                           </FormItem>
@@ -558,7 +712,7 @@ const SheepDetails = () => {
               </div>
 
               <DialogFooter>
-                <Button type="submit">
+                <Button type="submit" disabled={!form.watch("sheepNumber")}>
                   احفظ التعديلات
                 </Button>
                 <Button type="button" variant="outline" onClick={() => {setEditSheep(false);form.reset();}}>
@@ -584,7 +738,7 @@ const SheepDetails = () => {
             <form onSubmit={disposalForm.handleSubmit(handleSubmitDisposal)} className="space-y-4">
               <Tabs value={tab} onValueChange={setTab} className="w-full">
                 <TabsList className="grid grid-cols-3">
-                  <TabsTrigger value="sale">بيع</TabsTrigger>
+                  <TabsTrigger value="sell">بيع</TabsTrigger>
                   <TabsTrigger value="death">موت</TabsTrigger>
                   <TabsTrigger value="delete">حذف</TabsTrigger>
                 </TabsList>
@@ -595,7 +749,7 @@ const SheepDetails = () => {
                   <TabsContent value="delete">
                     <p className="text-red-600 font-semibold pb-5 pt-3" dir={'rtl'}>هل أنت متأكد أنك تريد حذف هذه النعجة؟ هذا الإجراء لا يمكن التراجع عنه.</p>
                   </TabsContent>
-                  <TabsContent value="sale" dir={'rtl'} className={'pb-5 pt-3'}>
+                  <TabsContent value="sell" dir={'rtl'} className={'pb-5 pt-3'}>
                     <FormField control={disposalForm.control} name="sellPrice" render={({ field }) => (
                         <FormItem>
                           <FormLabel>سعر البيع</FormLabel>
@@ -613,7 +767,8 @@ const SheepDetails = () => {
                 <Button type="button" variant="outline" onClick={() => {setDisposalModal(false);disposalForm.reset();setTab("death")}}>
                   إلغاء
                 </Button>
-                <Button type="submit" onClick={disposalForm.handleSubmit(handleSubmitDisposal)}>
+                <Button type="submit" disabled={ tab === 'sell' && !disposalForm.watch("sellPrice")}
+                        onClick={disposalForm.handleSubmit(handleSubmitDisposal)}>
                   تأكيد
                 </Button>
               </DialogFooter>
@@ -681,7 +836,15 @@ const SheepDetails = () => {
 
 
               <DialogFooter>
-                <Button type="submit" onClick={milkForm.handleSubmit(handleSubmitMilkAmount)}>
+                <Button
+                    type="submit"
+                    onClick={milkForm.handleSubmit(handleSubmitMilkAmount)}
+                    disabled={
+                        !milkForm.watch("milkProduceDate") ||
+                        !milkForm.watch("milkStopDate") ||
+                        !milkForm.watch("milkAmount")
+                    }
+                >
                   تأكيد
                 </Button>
                 <Button type="button" variant="outline" onClick={() => {setDisposalModal(false);disposalForm.reset();setTab("death")}}>

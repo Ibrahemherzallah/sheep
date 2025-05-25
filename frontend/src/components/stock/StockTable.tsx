@@ -1,4 +1,3 @@
-
 import { StockItem } from '@/types';
 import { 
   Table, 
@@ -20,11 +19,11 @@ const StockTable = ({ items }: StockTableProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Quantity</TableHead>
-            <TableHead>Unit</TableHead>
-            <TableHead>Last Updated</TableHead>
-            <TableHead>Notes</TableHead>
+            <TableHead style={{textAlign:'start'}}>الإسم</TableHead>
+            <TableHead style={{textAlign:'start'}}>الكمية</TableHead>
+            <TableHead style={{textAlign:'start'}}>الوحدة</TableHead>
+            <TableHead style={{textAlign:'start'}}>أخر تحديث</TableHead>
+            <TableHead style={{textAlign:'start'}}>الملاحظات</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

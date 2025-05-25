@@ -117,17 +117,17 @@ export default function Milk() {
 
   return (
     <div className="container py-10">
-      <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
-        <MilkIcon className="h-8 w-8" />
-        Milk Production & Sales
+      <h1 className="text-3xl font-bold mb-8 flex items-center gap-3" >
+        {/*<MilkIcon className="h-8 w-8" />*/}
+        إنتاج الحليب والمبيعات
       </h1>
       
-      <div className="grid gap-8 md:grid-cols-2">
-        <Card>
+      <div className="grid gap-8 md:grid-cols-2 mt-10">
+        <Card dir={'rtl'}>
           <CardHeader>
-            <CardTitle>Add New Milk Record</CardTitle>
+            <CardTitle>أضف تسجيل حليب جديد</CardTitle>
             <CardDescription>
-              Enter today's milk production and sales data
+              ادخل انتاج ومبيعات الحليب لليوم
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -138,7 +138,7 @@ export default function Milk() {
                   name="date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date</FormLabel>
+                      <FormLabel>التاريخ</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -151,7 +151,7 @@ export default function Milk() {
                   name="productionLiters"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Production (Liters)</FormLabel>
+                      <FormLabel>الإنتاج (باللتر)</FormLabel>
                       <FormControl>
                         <Input placeholder="0" {...field} />
                       </FormControl>
@@ -164,7 +164,7 @@ export default function Milk() {
                   name="soldLiters"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sold (Liters)</FormLabel>
+                      <FormLabel>المباع (باللتر)</FormLabel>
                       <FormControl>
                         <Input placeholder="0" {...field} />
                       </FormControl>
@@ -177,7 +177,7 @@ export default function Milk() {
                   name="pricePerLiter"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price per Liter</FormLabel>
+                      <FormLabel>سعر اللتر</FormLabel>
                       <FormControl>
                         <Input placeholder="0.00" {...field} />
                       </FormControl>
@@ -186,36 +186,36 @@ export default function Milk() {
                   )}
                 />
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Adding..." : "Add Record"}
+                  {isLoading ? "جار الإضافة..." : "إضافة تسجيل"}
                 </Button>
               </form>
             </Form>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card dir={'rtl'}>
           <CardHeader>
-            <CardTitle>Milk Statistics</CardTitle>
+            <CardTitle>إحصائيات الحليب</CardTitle>
             <CardDescription>
-              Overview of your milk production and sales
+              نظرة شاملة حول إنتاجك للحليب ومبيعاته
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-secondary/30 p-4 rounded-lg">
-                <div className="text-sm text-muted-foreground">Total Production</div>
-                <div className="text-2xl font-bold">{totalProduction} L</div>
+                <div className="text-sm text-muted-foreground">الإنتاج الإجمالي</div>
+                <div className="text-2xl font-bold"><span className={'opacity-0'}>L</span> {totalProduction} L</div>
               </div>
               <div className="bg-secondary/30 p-4 rounded-lg">
-                <div className="text-sm text-muted-foreground">Total Sold</div>
-                <div className="text-2xl font-bold">{totalSales} L</div>
+                <div className="text-sm text-muted-foreground">البيع الإجمالي</div>
+                <div className="text-2xl font-bold"><span className={'opacity-0'}>L</span>{totalSales} L</div>
               </div>
               <div className="bg-secondary/30 p-4 rounded-lg">
-                <div className="text-sm text-muted-foreground">Total Revenue</div>
+                <div className="text-sm text-muted-foreground">الإيرادات الإجمالية</div>
                 <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
               </div>
               <div className="bg-secondary/30 p-4 rounded-lg">
-                <div className="text-sm text-muted-foreground">Average Price</div>
+                <div className="text-sm text-muted-foreground">معدل السعر</div>
                 <div className="text-2xl font-bold">${averagePrice.toFixed(2)}/L</div>
               </div>
             </div>
@@ -223,11 +223,11 @@ export default function Milk() {
         </Card>
       </div>
 
-      <Card className="mt-8">
+      <Card className="mt-8" dir={'rtl'}>
         <CardHeader>
-          <CardTitle>Milk Records</CardTitle>
+          <CardTitle>تسجيلات الحليب</CardTitle>
           <CardDescription>
-            History of milk production and sales
+            تاريخ انتاج الحليب والمبيعات
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -235,21 +235,21 @@ export default function Milk() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="py-3 px-2 text-left">Date</th>
-                  <th className="py-3 px-2 text-left">Production (L)</th>
-                  <th className="py-3 px-2 text-left">Sold (L)</th>
-                  <th className="py-3 px-2 text-left">Price/L</th>
-                  <th className="py-3 px-2 text-left">Revenue</th>
+                  <th className="py-3 px-2 text-right">الإيرادات</th>
+                  <th className="py-3 px-2 text-right">الإنتاج (L)</th>
+                  <th className="py-3 px-2 text-right">المباع (L)</th>
+                  <th className="py-3 px-2 text-right">السعر/L</th>
+                  <th className="py-3 px-2 text-right">التاريخ</th>
                 </tr>
               </thead>
               <tbody>
                 {records.map((record) => (
                   <tr key={record.id} className="border-b">
-                    <td className="py-3 px-2">{record.date}</td>
+                    <td className="py-3 px-2">${record.revenue.toFixed(2)}</td>
                     <td className="py-3 px-2">{record.productionLiters} L</td>
                     <td className="py-3 px-2">{record.soldLiters} L</td>
                     <td className="py-3 px-2">${record.pricePerLiter.toFixed(2)}</td>
-                    <td className="py-3 px-2">${record.revenue.toFixed(2)}</td>
+                    <td className="py-3 px-2">{record.date}</td>
                   </tr>
                 ))}
               </tbody>

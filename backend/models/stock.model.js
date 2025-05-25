@@ -14,6 +14,11 @@ const stockSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    section: {
+        type: String,
+        required: true,
+        enum: ['cycle','sheep']
+    },
     unit: {
         type: String,
         required: true,

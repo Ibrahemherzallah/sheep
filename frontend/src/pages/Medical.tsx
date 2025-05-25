@@ -1,103 +1,12 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Check,
-  Calendar,
-  Download,
-  Filter,
-  Plus,
-  Search,
-  CalendarCheck,
-  CalendarPlus,
-  Syringe,
-  Heart, History
-} from 'lucide-react';
-import {
-  Button,
-  Input,
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  Checkbox,
-  Label,
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-  toast,
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody, TableCell,
-} from '@/components/ui';
+import {Check, Calendar, Download, Filter, Plus, Search, CalendarCheck, CalendarPlus, Syringe, Heart, History} from 'lucide-react';
+import {Button, Input, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, Card, CardContent, CardDescription, CardHeader, CardTitle, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, Checkbox, Label, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, toast, Table, TableHeader, TableRow, TableHead, TableBody, TableCell,} from '@/components/ui';
 import {useForm} from "react-hook-form";
+import {Combobox} from "@/components/ui/combobox.tsx";
+import {any} from "zod";
+import * as React from "react";
 
-// Mock data for injections
-const injectionsData = [
-  { id: '101', sheepId: '1001', type: 'routine', status: 'completed', dueDate: '2025-04-30', completedDate: '2025-04-28' },
-  { id: '102', sheepId: '1002', type: 'routine', status: 'overdue', dueDate: '2025-05-01', completedDate: null },
-  { id: '103', sheepId: '1003', type: 'birth-first', status: 'upcoming', dueDate: '2025-05-10', completedDate: null },
-  { id: '104', sheepId: '1004', type: 'birth-second', status: 'upcoming', dueDate: '2025-05-15', completedDate: null },
-  { id: '105', sheepId: '1005', type: 'routine', status: 'upcoming', dueDate: '2025-05-20', completedDate: null },
-  { id: '106', sheepId: '1006', type: 'routine', status: 'upcoming', dueDate: '2025-06-01', completedDate: null },
-];
-
-// Mock data for treatments
-const treatmentsData = [
-  { id: '201', sheepId: '1003', disease: 'الرشح', medicine: 'Antibiotics A', status: 'active', startDate: '2025-05-02', expectedHealDate: '2025-05-07' },
-  { id: '202', sheepId: '1002', disease: 'الرشح', medicine: 'Antibiotics B', status: 'healed', startDate: '2025-04-20', expectedHealDate: '2025-04-25' },
-  { id: '203', sheepId: '1005', disease: 'الرشح', medicine: 'Anti-parasite', status: 'healed', startDate: '2025-04-15', expectedHealDate: '2025-04-20' },
-];
-
-// Mock data for available sheep
-const sheepData = [
-  { id: '1001', number:'1001', name: 'Sheep #1001' },
-  { id: '1002', number:'1002', name: 'Sheep #1002' },
-  { id: '1003', number:'1003', name: 'Sheep #1003' },
-  { id: '1004', number:'1004', name: 'Sheep #1004' },
-  { id: '1005', number:'1005', name: 'Sheep #1005' },
-  { id: '1006', number:'1006', name: 'Sheep #1006' },
-  { id: '1007', number:'1007', name: 'Sheep #1007' },
-  { id: '1008', number:'1008', name: 'Sheep #1008' },
-
-];
-
-
-// Mock data for injection types
-const injectionTypes = [
-  { id: 'routine', name: 'Routine (6-month)' },
-  { id: 'birth-first', name: 'Post-birth (1st)' },
-  { id: 'birth-second', name: 'Post-birth (2nd)' },
-  { id: 'antibiotic-a', name: 'Antibiotic A' },
-  { id: 'antibiotic-b', name: 'Antibiotic B' },
-  { id: 'vitamin-complex', name: 'Vitamin Complex' },
-  { id: 'parasite', name: 'Anti-parasite' },
-];
-
-
-// Status badge component
 const StatusBadge = ({ status }: { status: string }) => {
   const getStatusClass = () => {
     switch (status) {
@@ -123,93 +32,46 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-// Injection card component
-const InjectionCard = ({ injection }: { injection: typeof injectionsData[0] }) => {
-  const getInjectionTypeLabel = (type: string) => {
-    switch (type) {
-      case 'routine':
-        return 'Routine (6-month)';
-      case 'birth-first':
-        return 'Post-birth (1st)';
-      case 'birth-second':
-        return 'Post-birth (2nd)';
-      default:
-        return type;
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-lg">Sheep #{injection.sheepId}</CardTitle>
-          <StatusBadge status={injection.status} />
-        </div>
-        <CardDescription>{getInjectionTypeLabel(injection.type)} Injection</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Due Date:</span>
-            <span className="font-medium">{injection.dueDate}</span>
-          </div>
-          {injection.completedDate && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Completed:</span>
-              <span className="font-medium">{injection.completedDate}</span>
-            </div>
-          )}
-          <div className="pt-2">
-            {injection.status === 'upcoming' || injection.status === 'overdue' ? (
-              <Button size="sm" className="w-full gap-1">
-                <Check size={16} />
-                <span>Mark as Completed</span>
-              </Button>
-            ) : injection.status === 'completed' ? (
-              <Button variant="outline" size="sm" className="w-full gap-1">
-                <CalendarCheck size={16} />
-                <span>View Details</span>
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
 // Treatment card component
-const TreatmentCard = ({ treatment }: { treatment: typeof treatmentsData[0] }) => {
-  const [openChangeMedicineDialog,setOpenChangeMedicineDialog] = useState(false);
+const TreatmentCard = ({ treatment,allDrugs }: { treatment: any;allDrugs: any }) => {
   return (
         <Card dir={'rtl'}>
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
-              <CardTitle className="text-lg">النعجة #{treatment.sheepId}</CardTitle>
+              <CardTitle className="text-lg">النعجة #{treatment.sheepNumber}</CardTitle>
               <StatusBadge status={'مريضة'} />
             </div>
-            <CardDescription> علاج&nbsp;{treatment.disease}  </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">المرض :</span>
+                <span className="font-medium">{treatment.latestPatient.patientName}</span>
+              </div>
+              <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">الدواء :</span>
-                <span className="font-medium">{treatment.medicine}</span>
+                <span className="font-medium">
+                  {treatment.latestPatient.drugs?.[0]?.drug?.name || 'غير متوفر'}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">رقم الدواء :</span>
-                <span className="font-medium">1</span>
+                <span className="font-medium">{treatment.latestPatient.drugs?.[treatment.latestPatient.drugs.length - 1]?.order || 1}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">تاريخ المرض :</span>
-                <span className="font-medium">{treatment.startDate}</span>
+                <span className="font-medium">
+                  {new Date(treatment.latestPatient.patientDate).toLocaleDateString('ar-EG')}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">تاريخ الشفاء المتوقع :</span>
-                <span className="font-medium">{treatment.expectedHealDate}</span>
+                <span className="font-medium">
+                {new Date(new Date(treatment.latestPatient.updatedAt).getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('ar-EG')}
+              </span>
               </div>
               <div className="pt-2">
-                    <ChangeMedicine />
+                    <ChangeMedicine id={treatment.sheepId} allDrugs={allDrugs} />
               </div>
             </div>
           </CardContent>
@@ -218,12 +80,20 @@ const TreatmentCard = ({ treatment }: { treatment: typeof treatmentsData[0] }) =
 };
 
 // Treatment Modal Component
-const NewInjectionModal = () => {
+const NewInjectionModal = ({allSheep}) => {
   const [selectedSheep, setSelectedSheep] = useState<string[]>([]);
   const [selectedInjection, setSelectedInjection] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState(() => {const today = new Date();return today.toISOString().split("T")[0];});
   const [notes, setNotes] = useState("");
   const [injectNumber, setInjectNumber] = useState("");
+  const [allInjections,setAllInjections] = useState([]);
+  const [useTodayDate,setTodayDate] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const selectedInjectionObj = allInjections?.find(
+      (inj) => inj._id === selectedInjection
+  );
   const handleSheepToggle = (sheepId: string) => {
     if (selectedSheep.includes(sheepId)) {
       setSelectedSheep(selectedSheep.filter(id => id !== sheepId));
@@ -232,20 +102,69 @@ const NewInjectionModal = () => {
     }
   };
 
-  const handleSubmit = () => {
-    // Reset form after submission
-    setSelectedSheep([]);
-    setSelectedInjection("");
-    setDueDate("");
-    setNotes("");
-  };
-  const [useTodayDate,setTodayDate] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('');
-  const filteredSheepMultiSelector = sheepData.filter((sheep) =>
-      sheep.number.toString().includes(searchTerm.trim())
+  const filteredSheepMultiSelector = allSheep.filter((sheep) =>
+      sheep.sheepNumber.toString().includes(searchTerm.trim())
   );
+  console.log('dueDate : ' , dueDate);
+
+  useEffect(() => {
+    const fetchInjections = async () => {
+      try {
+        const response = await fetch('http://localhost:3030/api/supplement/injections');
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'فشل في جلب البيانات');
+        }
+
+        console.log('تم جلب الأدوية بنجاح:', result);
+
+        setAllInjections(result);
+
+      } catch (error: any) {
+        console.error('فشل في جلب الأدوية:', error);
+      }
+    }
+    fetchInjections();
+
+  }, []);
+
+
+  const handleSubmitAddInject = async () => {
+    try {
+      const payload = {
+        sheepId: selectedSheep, // Array of IDs
+        injectionType: selectedInjection,
+        numOfInject: selectedInjectionObj?.reputation === '6m' ? Number(injectNumber) : undefined,
+        injectDate: useTodayDate ? new Date() : new Date(dueDate),
+        notes,
+      };
+
+      const response = await fetch('http://localhost:3030/api/injections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('فشل في إضافة الطعم');
+
+      toast({ title: 'تمت إضافة الطعم بنجاح' });
+      // Optional: Reset states
+      setSelectedInjection('');
+      setInjectNumber('');
+      setSelectedSheep([]);
+      setDueDate('');
+      setNotes('');
+      setTodayDate(true);
+      setOpen(false);
+    } catch (error) {
+      toast({ title: 'حدث خطأ', description: String(error) });
+    }
+  };
+
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button asChild>
           <div className="flex items-center gap-1" style={{cursor:'pointer'}}>
@@ -262,42 +181,45 @@ const NewInjectionModal = () => {
         <div className="space-y-3 py-2" dir={'rtl'}>
           <div className="space-y-1">
             <Label htmlFor="injection-type">نوع الطعم</Label>
-            <Select value={selectedInjection} onValueChange={setSelectedInjection} dir={'rtl'}>
-              <SelectTrigger id="injection-type">
-                <SelectValue placeholder="حدد نوع الطعم" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {injectionTypes.map((injection) => (
-                    <SelectItem key={injection.id} value={injection.id}>
-                      {injection.name}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          {/* Number Of Inject */}
-          <div className="space-y-1">
-            <Label htmlFor="injectNumber">رقم الجرعة</Label>
-            <Input
-                id="injectNumber"
-                placeholder="يظهر فقط اذا كان الطعم ذو جرعتين"
-                value={injectNumber}
-                onChange={(e) => setInjectNumber(e.target.value)}
+            <Combobox
+                value={selectedInjection}
+                onChange={setSelectedInjection}
+                options={allInjections.map((injection) => ({
+                  label: injection.name,
+                  value: injection._id,
+                }))}
+                placeholder="ابحث واختر نوع الطعم"
+                dir="rtl"
             />
           </div>
-
-
-
-
+          {/* Number Of Inject */}
+              {
+                selectedInjectionObj?.reputation === '6m' &&
+                  (
+                    <div className="space-y-1">
+                      <Label htmlFor="injectNumber">رقم الجرعة</Label>
+                      <Input
+                          id="injectNumber"
+                          placeholder="أدخل رقم الجرعة"
+                          value={injectNumber}
+                          onChange={(e) => setInjectNumber(e.target.value)}
+                      />
+                    </div>
+                  )
+             }
           {/* Sheep Selection */}
           <div className="space-y-2">
             <div style={{display: "flex", justifyContent: "space-between"}}>
               <div>
                 <Label>حدد النعجة</Label>
                 <div className="mb-3" >
-                  <Input type="text" style={{width:'100%'}} placeholder="إبحث بواسطة الرقم" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full md:w-1/2"/>
+                  <Input type="text" style={{width:'100%'}}
+                         placeholder="إبحث بواسطة الرقم"
+                         value={searchTerm}
+                         onChange={(e) =>
+                         setSearchTerm(e.target.value)}
+                         className="w-full md:w-1/2"
+                  />
                 </div>
               </div>
               <div>
@@ -324,10 +246,10 @@ const NewInjectionModal = () => {
 
             <div className="max-h-40 overflow-y-auto p-2 border rounded-md">
               {filteredSheepMultiSelector.map((sheep) => (
-                <div key={sheep.id} className="flex items-center space-x-2 py-2 border-b last:border-0">
-                  <Checkbox id={`sheep-${sheep.id}`} checked={selectedSheep.includes(sheep.id)} onCheckedChange={() => handleSheepToggle(sheep.id)}/>
-                  <Label htmlFor={`sheep-${sheep.id}`} className="flex-grow cursor-pointer">
-                    {sheep.name}
+                <div key={sheep._id} className="flex items-center space-x-2 py-2 border-b last:border-0">
+                  <Checkbox id={`sheep-${sheep._id}`} checked={selectedSheep.includes(sheep._id)} onCheckedChange={() => handleSheepToggle(sheep._id)}/>
+                  <Label htmlFor={`sheep-${sheep._id}`} className="flex-grow cursor-pointer">
+                    &nbsp;# {sheep.sheepNumber}
                   </Label>
                 </div>
               ))}
@@ -351,8 +273,8 @@ const NewInjectionModal = () => {
         <DialogFooter>
           <Button 
             type="submit" 
-            onClick={handleSubmit}
-            disabled={!selectedInjection || selectedSheep.length === 0 || !dueDate}
+            onClick={handleSubmitAddInject}
+            disabled={!selectedInjection || selectedSheep.length === 0 || !injectNumber }
           >
             <Syringe className="mr-1" size={16} />
               اضافة
@@ -362,12 +284,21 @@ const NewInjectionModal = () => {
     </Dialog>
   );
 };
-const NewTreatmentModal = () => {
+
+const NewTreatmentModal = ({allDrugs,allSheep}) => {
   const [selectedSheep, setSelectedSheep] = useState<string[]>([]);
-  const [selectedInjection, setSelectedInjection] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [selectedDrug, setSelectedDrug] = useState("");
+  const [dueDate, setDueDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  });
   const [notes, setNotes] = useState("");
   const [injectNumber, setInjectNumber] = useState("");
+  const [useTodayDate,setTodayDate] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('');
+  const [open, setOpen] = useState(false);
+
+
   const handleSheepToggle = (sheepId: string) => {
     if (selectedSheep.includes(sheepId)) {
       setSelectedSheep(selectedSheep.filter(id => id !== sheepId));
@@ -375,21 +306,61 @@ const NewTreatmentModal = () => {
       setSelectedSheep([...selectedSheep, sheepId]);
     }
   };
-
-  const handleSubmit = () => {
-    // Reset form after submission
-    setSelectedSheep([]);
-    setSelectedInjection("");
-    setDueDate("");
-    setNotes("");
-  };
-  const [useTodayDate,setTodayDate] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('');
-  const filteredSheepMultiSelector = sheepData.filter((sheep) =>
-      sheep.number.toString().includes(searchTerm.trim())
+  const healthySheep = allSheep.filter(sheep => !sheep.isPatient)
+  const filteredSheepMultiSelector = healthySheep.filter((sheep) =>
+      sheep.sheepNumber.toString().includes(searchTerm.trim())
   );
+  const handleSubmit = async () => {
+
+    const payload = {sheepIds: selectedSheep, patientName: injectNumber,
+      drugs: [
+        {
+          drug: selectedDrug,
+          order: 1,
+        },
+      ],
+      patientDate: dueDate,
+      notes,
+    };
+
+    try {
+      const res = await fetch("http://localhost:3030/api/patient", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "فشل في إضافة الحالة المرضية");
+      }
+
+      // Optionally: toast success or close dialog here
+      toast({ title: 'تم إضافة الحالات المرضية بنجاح!' });
+
+      // Reset form
+      setSelectedSheep([]);
+      setSelectedDrug("");
+      setDueDate(() => {
+        const today = new Date();
+        return today.toISOString().split("T")[0];
+      });
+      setNotes("");
+      setInjectNumber("");
+      setTodayDate(true);
+      setOpen(false);
+
+    } catch (error) {
+      console.error("Error creating patient record:", error);
+      toast({ title: 'حدث خطأ أثناء إضافة الحالات المرضية', description: String(error) });
+    }
+  };
+
   return (
-      <Dialog>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button asChild>
             <div className="flex items-center gap-1" style={{cursor:'pointer'}}>
@@ -405,7 +376,7 @@ const NewTreatmentModal = () => {
 
           <div className="space-y-3 py-2" dir={'rtl'}>
             {/* Number Of Inject */}
-              <div className="space-y-1">
+            <div className="space-y-1">
                 <Label htmlFor="injectNumber">إسم المرض</Label>
                 <Input
                     id="injectNumber"
@@ -414,30 +385,25 @@ const NewTreatmentModal = () => {
                     onChange={(e) => setInjectNumber(e.target.value)}
                 />
               </div>
-              <div className="space-y-1" >
-                <Label htmlFor="injection-type">الدواء المعطى</Label>
-                <Select value={selectedInjection} onValueChange={setSelectedInjection} dir={'rtl'}>
-                  <SelectTrigger id="injection-type">
-                    <SelectValue placeholder="حدد الدواء المعطى" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {injectionTypes.map((injection) => (
-                          <SelectItem key={injection.id} value={injection.id}>
-                            {injection.name}
-                          </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
+
+            {/* Given Drug */}
+            <div className="space-y-1">
+              <Label htmlFor="injection-type">الدواء المعطى</Label>
+              <Combobox
+                  value={selectedDrug}
+                  onChange={setSelectedDrug}
+                  options={allDrugs.map((drug) => ({
+                    label: drug.name,
+                    value: drug._id,
+                  }))}
+                  placeholder="حدد الدواء المعطى"
+                  dir="rtl"
+              />
+
+            </div>
 
 
             {/* Due Date */}
-
-
-
-            {/* Sheep Selection */}
             <div className="space-y-2">
               <div style={{display:'flex',justifyContent:'space-between'}}>
                 <div>
@@ -465,16 +431,18 @@ const NewTreatmentModal = () => {
                 </div>
               </div>
 
+              {/* Sheep Selection */}
               <div className="max-h-40 overflow-y-auto p-2 border rounded-md">
                 {filteredSheepMultiSelector.map((sheep) => (
-                    <div key={sheep.id} className="flex items-center space-x-2 py-2 border-b last:border-0">
-                      <Checkbox id={`sheep-${sheep.id}`} checked={selectedSheep.includes(sheep.id)} onCheckedChange={() => handleSheepToggle(sheep.id)}/>
-                      <Label htmlFor={`sheep-${sheep.id}`} className="flex-grow cursor-pointer">
-                        {sheep.name}
+                    <div key={sheep._id} className="flex items-center space-x-2 py-2 border-b last:border-0">
+                      <Checkbox id={`sheep-${sheep._id}`} checked={selectedSheep.includes(sheep._id)} onCheckedChange={() => handleSheepToggle(sheep._id)}/>
+                      <Label htmlFor={`sheep-${sheep._id}`} className="flex-grow cursor-pointer">
+                        &nbsp;# {sheep.sheepNumber}
                       </Label>
                     </div>
                 ))}
               </div>
+
               <div className="text-sm text-muted-foreground mt-1">
                 {selectedSheep.length} sheep selected
               </div>
@@ -497,7 +465,7 @@ const NewTreatmentModal = () => {
             <Button
                 type="submit"
                 onClick={handleSubmit}
-                disabled={!selectedInjection || selectedSheep.length === 0 || !dueDate}
+                disabled={!selectedDrug || selectedSheep.length === 0 || !dueDate}
             >
               <Syringe className="mr-1" size={16} />
               إضافة
@@ -508,18 +476,50 @@ const NewTreatmentModal = () => {
   );
 };
 
-const ChangeMedicine = () => {
+const ChangeMedicine = ({id,allDrugs}) => {
 
   const [newMedicine, setNewMedicine] = useState("");
   const [medicineNumber, setMedicineNumber] = useState("");
+  const [open, setOpen] = useState(false);
 
-  const handleSubmit = () => {
-    setNewMedicine("");
-    setMedicineNumber("");
+
+  const handleSubmit = async () => {
+    if (!newMedicine || !medicineNumber) return;
+
+    try {
+      const response = await fetch(`http://localhost:3030/api/patient/add-drug/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          drug: newMedicine,
+          order: Number(medicineNumber),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'فشل في إضافة الدواء');
+      }
+
+      // Reset form
+      setNewMedicine('');
+      setMedicineNumber('');
+      setOpen(false);
+
+      // Optional: Show success message
+      toast({ title: 'تمت إضافة الدواء بنجاح' });
+      // Optional: trigger data refresh or close dialog if needed
+    } catch (error) {
+      console.error('Error:', error);
+      toast({ title: 'حدث خطأ', description: String(error) });
+    }
   };
 
   return (
-      <Dialog>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button asChild>
             <div className="flex items-center gap-1" style={{cursor:'pointer',width:'100%'}}>
@@ -535,27 +535,24 @@ const ChangeMedicine = () => {
           <div className="space-y-3 py-2" dir={'rtl'}>
             <div className="space-y-1">
               <Label htmlFor="injection-type">الدواء الجديد</Label>
-              <Select value={newMedicine} onValueChange={setNewMedicine} dir={'rtl'}>
-                <SelectTrigger id="injection-type">
-                  <SelectValue placeholder="حدد الدواء المعطى" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {injectionTypes.map((injection) => (
-                        <SelectItem key={injection.id} value={injection.id}>
-                          {injection.name}
-                        </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+                <Combobox
+                    value={newMedicine}
+                    onChange={setNewMedicine}
+                    options={allDrugs.map((drug) => ({
+                      label: drug.name,
+                      value: drug._id,
+                    }))}
+                    placeholder="ابحث واختر الدواء"
+                    dir="rtl"
+                />
+
             </div>
             {/* Number Of Inject */}
             <div className="space-y-1">
               <Label htmlFor="injectNumber">ترتيب الدواء</Label>
               <Input
                   id="injectNumber"
-                  placeholder="الرجاء إدخال اسم المرض المصابين به"
+                  placeholder="الرجاء إدخال ترتيب الدواء"
                   value={medicineNumber}
                   onChange={(e) => setMedicineNumber(e.target.value)}
               />
@@ -575,37 +572,105 @@ const ChangeMedicine = () => {
 }
 
 
-const sheepMedicalHistory = [
-  { id: 'm1', sheepId: '1001', type: 'routine-injection', date: '2024-01-15', description: 'Semi-annual routine injection', notes: 'No adverse reactions' },
-  { id: 'm2', sheepId: '1001', type: 'vitamin', date: '2024-02-20', vitaminId: 'v1', vitaminName: 'Vitamin B Complex', notes: 'Administered during weekly check' },
-  { id: 'm3', sheepId: '1001', type: 'disease', date: '2024-03-05', diseaseId: 'd1', diseaseName: 'Mild fever', notes: 'Observed lethargy, treated immediately' },
-  { id: 'm4', sheepId: '1001', type: 'medication', date: '2024-03-05', medicineId: 'med1', medicineName: 'Antibiotics', notes: 'For fever treatment' },
-];
 
 const Medical = () => {
   const [activeTab, setActiveTab] = useState('injections');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [givenInjections,setGivenInjections] = useState([]);
+  const [upcomingInjections,setUpcomingInjections] = useState([])
+  const [sickSheep, setSickSheep] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [allDrugs,setAllDrugs] = useState([])
+  const [allSheep,setAllSheep] = useState([]);
 
 
-  // Filter injections based on search and status
-  const filteredInjections = injectionsData.filter(injection => {
-    if (filterStatus !== 'all' && injection.status !== filterStatus) return false;
-    if (searchQuery) {
-      return injection.sheepId.includes(searchQuery);
+  useEffect(() => {
+    const fetchSheep = async () => {
+      try {
+        const response = await fetch('http://localhost:3030/api/sheep');
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'فشل في جلب البيانات');
+        }
+
+        console.log('تم جلب النعاج بنجاح:', result);
+
+        setAllSheep(result); // full list
+      } catch (error: any) {
+        console.error('فشل في جلب النعاج:', error);
+      }
+    };
+    fetchSheep();
+  }, []);
+
+
+  console.log("setUpcomingInjections" , upcomingInjections)
+  console.log("setGivenInjections" , givenInjections);
+  console.log("sickSheep" , sickSheep);
+
+
+  useEffect(() => {
+    if(activeTab === 'sicks') {
+      const fetchDrug = async () => {
+        try {
+          const response = await fetch('http://localhost:3030/api/supplement/drug');
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error || 'فشل في جلب البيانات');
+          }
+
+          console.log('تم جلب الأدوية بنجاح:', result);
+
+          setAllDrugs(result);
+
+        } catch (error: any) {
+          console.error('فشل في جلب الأدوية:', error);
+        }
+      };
+      const fetchLatestPatients = async () => {
+        try {
+          const res = await fetch('http://localhost:3030/api/sheep/latest-patient-cases');
+          const data = await res.json();
+          setSickSheep(data);
+        } catch (err) {
+          console.error('Failed to fetch latest patient cases', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchDrug();
+      fetchLatestPatients();
     }
-    return true;
-  });
-
-  // Filter treatments based on search and status
-  const filteredTreatments = treatmentsData.filter(treatment => {
-    if (filterStatus !== 'all' && treatment.status !== filterStatus) return false;
-    if (searchQuery) {
-      return treatment.sheepId.includes(searchQuery);
+    else if(activeTab === 'injections') {
+      const fetchGivenInjections = async () => {
+        try {
+          const res = await fetch('http://localhost:3030/api/injections');
+          const data = await res.json();
+          setGivenInjections(data); // Save to state
+        } catch (err) {
+          console.error('Error loading given injections:', err);
+        }
+      };
+      const fetchCommingInjections = async () => {
+        try {
+          const res = await fetch('http://localhost:3030/api/tasks/injections-tasks');
+          const data = await res.json();
+          setUpcomingInjections(data); // Save to state
+        } catch (err) {
+          console.error('Error loading upcoming injections:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchGivenInjections();
+      fetchCommingInjections();
     }
-    return true;
-  });
+  }, [activeTab]);
 
+  if (loading) return <div>Loading...</div>;
 
 
   return (
@@ -615,7 +680,7 @@ const Medical = () => {
         <div className="flex items-center gap-2">
           {
             activeTab === 'injections' ?
-            <NewInjectionModal /> : <NewTreatmentModal />
+            <NewInjectionModal allSheep={allSheep} /> : <NewTreatmentModal allSheep={allSheep} allDrugs={allDrugs} />
           }
 
         </div>
@@ -635,6 +700,7 @@ const Medical = () => {
                 <Input placeholder="Search by sheep ID..." className="pl-8" value={searchQuery}
                        onChange={(e) => setSearchQuery(e.target.value)}/>
               </div>
+
             </div>
         }
 
@@ -649,27 +715,30 @@ const Medical = () => {
               <CardDescription style={{fontWeight:'bold'}}>سجل الطعومات القادمة للطعومات التي يجب اعطاؤها</CardDescription>
             </CardHeader>
             <CardContent>
-              {sheepMedicalHistory.length > 0 ? (
+              {upcomingInjections.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead style={{textAlign:"start"}}>التاريخ</TableHead>
-                        <TableHead style={{textAlign:"start"}}>نوع الطعم</TableHead>
-                        <TableHead style={{textAlign:"start"}}>الجرعة</TableHead>
+                        <TableHead style={{textAlign:"start"}}>الطعم</TableHead>
+                        <TableHead style={{textAlign:"start"}}>الملاحظات</TableHead>
                         <TableHead style={{textAlign:"start"}}>قائمة الاغنام</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sheepMedicalHistory.map((event) => (
-                          <TableRow key={event.id}>
-                            <TableCell>{event.date}</TableCell>
+                      {upcomingInjections.map((event) => (
+                          <TableRow key={event._id}>
                             <TableCell>
-                              اسفنجة
+                              {event.dueDate ? new Date(event.dueDate).toLocaleDateString('en-CA') : "غير متوفر"}
                             </TableCell>
-                            <TableCell>
-                              جرعة ثانية
+                            <TableCell>{event.title}</TableCell>
+                            <TableCell>{event.notes || 'لا يوجد ملاحظات'}</TableCell>
+                            <TableCell
+                                style={{ minWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                title={event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}>
+                              {event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}
                             </TableCell>
-                            <TableCell style={{maxWidth:'200px',overflow:'hidden',textOverflow:'ellipsis'}} title={'1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45,1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45,1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45'}>1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45,1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45,1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45</TableCell>
+
                           </TableRow>
                       ))}
                     </TableBody>
@@ -692,7 +761,7 @@ const Medical = () => {
               <CardDescription style={{fontWeight:'bold'}}>سجل الطعومات الكامل للطعومات التي تم اعطاؤها</CardDescription>
             </CardHeader>
             <CardContent>
-              {sheepMedicalHistory.length > 0 ? (
+              {givenInjections.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -704,17 +773,23 @@ const Medical = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sheepMedicalHistory.map((event) => (
-                          <TableRow key={event.id}>
-                            <TableCell>{event.date}</TableCell>
+                      {givenInjections?.map((event) => (
+                          <TableRow key={event._id}>
                             <TableCell>
-                              تسمم غذائي
+                              {event.injectDate ? new Date(event.injectDate).toLocaleDateString('en-CA') : "غير متوفر"}
                             </TableCell>
                             <TableCell>
-                              جرعة اولى
+                              {event?.injectionType?.name}
                             </TableCell>
-                            <TableCell style={{maxWidth:'200px',overflow:'hidden',textOverflow:'ellipsis'}}>تم العلاج من المرة الاولى</TableCell>
-                            <TableCell style={{maxWidth:'300px',overflow:'hidden',textOverflow:'ellipsis'}} title={'1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45,1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45,1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45'}>1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45,1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45,1,2,3,4,5,6,7,78,5,4,21,23,56,33,2,45</TableCell>
+                            <TableCell>
+                              {event.numOfInject === 1 ? 'جرعة اولى' : "جرعة ثانية"}
+                            </TableCell>
+                            <TableCell>{event.notes}</TableCell>
+                            <TableCell
+                                style={{ minWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                title={event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}>
+                                {event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}
+                            </TableCell>
                           </TableRow>
                       ))}
                     </TableBody>
@@ -729,12 +804,14 @@ const Medical = () => {
           </Card>
         </TabsContent>
         <TabsContent value="sicks">
-          {filteredTreatments.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredTreatments.map((treatment) => (
-                <TreatmentCard key={treatment.id} treatment={treatment} />
-              ))}
-            </div>
+          {sickSheep.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sickSheep
+                    .filter(sheep => sheep?.sheepNumber?.toString().includes(searchQuery))
+                    .map((treatment) => (
+                        <TreatmentCard key={treatment._id} treatment={treatment} allDrugs={allDrugs} />
+                    ))}
+              </div>
           ) : (
             <div className="py-12 text-center">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
@@ -744,9 +821,7 @@ const Medical = () => {
               <p className="text-muted-foreground mt-2">
                 No treatments match your current search or filter criteria.
               </p>
-              <Button
-                variant="outline"
-                className="mt-4"
+              <Button variant="outline" className="mt-4"
                 onClick={() => {
                   setSearchQuery('');
                   setFilterStatus('all');
@@ -757,7 +832,6 @@ const Medical = () => {
             </div>
           )}
         </TabsContent>
-        
       </Tabs>
 
     </div>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -119,26 +118,26 @@ const StockManagement = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Stock Management</h1>
+          <h1 className="text-3xl font-bold">إدارة المخزون</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your sheep and cycle inventory
+            إدارة مخزون الأغنام والدورة لديك
           </p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
           <Plus size={16} />
-          <span>Add Stock Item</span>
+          <span>اضافة منتجات للمخزون</span>
         </Button>
       </div>
 
       <Tabs defaultValue="sheep" className="mb-6" onValueChange={(value) => setStockType(value as 'sheep' | 'cycle')}>
         <TabsList className="grid grid-cols-2 mb-4">
-          <TabsTrigger value="sheep">Sheep Stock</TabsTrigger>
-          <TabsTrigger value="cycle">Cycle Stock</TabsTrigger>
+          <TabsTrigger value="sheep">مخزون الأغنام</TabsTrigger>
+          <TabsTrigger value="cycle">مخزون الدورات</TabsTrigger>
         </TabsList>
         
         <TabsContent value="sheep">
           {stockData.sheep.map((category) => (
-            <Card key={category.category} className="mb-6">
+            <Card key={category.category} className="mb-6" dir={'rtl'}>
               <CardHeader className="pb-3">
                 <CardTitle>{category.category}</CardTitle>
               </CardHeader>
@@ -149,7 +148,7 @@ const StockManagement = () => {
           ))}
         </TabsContent>
         
-        <TabsContent value="cycle">
+        <TabsContent value="cycle" dir={'rtl'}>
           {stockData.cycle.map((category) => (
             <Card key={category.category} className="mb-6">
               <CardHeader className="pb-3">

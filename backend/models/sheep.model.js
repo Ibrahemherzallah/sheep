@@ -11,12 +11,12 @@ const SheepSchema = new mongoose.Schema({
     sheepGender: {
         type: String,
         required: true,
-        enum: ['ذكر','انثى']
+        enum: ['ذكر','أنثى']
     },
     source: {
         type: String,
         required: true,
-        enum: ['انتاج','شراء']
+        enum: ['إنتاج المزرعة','شراء']
     },
     isPregnant: {
         type: Boolean,
@@ -35,6 +35,11 @@ const SheepSchema = new mongoose.Schema({
         required: true,
     },
     status: {
+        type: String,
+        required: false,
+        default: '',
+    },
+    medicalStatus: {
         type: String,
         required: true,
     },

@@ -20,3 +20,47 @@ export const getDashboardTasks = async (req, res) => {
 
     res.json({ currentTasks, upcomingTasks });
 };
+
+
+export const getInjectionTasks = async (req, res) => {
+    try {
+        const today = new Date();
+        const tasks = await Task.find({
+            type: 'injection',
+            dueDate: { $gt: today },
+            completed: false,
+        })
+            .populate('sheepIds')
+            .sort({ dueDate: 1 }); // Soonest first
+
+        res.status(200).json(tasks);
+    } catch (err) {
+        console.error('Error fetching upcoming injections:', err);
+        res.status(500).json({ error: 'فشل في جلب المهام' });
+    }
+}
+
+
+export const getNextInjectionTaskForSheep = async (req, res) => {
+    try {
+        const {sheepId} = req.params;
+
+        const task = await Task.findOne({
+            type: 'injection',
+            sheepIds: sheepId,
+            completed: false,
+            dueDate: {$gte: new Date()},
+        })
+            .sort({dueDate: 1}) // soonest upcoming
+            .populate('sheepIds');
+
+        if (!task) {
+            return res.status(404).json({message: 'No upcoming injection task found.'});
+        }
+
+        res.json(task);
+    } catch (error) {
+        console.error('Error fetching next injection task:', error);
+        res.status(500).json({error: 'Failed to fetch task.'});
+    }
+}

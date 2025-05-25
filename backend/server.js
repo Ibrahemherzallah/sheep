@@ -10,6 +10,7 @@ import pregnancyRoutes from './routes/pregnancy.routes.js';
 import patientRoute from './routes/patient.routes.js';
 import supplementRoute from './routes/supplies.routes.js';
 import cycleRoutes from './routes/cycle.routes.js';
+import injectionsRoutes from './routes/injection.routes.js';
 import './scheduler/patientStatusChecker.js';
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/pregnancies', pregnancyRoutes);
 app.use('/api/patient', patientRoute);
 app.use('/api/supplement', supplementRoute);
 app.use('/api/cycle', cycleRoutes);
+app.use('/api/injections', injectionsRoutes);
 
 
 

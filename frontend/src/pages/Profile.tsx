@@ -1,23 +1,8 @@
-
 import { useState } from "react";
-import { 
-  Card, 
-  CardHeader,
-  CardTitle, 
-  CardDescription, 
-  CardContent, 
-  CardFooter 
-} from "@/components/ui/card";
+import {Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -97,29 +82,23 @@ export default function Profile() {
 
   return (
     <div className="container py-10">
-      <h1 className="text-3xl font-bold mb-8">My Profile</h1>
+      <h1 className="text-3xl font-bold mb-8">حسابي</h1>
       
-      <div className="space-y-8">
+      <div className="space-y-8" dir={'rtl'}>
         {/* Profile Information Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
+            <CardTitle>معلومات الحساب</CardTitle>
             <CardDescription>
-              Update your personal details
+              عدل معلوماتك الشخصية
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...profileForm}>
-              <form 
-                onSubmit={profileForm.handleSubmit(onProfileSubmit)} 
-                className="space-y-6"
-              >
-                <FormField
-                  control={profileForm.control}
-                  name="name"
-                  render={({ field }) => (
+              <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
+                <FormField control={profileForm.control} name="name" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <FormLabel>الإسم</FormLabel>
                       <FormControl>
                         <Input placeholder="Your name" {...field} />
                       </FormControl>
@@ -132,7 +111,7 @@ export default function Profile() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>الإيميل</FormLabel>
                       <FormControl>
                         <Input placeholder="Your email" {...field} />
                       </FormControl>
@@ -151,9 +130,9 @@ export default function Profile() {
         {/* Password Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Change Password</CardTitle>
+            <CardTitle>تغيير كلمة المرور</CardTitle>
             <CardDescription>
-              Update your password
+              عدل كلمة المرور الخاصة بك
             </CardDescription>
           </CardHeader>
           <CardContent>

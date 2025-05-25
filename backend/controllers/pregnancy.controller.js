@@ -12,7 +12,7 @@ const addDays = (date, days) => {
 
 export const createPregnancies = async (req, res) => {
     try {
-        const { sheepIds, pregnantDate, expectedBornDate } = req.body;
+        const { sheepIds, pregnantDate, expectedBornDate, notes } = req.body;
         const createdPregnancies = [];
         const createdTasks = [];
 
@@ -36,7 +36,8 @@ export const createPregnancies = async (req, res) => {
                 sheepId,
                 pregnantDate,
                 expectedBornDate,
-                order
+                order,
+                notes
             });
 
             // Update sheep with new pregnancy
@@ -57,6 +58,17 @@ export const createPregnancies = async (req, res) => {
 
         });
         createdTasks.push(task);
+        const pasteurellaDate = new Date(pregnantDate);
+        pasteurellaDate.setDate(pasteurellaDate.getDate() + 90);
+
+        await Task.create({
+            title: 'إعطاء لقاح الباستيريلا وال فيرست ايد',
+            dueDate: pasteurellaDate,
+            type: 'injection',
+            sheepIds
+        });
+
+
         res.status(201).json({
             message: "Pregnancies and expected birth tasks created.",
             data: { pregnancies: createdPregnancies, tasks: createdTasks }
@@ -91,6 +103,34 @@ export const getPregnancyById = async (req, res) => {
 
 };
 
+export const updateMilkInfo = async (req, res) => {
+    try {
+        const { sheepId, milkAmount, milkProduceDate, milkStopDate, notes } = req.body;
+
+
+        if (!sheepId) {
+            return res.status(400).json({ error: 'sheepId is required' });
+        }
+
+        const latestPregnancy = await Pregnancy.findOne({ sheepId }).sort({ createdAt: -1 });
+
+        if (!latestPregnancy) {
+            return res.status(404).json({ error: 'No pregnancy record found for this sheep' });
+        }
+
+        latestPregnancy.milkAmount = milkAmount;
+        latestPregnancy.startMilkDate = milkProduceDate;
+        latestPregnancy.endMilkDate = milkStopDate;
+        latestPregnancy.milkNotes = notes;
+
+        await latestPregnancy.save();
+
+        res.status(200).json({ message: 'Milk info updated successfully', data: latestPregnancy });
+    } catch (error) {
+        console.error('Error updating milk info:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
 
 
 export const updateOnePregnancy = async (req, res) => {
@@ -105,8 +145,13 @@ export const updateOnePregnancy = async (req, res) => {
 
 
 export const updateLastPregnanciesAfterBirth = async (req, res) => {
+    console.log("TESTTTT")
     try {
-        const { bornDate, births } = req.body;
+        const { bornDate, births, notes } = req.body;
+        console.log('bornDate',bornDate);
+        console.log('bornDate',births);
+        console.log('bornDate',notes);
+
         const updatedPregnancies = [];
         const allBornedSheepIds = [];
 
@@ -128,7 +173,8 @@ export const updateLastPregnanciesAfterBirth = async (req, res) => {
                 {
                     bornDate,
                     numberOfMaleLamb,
-                    numberOfFemaleLamb
+                    numberOfFemaleLamb,
+                    notes
                 },
                 { new: true }
             );

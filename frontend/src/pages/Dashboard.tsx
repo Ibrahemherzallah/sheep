@@ -1,27 +1,6 @@
-
 import { useState } from 'react';
-import { 
-  Activity, 
-  Baby, 
-  Calendar, 
-  Ear, 
-  Info, 
-  Pill, 
-  Syringe, 
-  Truck 
-} from 'lucide-react';
-import { 
-  Button, 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui';
+import {Activity, Baby, Calendar, Ear, Info, Pill, Syringe, Truck} from 'lucide-react';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger,} from '@/components/ui';
 import { Link } from 'react-router-dom';
 
 // Mock data - in a real application this would come from an API
