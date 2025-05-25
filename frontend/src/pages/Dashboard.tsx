@@ -16,17 +16,17 @@ const mockStats = {
 };
 
 const recentEvents = [
-  { id: 1, type: 'birth', sheepId: '1234', date: '2025-05-03', details: 'Sheep #1234 gave birth to 2 lambs' },
-  { id: 2, type: 'medication', sheepId: '2156', date: '2025-05-02', details: 'Sheep #2156 treated for infection' },
-  { id: 3, type: 'injection', sheepIds: ['1001', '1002', '1003'], date: '2025-05-01', details: 'Routine injection given to 3 sheep' },
-  { id: 4, type: 'cycle', cycleId: 'C-2023-04', date: '2025-04-30', details: 'New cycle C-2023-04 started with 15 sheep' },
+  { id: 1, type: 'birth', date: '2025-05-07', details: '12 نعجة يتوقع ان تلد' },
+  { id: 2, type: 'injection', date: '2025-05-06', details: '8 نعجات تحتاج جرعة ثانية للتسمم الغذائي' },
+  { id: 3, type: 'injection', date: '2025-05-10', details: '5 نعجات تحتاج للهرمون' },
+  { id: 4, type: 'cycle', date: '2025-05-15', details: '20 نعجة تحتاج الاسفنجة' },
 ];
 
 const upcomingTasks = [
-  { id: 1, type: 'birth', date: '2025-05-07', details: 'Expected birth from Sheep #1567' },
-  { id: 2, type: 'injection', date: '2025-05-06', details: '8 sheep due for routine injections' },
-  { id: 3, type: 'injection', date: '2025-05-10', details: 'Sheep #2156 post-birth injection due' },
-  { id: 4, type: 'cycle', date: '2025-05-15', details: 'Cycle C-2023-03 due to end' },
+  { id: 1, type: 'birth', date: '2025-05-07', details: '12 نعجة يتوقع ان تلد' },
+  { id: 2, type: 'injection', date: '2025-05-06', details: '8 نعجات تحتاج جرعة ثانية للتسمم الغذائي' },
+  { id: 3, type: 'injection', date: '2025-05-10', details: '5 نعجات تحتاج للهرمون' },
+  { id: 4, type: 'cycle', date: '2025-05-15', details: '20 نعجة تحتاج الاسفنجة' },
 ];
 
 const getEventIcon = (type: string) => {
@@ -39,16 +39,10 @@ const getEventIcon = (type: string) => {
   }
 };
 
-const StatCard = ({ 
-  title, 
-  value, 
-  description, 
-  icon: Icon, 
-  trend,
-}: { 
-  title: string; 
-  value: string | number; 
-  description?: string; 
+const StatCard = ({title, value, description, icon: Icon, trend,}: {
+  title: string;
+  value: string | number;
+  description?: string;
   icon: React.ElementType;
   trend?: { value: number; label: string; positive?: boolean };
 }) => (
@@ -79,48 +73,40 @@ const Dashboard = () => {
   return (
     <div className="flex-1 space-y-6 p-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <Button asChild>
-            <Link to="/sheep/new" className="flex items-center gap-1">
-              <span>Add Sheep</span>
-            </Link>
-          </Button>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight">الرئيسية</h1>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="medical">Medical</TabsTrigger>
-          <TabsTrigger value="breeding">Breeding</TabsTrigger>
-          <TabsTrigger value="cycles">Cycles</TabsTrigger>
+          <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
+          <TabsTrigger value="medical">الطب</TabsTrigger>
+          <TabsTrigger value="cycles">الدورات</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard 
-              title="Total Sheep" 
+              title="عدد الاغنام الكلي"
               value={mockStats.totalSheep} 
               icon={Ear}
-              trend={{ value: 5, label: "since last month", positive: true }}
+              trend={{ value: 5, label: "من الشهر الفائت", positive: true }}
             />
             <StatCard 
-              title="Pregnant Sheep" 
+              title="الاغنام الحوامل"
               value={mockStats.pregnantSheep}
               description={`${mockStats.upcomingBirths} births in next 7 days`}
               icon={Baby}
             />
             <StatCard 
-              title="Active Cycles" 
+              title="الدورات النشطة"
               value={mockStats.activeCycles} 
               description={`${mockStats.totalCycles} total cycles`}
               icon={Calendar}
             />
             <StatCard 
-              title="Health Status" 
-              value={`${mockStats.healthySheep} healthy`} 
-              description={`${mockStats.sickSheep} sheep need attention`}
+              title="الحالات الصحية"
+              value={`${mockStats.healthySheep}نعجة سليمة `}
+              description={`${mockStats.sickSheep} مريضات`}
               icon={Activity}
             />
           </div>
@@ -129,85 +115,56 @@ const Dashboard = () => {
         <TabsContent value="medical">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard 
-              title="Pending Injections" 
+              title="الحقن المنتظرة"
               value={mockStats.pendingInjections} 
-              description="Sheep requiring injections"
+              description="نعجة تحتاج حقن"
               icon={Syringe}
             />
             <StatCard 
-              title="Sick Sheep" 
+              title="الاغنام المريضة"
               value={mockStats.sickSheep}
-              description="Currently under treatment"
+              description="حاليا تحت العلاج"
               icon={Activity}
             />
             <StatCard 
-              title="Medications Used" 
+              title="الأدوية المستخدمة"
               value="12"
-              description="Different medications"
+              description="نوع دواء مختلف"
               icon={Pill}
             />
             <StatCard 
-              title="Recent Recoveries" 
+              title="تم علاجها مؤخرا"
               value="8" 
-              description="In the past 14 days"
+              description="في اخر 14 يوم"
               icon={Activity}
             />
           </div>
         </TabsContent>
-        
-        <TabsContent value="breeding">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard 
-              title="Pregnant Sheep" 
-              value={mockStats.pregnantSheep}
-              description="Currently pregnant"
-              icon={Baby}
-            />
-            <StatCard 
-              title="Upcoming Births" 
-              value={mockStats.upcomingBirths}
-              description="Within next 7 days"
-              icon={Calendar}
-            />
-            <StatCard 
-              title="Recent Births" 
-              value="5"
-              description="In the past 30 days"
-              icon={Baby}
-            />
-            <StatCard 
-              title="Total Offspring" 
-              value="42"
-              description="In this year"
-              icon={Truck}
-            />
-          </div>
-        </TabsContent>
-        
+
         <TabsContent value="cycles">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard 
-              title="Active Cycles" 
+              title="الدورات النشطة"
               value={mockStats.activeCycles}
-              description={`Out of ${mockStats.totalCycles} total cycles`}
+              description={` من أصل${mockStats.totalCycles} دورات اجمالية`}
               icon={Calendar}
             />
             <StatCard 
-              title="Sheep in Cycles" 
+              title="نعجة في الدورات"
               value="35"
-              description="Currently in active cycles"
+              description="حاليا في دورات نشطة"
               icon={Ear}
             />
             <StatCard 
-              title="Weekly Feed Avg" 
+              title="معدل الغذاء الاسبوعي"
               value="120 kg"
-              description="Feed consumed weekly"
+              description="غذاء يستهلك اسبوعيا"
               icon={Truck}
             />
             <StatCard 
-              title="Weekly Milk Avg" 
+              title="معدل الحليب الأسبوعي"
               value="85 L"
-              description="Milk produced weekly"
+              description="الحليب المنتج اسبوعيا"
               icon={Truck}
             />
           </div>
@@ -217,8 +174,8 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle className="text-lg">Recent Events</CardTitle>
-            <CardDescription>The last activities recorded in the system</CardDescription>
+            <CardTitle className="text-lg">المهام الحالية</CardTitle>
+            <CardDescription>المهام الحالية يجب التركيز عليها</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-5">
@@ -231,19 +188,20 @@ const Dashboard = () => {
                     <div className="font-medium">{event.details}</div>
                     <div className="text-sm text-muted-foreground">{event.date}</div>
                   </div>
+                  <Button variant="ghost" size="sm">رؤية القائمة</Button>
                 </div>
               ))}
             </div>
             <Button variant="outline" size="sm" className="mt-4 w-full">
-              View All Events
+              رؤوية جميع المهام
             </Button>
           </CardContent>
         </Card>
         
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle className="text-lg">Upcoming Tasks</CardTitle>
-            <CardDescription>Tasks that require your attention soon</CardDescription>
+            <CardTitle className="text-lg">المهام القادمة</CardTitle>
+            <CardDescription>المهام القريبة تتطلب اهتمامك وتتبعك</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-5">
@@ -254,14 +212,14 @@ const Dashboard = () => {
                   </div>
                   <div className="flex-grow">
                     <div className="font-medium">{task.details}</div>
-                    <div className="text-sm text-muted-foreground">Due on {task.date}</div>
+                    <div className="text-sm text-muted-foreground">في تاريخ {task.date}</div>
                   </div>
-                  <Button variant="ghost" size="sm">Complete</Button>
+                  <Button variant="ghost" size="sm">رؤية القائمة</Button>
                 </div>
               ))}
             </div>
             <Button variant="outline" size="sm" className="mt-4 w-full">
-              View All Tasks
+              رؤوية جميع المهام
             </Button>
           </CardContent>
         </Card>

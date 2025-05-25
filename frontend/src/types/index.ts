@@ -48,6 +48,23 @@ export interface Vitamin {
   description?: string;
 }
 
+// Stock Types
+export interface StockItem {
+  id: string;
+  itemType: 'medicine' | 'injection' | 'vitamin' | 'feed' | 'straw';
+  itemId?: string; // Reference to medicine/injection/vitamin ID if applicable
+  name: string;
+  quantity: number;
+  unit: string;
+  lastUpdated: Date;
+  notes?: string;
+}
+
+export interface StockCategory {
+  category: string;
+  items: StockItem[];
+}
+
 export type MedicalEventType = 'routine-injection' | 'post-birth-injection' | 'disease' | 'medication' | 'vitamin' | 'recovered';
 
 export interface MedicalEvent {
@@ -84,7 +101,7 @@ export interface Cycle {
   sheepIds: string[];
   initialMaleCount: number;
   initialFemaleCount: number;
-  status: 'active' | 'completed';
+  status: string;
   notes?: string;
 }
 
@@ -134,15 +151,15 @@ export interface Notification {
 }
 
 // Stock Movement
-export type StockMovementType = 'added' | 'sold' | 'dead';
+export type StockMovementType = 'added' | 'sold' | 'dead' | 'consumed';
 
 export interface StockMovement {
   id: string;
-  sheepIds: string[];
+  sheepIds?: string[];
+  cycleId?: string;
+  stockItemId: string;
   type: StockMovementType;
   date: Date;
-  count: number;
-  totalWeight?: number;
-  pricePerKilo?: number;
+  quantity: number;
   notes?: string;
 }

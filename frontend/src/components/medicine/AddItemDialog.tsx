@@ -49,7 +49,7 @@ const AddItemDialog = ({ activeTab, onItemAdded }: AddItemDialogProps) => {
   const getAddDialogTitle = () => {
     switch (activeTab) {
       case 'medicines': return 'Add New Medicine';
-      case 'injections': return 'Add New InjectionModel';
+      case 'injections': return 'Add New Injection';
       case 'vitamins': return 'Add New Vitamin';
       case 'diseases': return 'Add New Disease';
       default: return 'Add New Item';

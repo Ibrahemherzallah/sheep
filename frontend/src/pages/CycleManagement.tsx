@@ -1,79 +1,55 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Calendar, 
-  CalendarDays, 
-  Plus, 
-  ChevronRight, 
-  Search,
-  Syringe,
-  Pill
-} from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle,
-  CardDescription 
-} from '@/components/ui/card';
-import { 
-  Table, 
-  TableHeader, 
-  TableBody, 
-  TableHead, 
-  TableRow, 
-  TableCell 
-} from '@/components/ui/table';
+import {Calendar, CalendarDays, Plus, ChevronRight, Search, Syringe, Pill, ChevronLeft} from 'lucide-react';
+import {Card, CardContent, CardHeader, CardTitle, CardDescription} from '@/components/ui/card';
+import {Table, TableHeader, TableBody, TableHead, TableRow, TableCell} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Cycle } from '@/types';
 import { toast } from 'sonner';
+import { toast as hotToast } from '@/hooks/use-toast';
+import {useForm} from "react-hook-form";
+import {Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 // Mock data for cycles
 const mockCycles: Cycle[] = [
   {
     id: "c1",
-    name: "Spring Lambs 2025",
+    name: "دورة شتاء 2025",
     startDate: new Date(2025, 2, 15),
     endDate: undefined,
     sheepIds: ["s1", "s2", "s3", "s4", "s5"],
     initialMaleCount: 3,
     initialFemaleCount: 2,
-    status: "active",
-    notes: "First cycle of the spring season"
+    status: "نشطة",
+    notes: "أول دورة تنشط في هذا الموسم"
   },
   {
     id: "c2",
-    name: "Winter Group 2024",
+    name: "دورة شتاء 2025",
     startDate: new Date(2024, 10, 10),
     endDate: new Date(2025, 3, 15),
     sheepIds: ["s6", "s7", "s8", "s9", "s10", "s11"],
     initialMaleCount: 4,
     initialFemaleCount: 2,
-    status: "completed",
-    notes: "Winter breeding program"
+    status: "منتهية",
+    notes: "أول دورة تنشط في هذا الموسم"
   },
   {
     id: "c3",
-    name: "Summer Cycle 2024",
+    name: "دورة شتاء 2025",
     startDate: new Date(2024, 5, 20),
     endDate: new Date(2024, 9, 30),
     sheepIds: ["s12", "s13", "s14", "s15"],
     initialMaleCount: 2,
     initialFemaleCount: 2,
-    status: "completed",
-    notes: "Summer breeding group"
+    status: "منتهية",
+    notes: "أول دورة تنشط في هذا الموسم"
   }
 ];
 
@@ -92,16 +68,24 @@ const mockInjections = [
   { id: "i4", name: "Anthrax Vaccine", description: "Protects against anthrax" }
 ];
 
+
+interface CycleFormData {cycleName: string ;cycleNumber: number ;maleNum: number ;femaleNum: number ;startDate: string ;notes: string }
+
+
+
+
 const CycleManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [medicineTab, setMedicineTab] = useState('medicines');
-  
   const [selectedCycle, setSelectedCycle] = useState<string>('');
   const [selectedMedicine, setSelectedMedicine] = useState<string>('');
   const [selectedInjection, setSelectedInjection] = useState<string>('');
   const [dosage, setDosage] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+  const [addCycleDialog,setAddCycleDialog] = useState(false);
+  const [useTodayDate,setUseTodayDate] = useState(true);
+
 
   // Filter cycles based on search query and active tab
   const filteredCycles = mockCycles
@@ -111,19 +95,50 @@ const CycleManagement = () => {
     )
     .filter(cycle => {
       if (activeTab === 'all') return true;
-      if (activeTab === 'active') return cycle.status === 'active';
-      if (activeTab === 'completed') return cycle.status === 'completed';
+      if (activeTab === 'نشطة') return cycle.status === 'active';
+      if (activeTab === 'انتهت') return cycle.status === 'completed';
       return true;
     });
 
   // Format date to a readable string
   const formatDate = (date?: Date) => {
-    if (!date) return 'Ongoing';
+    if (!date) return ' مستمر';
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     }).format(date);
+  };
+
+  const formSchema = z.object({
+    cycleName: z.string().min(1, "هذا الحقل مطلوب"),
+    cycleNumber: z.coerce.number().min(1, "رقم الدورة مطلوب"),
+    maleNum: z.coerce.number().min(1, "عدد الذكور مطلوب"),
+    femaleNum: z.coerce.number().min(1, "عدد الإناث مطلوب"),
+    startDate: z.string().min(1, "تاريخ البداية مطلوب"),
+    notes: z.string().optional(),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      cycleName: "",
+      cycleNumber: 0,
+      maleNum: 0,
+      femaleNum: 0,
+      startDate: "",
+      notes: "",
+    },
+  });
+
+
+
+
+
+  const handleSubmitSheep = (data: CycleFormData) => {
+    hotToast({title: "الدورة أضيفت", description: ` تمت اضافة الدورة بنجاح .`});
+    setAddCycleDialog(false);
+    form.reset();
   };
 
   // Handle adding a medicine or injection to a cycle
@@ -144,7 +159,7 @@ const CycleManagement = () => {
     }
 
     // In a real app, this would save to a database
-    toast.success(`${medicineTab === 'medicines' ? 'Medicine' : 'InjectionModel'} added to cycle successfully`);
+    toast.success(`${medicineTab === 'medicines' ? 'Medicine' : 'Injection'} added to cycle successfully`);
     
     // Reset form
     setSelectedMedicine('');
@@ -157,14 +172,12 @@ const CycleManagement = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Cycle Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage and track breeding cycles of your flock
-          </p>
+          <h1 className="text-3xl font-bold">إدارة الدورات</h1>
+
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => {setAddCycleDialog(true);form.reset();}}>
           <Plus size={16} />
-          <span>New Cycle</span>
+          <span>إضافة دورة</span>
         </Button>
       </div>
 
@@ -188,22 +201,22 @@ const CycleManagement = () => {
         </TabsList>
       </Tabs>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="col-span-1 md:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+        <div className="col-span-1 md:col-span-3">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Cycles</CardTitle>
+            <CardHeader className="pb-5" dir={'rtl'}>
+              <CardTitle>الدورات</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
+              <Table dir={'rtl'}>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Cycle Name</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>End Date</TableHead>
-                    <TableHead>Sheep Count</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                  <TableRow >
+                    <TableHead>إسم الدورة</TableHead>
+                    <TableHead>تاريخ البداية</TableHead>
+                    <TableHead>تاريخ النهاية</TableHead>
+                    <TableHead>عدد الاغنام</TableHead>
+                    <TableHead>الحالة</TableHead>
+                    <TableHead>الأحداث</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -216,35 +229,35 @@ const CycleManagement = () => {
                   ) : (
                     filteredCycles.map((cycle) => (
                       <TableRow key={cycle.id}>
-                        <TableCell className="font-medium">{cycle.name}</TableCell>
+                        <TableCell className="font-medium" style={{textAlign:'end'}}>{cycle.name}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar size={16} className="text-muted-foreground" />
+                          <div className="flex items-center gap-2 justify-end" >
+                            <Calendar size={16} className="text-muted-foreground " />
                             {formatDate(cycle.startDate)}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 justify-end">
                             <CalendarDays size={16} className="text-muted-foreground" />
                             {formatDate(cycle.endDate)}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {cycle.initialMaleCount + cycle.initialFemaleCount} total
+                        <TableCell style={{textAlign:'end'}}>
+                          {cycle.initialMaleCount + cycle.initialFemaleCount} الكل
                           <div className="text-xs text-muted-foreground mt-1">
-                            {cycle.initialMaleCount} male, {cycle.initialFemaleCount} female
+                            {cycle.initialMaleCount} ذكور, {cycle.initialFemaleCount} إاناث
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell style={{textAlign:'end'}}>
                           <Badge variant={cycle.status === 'active' ? 'default' : 'secondary'}>
                             {cycle.status === 'active' ? 'Active' : 'Completed'}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell style={{textAlign:'end'}}>
                           <Button variant="ghost" size="sm" asChild>
                             <Link to={`/cycles/${cycle.id}`} className="flex items-center">
-                              View Details
-                              <ChevronRight size={16} className="ml-1" />
+                              رؤية التفاصيل
+                              <ChevronLeft size={16} className="ml-1" />
                             </Link>
                           </Button>
                         </TableCell>
@@ -257,120 +270,116 @@ const CycleManagement = () => {
           </Card>
         </div>
 
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Medical Records</CardTitle>
-              <CardDescription>
-                Add medicines or injections to a cycle
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cycle">Select Cycle</Label>
-                  <Select value={selectedCycle} onValueChange={setSelectedCycle}>
-                    <SelectTrigger id="cycle">
-                      <SelectValue placeholder="Select a cycle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockCycles
-                        .filter(cycle => cycle.status === 'active')
-                        .map((cycle) => (
-                          <SelectItem key={cycle.id} value={cycle.id}>
-                            {cycle.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Tabs defaultValue="medicines" onValueChange={setMedicineTab}>
-                  <TabsList className="grid grid-cols-2">
-                    <TabsTrigger value="medicines" className="flex items-center gap-2">
-                      <Pill size={16} />
-                      <span>Medicines</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="injections" className="flex items-center gap-2">
-                      <Syringe size={16} />
-                      <span>Injections</span>
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="medicines" className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="medicine">Select Medicine</Label>
-                      <Select value={selectedMedicine} onValueChange={setSelectedMedicine}>
-                        <SelectTrigger id="medicine">
-                          <SelectValue placeholder="Select a medicine" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockMedicines.map((medicine) => (
-                            <SelectItem key={medicine.id} value={medicine.id}>
-                              {medicine.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="dosage">Dosage</Label>
-                      <Input 
-                        id="dosage" 
-                        placeholder="e.g., 10ml per sheep" 
-                        value={dosage}
-                        onChange={(e) => setDosage(e.target.value)}
-                      />
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="injections" className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="injection">Select Injection</Label>
-                      <Select value={selectedInjection} onValueChange={setSelectedInjection}>
-                        <SelectTrigger id="injection">
-                          <SelectValue placeholder="Select an injection" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockInjections.map((injection) => (
-                            <SelectItem key={injection.id} value={injection.id}>
-                              {injection.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="dosage">Dosage</Label>
-                      <Input 
-                        id="dosage" 
-                        placeholder="e.g., 2ml per sheep" 
-                        value={dosage}
-                        onChange={(e) => setDosage(e.target.value)}
-                      />
-                    </div>
-                  </TabsContent>
-                </Tabs>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Input 
-                    id="notes" 
-                    placeholder="Additional notes..." 
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </div>
-
-                <Button 
-                  className="w-full"
-                  onClick={handleAddMedication}
-                >
-                  Add to Cycle
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
+      <Dialog open={addCycleDialog} onOpenChange={setAddCycleDialog}>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign: "end"}}>
+            <DialogTitle>إضافة دورة جديدة</DialogTitle>
+            <DialogDescription>
+              أضف دورة جديدة للمزرعة
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...form} >
+            <form onSubmit={form.handleSubmit(handleSubmitSheep)} className="space-y-4"  dir={'rtl'}>
+              <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <FormField control={form.control} name="cycleName"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>اسم الدورة</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال اسم الدورة الجديدة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+
+                  <FormField control={form.control} name="cycleNumber"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>رقم الدورة</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال رقم الدورة الجديدة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+
+                </div>
+
+
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <FormField control={form.control} name="femaleNum"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>عدد الإناث</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال عدد الإناث'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+
+                  <FormField control={form.control} name="maleNum"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>عدد الذكور</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال عدد الذكور'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+
+                </div>
+
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                    <div className="items-center space-x-2 space-y-5">
+                      <Checkbox id={`sheep-patient`}  checked={useTodayDate} onCheckedChange={(e) => setUseTodayDate(!useTodayDate)}/>
+                      &nbsp;
+                      <Label htmlFor={`sheep-patient`} className="flex-grow cursor-pointer">
+                        استخدام تاريخ اليوم ؟
+                      </Label>
+                      {
+                          !useTodayDate && (
+                              <FormField control={form.control} name="startDate" render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>تاريخ بدية الدورة</FormLabel>
+                                    <FormControl>
+                                      <Input type="date" {...field} dir={'rtl'}/>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                              )}
+                              />
+                          )
+                      }
+                    </div>
+
+                </div>
+                <FormField control={form.control} name="notes" render={({ field }) => (
+                    <FormItem >
+                      <FormLabel>الملاحظات</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder=" أي ملاحظات اضافية ..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}/>
+              </div>
+
+              <DialogFooter>
+                <Button type="submit">
+                  إضافة النعجة
+                </Button>
+
+                <Button type="button" variant="outline" onClick={() => {setAddCycleDialog(false);form.reset()}}>
+                  الغاء
+                </Button>
+
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
