@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import Patient from '../models/patient.model.js';
 import Sheep from '../models/sheep.model.js';
+import Task from "../models/task.model.js";
 
 // Runs daily at midnight
 cron.schedule('0 0 * * *', async () => {
@@ -20,7 +21,7 @@ cron.schedule('0 0 * * *', async () => {
             // Only update if still marked as patient
             if (sheep && sheep.isPatient === true) {
                 sheep.isPatient = false;
-                sheep.status = 'سليم';
+                sheep.medicalStatus = 'سليمة';
                 await sheep.save();
                 console.log(`✅ Sheep ${sheep.sheepNumber} marked as سليم`);
             }
@@ -28,5 +29,20 @@ cron.schedule('0 0 * * *', async () => {
 
     } catch (error) {
         console.error('❌ Error in patient status checker:', error);
+    }
+});
+
+
+// Task cleaner — daily at 1 AM
+cron.schedule('0 1 * * *', async () => {
+    console.log('🧹 Running task cleanup...');
+
+    try {
+        const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+        const result = await Task.deleteMany({ dueDate: { $lte: tenDaysAgo } });
+
+        console.log(`🗑️ ${result.deletedCount} old tasks deleted.`);
+    } catch (error) {
+        console.error('❌ Error during task cleanup:', error);
     }
 });

@@ -59,14 +59,12 @@ export const deleteVitamin = async (req, res) => {
 
 export const createDrugType = async (req, res) => {
     try {
-        const { name, patientTakeFor,quantity,unit, notes } = req.body;
-
         const existing = await DrugType.findOne({ name });
         if (existing) {
             return res.status(400).json({ error: "هذا الدواء موجود" });
         }
 
-        const drugType = new DrugType({ name, patientTakeFor,quantity,unit, notes });
+        const drugType = new DrugType({ name, patientTakeFor, notes });
         await drugType.save();
 
         res.status(201).json({ message: "Drug type created", data: drugType });

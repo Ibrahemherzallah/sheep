@@ -11,14 +11,6 @@ const drugTypeSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    quantity: {
-        type: Number,
-        required: true,
-    },
-    unit: {
-        type: String,
-        required: true,
-    },
     notes: {
         type:String,
         required: false
