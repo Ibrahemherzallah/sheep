@@ -12,13 +12,18 @@ const taskSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Sheep'
     }],
+    cycleId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Cycle',
+        required: false,
+    },
     dueDate: {
         type: Date,
         required: true
     },
     type: {
         type: String,
-        enum: ['injection', 'milk', 'pregnancy-check', 'stock-alert', 'born'],
+        enum: ['injection', 'milk', 'pregnancy-check', 'stock-alert', 'born', 'end-cycle'],
         required: true
     },
     completed: {

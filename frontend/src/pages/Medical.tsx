@@ -51,7 +51,7 @@ const TreatmentCard = ({ treatment,allDrugs }: { treatment: any;allDrugs: any })
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">الدواء :</span>
                 <span className="font-medium">
-                  {treatment.latestPatient.drugs?.[0]?.drug?.name || 'غير متوفر'}
+                  {treatment.latestPatient.drugs?.[treatment.latestPatient.drugs.length - 1]?.drug.name || 'غير متوفر'}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
@@ -79,7 +79,7 @@ const TreatmentCard = ({ treatment,allDrugs }: { treatment: any;allDrugs: any })
   );
 };
 
-// Treatment Modal Component
+// Injection Modal Component
 const NewInjectionModal = ({allSheep}) => {
   const [selectedSheep, setSelectedSheep] = useState<string[]>([]);
   const [selectedInjection, setSelectedInjection] = useState("");
@@ -285,6 +285,7 @@ const NewInjectionModal = ({allSheep}) => {
   );
 };
 
+// Treatment Modal Component
 const NewTreatmentModal = ({allDrugs,allSheep}) => {
   const [selectedSheep, setSelectedSheep] = useState<string[]>([]);
   const [selectedDrug, setSelectedDrug] = useState("");
@@ -476,6 +477,7 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
   );
 };
 
+// ChangeMedicine Modal Component
 const ChangeMedicine = ({id,allDrugs}) => {
 
   const [newMedicine, setNewMedicine] = useState("");

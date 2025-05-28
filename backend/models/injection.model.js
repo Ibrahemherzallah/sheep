@@ -16,7 +16,7 @@ const injectionSchema = new mongoose.Schema({
     },
     injectDate: {
         type: Date,
-        required: false,
+        required: true,
     },
     notes: {
         type: String,
