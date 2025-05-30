@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import {Activity, Baby, Calendar, Ear, Info, Pill, Syringe, Truck} from 'lucide-react';
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger,} from '@/components/ui';
 import { Link } from 'react-router-dom';
@@ -69,7 +69,87 @@ const StatCard = ({title, value, description, icon: Icon, trend,}: {
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [medicalDashboard, setMedicalDashboard] = useState(null);
+  const [cycleDashboard, setCycleDashboard] = useState(null);
+
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch("http://localhost:3030/api/dashboard/summary", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch dashboard data");
+        }
+
+        const data = await res.json();
+        setDashboardData(data);
+        console.log("dashboardData is :" , dashboardData)
+      } catch (error) {
+        console.error("Error fetching dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    const fetchMedicalDashboard = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:3030/api/dashboard/summary-medical", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch medical dashboard data");
+        }
+
+        const data = await res.json();
+        setMedicalDashboard(data);
+        console.log("medicalDashboard is : ", medicalDashboard);
+      } catch (err) {
+        console.error("Error fetching medical dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    const fetchCycleDashboard = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch("http://localhost:5000/api/cycle-dashboard", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch cycle dashboard");
+        }
+
+        const data = await res.json();
+        setCycleDashboard(data);
+      } catch (err) {
+        console.error("Error fetching cycle dashboard:", err);
+      }
+    };
+    if(activeTab === 'overview')  fetchDashboardData();
+    if(activeTab === 'medical')  fetchMedicalDashboard();
+    if(activeTab === 'cycles')  fetchCycleDashboard();
+  }, [activeTab]);
+  if (loading) return <div className={"text-center mt-4"}>جار تحميل البيانات...</div>;
+  if (!dashboardData) return <div>Something went wrong!</div>;
+
   return (
     <div className="flex-1 space-y-6 p-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -85,56 +165,36 @@ const Dashboard = () => {
         
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard 
-              title="عدد الاغنام الكلي"
-              value={mockStats.totalSheep} 
-              icon={Ear}
-              trend={{ value: 5, label: "من الشهر الفائت", positive: true }}
-            />
-            <StatCard 
-              title="الاغنام الحوامل"
-              value={mockStats.pregnantSheep}
-              description={`${mockStats.upcomingBirths} births in next 7 days`}
-              icon={Baby}
-            />
-            <StatCard 
-              title="الدورات النشطة"
-              value={mockStats.activeCycles} 
-              description={`${mockStats.totalCycles} total cycles`}
-              icon={Calendar}
-            />
-            <StatCard 
-              title="الحالات الصحية"
-              value={`${mockStats.healthySheep}نعجة سليمة `}
-              description={`${mockStats.sickSheep} مريضات`}
-              icon={Activity}
-            />
+            <StatCard title="عدد الاغنام الكلي" value={dashboardData.totalSheep} icon={Ear} trend={{ value: dashboardData.sheepGrowthPercentage, label: "من الشهر الفائت", positive: true }}/>
+            <StatCard title="الاغنام الحوامل" value={dashboardData.pregnantSheep} description={`${dashboardData.upcomingPregnancies} births in next 7 days`} icon={Baby}/>
+            <StatCard title="الدورات النشطة" value={dashboardData.activeCycles} description={`${dashboardData.totalCycles} total cycles`} icon={Calendar}/>
+            <StatCard title="الحالات الصحية" value={`${dashboardData.totalSheep - dashboardData.patientSheep}نعجة سليمة `} description={`${dashboardData.patientSheep} مريضات`} icon={Activity}/>
           </div>
         </TabsContent>
         
         <TabsContent value="medical">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard 
+            <StatCard
               title="الحقن المنتظرة"
-              value={mockStats.pendingInjections} 
+              value={medicalDashboard.upcomingInjections}
               description="نعجة تحتاج حقن"
               icon={Syringe}
             />
-            <StatCard 
+            <StatCard
               title="الاغنام المريضة"
-              value={mockStats.sickSheep}
+              value={medicalDashboard.totalPatientSheep}
               description="حاليا تحت العلاج"
               icon={Activity}
             />
-            <StatCard 
+            <StatCard
               title="الأدوية المستخدمة"
-              value="12"
+              value={medicalDashboard.differentMedicineTypesCount}
               description="نوع دواء مختلف"
               icon={Pill}
             />
-            <StatCard 
+            <StatCard
               title="تم علاجها مؤخرا"
-              value="8" 
+              value={medicalDashboard.nonPatientCount}
               description="في اخر 14 يوم"
               icon={Activity}
             />
