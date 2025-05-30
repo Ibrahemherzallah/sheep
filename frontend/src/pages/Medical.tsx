@@ -672,7 +672,8 @@ const Medical = () => {
     }
   }, [activeTab]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return <div className="p-6 text-center">جارٍ تحميل البيانات...</div>;
 
 
   return (

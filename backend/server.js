@@ -11,6 +11,10 @@ import patientRoute from './routes/patient.routes.js';
 import supplementRoute from './routes/supplies.routes.js';
 import cycleRoutes from './routes/cycle.routes.js';
 import injectionsRoutes from './routes/injection.routes.js';
+import milkRoutes from './routes/milk.routes.js';
+import stockRoutes from './routes/stock.routes.js';
+import protectedRoutes from './routes/protected.routes.js';
+
 import './scheduler/patientStatusChecker.js';
 
 const app = express();
@@ -22,6 +26,7 @@ dotenv.config();
 app.use(express.json());
 
 app.use('/api/auth',authRoutes)
+app.use('/api/protected', protectedRoutes);
 app.use('/api/dashboard',dashboardRoutes)
 app.use('/api/tasks', taskRoutes);
 app.use('/api/sheep', sheepRoutes);
@@ -30,8 +35,8 @@ app.use('/api/patient', patientRoute);
 app.use('/api/supplement', supplementRoute);
 app.use('/api/cycle', cycleRoutes);
 app.use('/api/injections', injectionsRoutes);
-
-
+app.use('/api/milk', milkRoutes);
+app.use('/api/stock', stockRoutes);
 
 app.listen(PORT , ()=> {
     connectMongoDB()

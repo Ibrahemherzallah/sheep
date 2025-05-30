@@ -24,8 +24,8 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const loginSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  email: z.string().nonempty({ message: "يرجى إدخال البريد الإلكتروني" }),
+  password: z.string().min(6, { message: "الكلمة السرية يجب ان تكون اكثر من 6 ارقام" }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -41,34 +41,39 @@ const Login = () => {
       password: '',
     },
   });
-  
+
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      setIsLoading(true);
-      // In a real app, we would authenticate with a backend
-      console.log('Login attempt with:', data);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      const response = await fetch('http://localhost:3030/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid credentials');
+      }
+
+      const result = await response.json();
+      localStorage.setItem('token', result.token); // ✅ Store token
+      localStorage.setItem('user', JSON.stringify(result.user)); // ✅ Store user info
+
       toast({
         title: 'Login Successful',
         description: 'Welcome back to FlockWatch!',
       });
-      
+
       navigate('/');
     } catch (error) {
-      console.error('Login error:', error);
       toast({
-        title: 'Login Failed',
-        description: 'Please check your credentials and try again.',
+        title: 'فشل تسجيل الدخول',
+        description: 'رجاء قم بفحص معلومات الدخول والمحاولة مرة اخرى.',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-farm-green-100/30 p-4">
       <div className="w-full max-w-md">
@@ -87,24 +92,17 @@ const Login = () => {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
+                <FormField control={form.control} name="email" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="you@example.com" {...field} />
+                        <Input placeholder="yourname" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
+                <FormField control={form.control} name="password" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
@@ -115,20 +113,16 @@ const Login = () => {
                   )}
                 />
                 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-farm-green-600 hover:bg-farm-green-700"
-                  disabled={isLoading}
-                >
+                <Button type="submit" className="w-full bg-farm-green-600 hover:bg-farm-green-700" disabled={isLoading}>
                   {isLoading ? 'Signing In...' : 'Sign In'}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
-            <div className="text-sm text-center text-muted-foreground">
-              Demo access: admin@farm.com / password123
-            </div>
+            {/*<div className="text-sm text-center text-muted-foreground">*/}
+            {/*  Demo access: admin@farm.com / password123*/}
+            {/*</div>*/}
           </CardFooter>
         </Card>
       </div>

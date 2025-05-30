@@ -1,26 +1,8 @@
-
-import { useState } from "react";
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent,
-  CardFooter
-} from "@/components/ui/card";
+import {useEffect, useState} from "react";
+import {Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Milk as MilkIcon } from "lucide-react";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -54,24 +36,7 @@ type MilkRecord = {
 
 export default function Milk() {
   const [isLoading, setIsLoading] = useState(false);
-  const [records, setRecords] = useState<MilkRecord[]>([
-    {
-      id: "1",
-      date: "2025-05-10",
-      productionLiters: 150,
-      soldLiters: 140,
-      pricePerLiter: 1.2,
-      revenue: 168,
-    },
-    {
-      id: "2",
-      date: "2025-05-09",
-      productionLiters: 165,
-      soldLiters: 155,
-      pricePerLiter: 1.2,
-      revenue: 186,
-    },
-  ]);
+  const [milkData, setMilkData] = useState([]);
 
   const form = useForm<MilkFormValues>({
     resolver: zodResolver(milkFormSchema),
@@ -83,37 +48,62 @@ export default function Milk() {
     },
   });
 
-  function onSubmit(data: MilkFormValues) {
+  async function onSubmit(data: MilkFormValues) {
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const newRecord: MilkRecord = {
-        id: Date.now().toString(),
-        date: data.date,
-        productionLiters: Number(data.productionLiters),
-        soldLiters: Number(data.soldLiters),
-        pricePerLiter: Number(data.pricePerLiter),
-        revenue: Number(data.soldLiters) * Number(data.pricePerLiter),
-      };
-      
-      setRecords(prev => [newRecord, ...prev]);
-      form.reset({
-        productionLiters: "",
-        soldLiters: "",
-        pricePerLiter: "",
-        date: new Date().toISOString().split('T')[0],
+    try {
+      const response = await fetch('http://localhost:3030/api/milk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: data.date,
+          production: data.productionLiters,
+          sold: data.soldLiters,
+          price: data.pricePerLiter,
+        }),
       });
-      
-      toast.success("Milk record added successfully!");
+
+      if (!response.ok) throw new Error('Failed to add milk record');
+
+      const result = await response.json();
+      console.log("Milk production added:", result);
+      toast.success("تم إضافة تسجيل الحليب بنجاح");
+
+      // Optional: reset form
+      form.reset();
+    } catch (err) {
+      console.error(err);
+      toast.error("حدث خطأ أثناء الإضافة");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   }
 
-  const totalProduction = records.reduce((sum, record) => sum + record.productionLiters, 0);
-  const totalSales = records.reduce((sum, record) => sum + record.soldLiters, 0);
-  const totalRevenue = records.reduce((sum, record) => sum + record.revenue, 0);
-  const averagePrice = records.reduce((sum, record) => sum + record.pricePerLiter, 0) / records.length;
+  const collectTotalProduction = milkData.reduce((accumulator,element) => {
+    return accumulator + element?.production;
+  }, 0);
+  const collectTotalPrice = milkData.reduce((accumulator,element) => {
+    return accumulator + element?.price * element?.sold;
+  }, 0);
+  const collectTotalSold = milkData.reduce((accumulator,element) => {
+    return accumulator + element?.production;
+  }, 0);
+  const collectTotalPriceAvg = milkData.reduce((accumulator,element) => {
+    return collectTotalPrice / milkData.length;
+  }, 0);
+
+  useEffect(() => {
+    const fetchMilk = async () => {
+      const res = await fetch('http://localhost:3030/api/milk');
+      const data = await res.json();
+      setMilkData(data);
+    };
+    fetchMilk();
+  }, []);
+  console.log("The milk is : " , milkData);
+  console.log("The collectTotalProduction is : " , collectTotalProduction);
+  console.log("The collectTotalProduction is : " , collectTotalPrice);
+  console.log("The collectTotalProduction is : " , collectTotalSold);
+  console.log("The collectTotalProduction is : " , collectTotalPriceAvg);
 
   return (
     <div className="container py-10">
@@ -133,10 +123,7 @@ export default function Milk() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
+                <FormField control={form.control} name="date" render={({ field }) => (
                     <FormItem>
                       <FormLabel>التاريخ</FormLabel>
                       <FormControl>
@@ -146,10 +133,7 @@ export default function Milk() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="productionLiters"
-                  render={({ field }) => (
+                <FormField control={form.control} name="productionLiters" render={({ field }) => (
                     <FormItem>
                       <FormLabel>الإنتاج (باللتر)</FormLabel>
                       <FormControl>
@@ -159,10 +143,7 @@ export default function Milk() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="soldLiters"
-                  render={({ field }) => (
+                <FormField control={form.control} name="soldLiters" render={({ field }) => (
                     <FormItem>
                       <FormLabel>المباع (باللتر)</FormLabel>
                       <FormControl>
@@ -172,10 +153,7 @@ export default function Milk() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="pricePerLiter"
-                  render={({ field }) => (
+                <FormField control={form.control} name="pricePerLiter" render={({ field }) => (
                     <FormItem>
                       <FormLabel>سعر اللتر</FormLabel>
                       <FormControl>
@@ -185,7 +163,13 @@ export default function Milk() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={
+                  isLoading ||
+                  !form.watch("date") ||
+                  !form.watch("productionLiters") ||
+                  !form.watch("soldLiters") ||
+                  !form.watch("pricePerLiter")
+                }>
                   {isLoading ? "جار الإضافة..." : "إضافة تسجيل"}
                 </Button>
               </form>
@@ -204,19 +188,19 @@ export default function Milk() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-secondary/30 p-4 rounded-lg">
                 <div className="text-sm text-muted-foreground">الإنتاج الإجمالي</div>
-                <div className="text-2xl font-bold"><span className={'opacity-0'}>L</span> {totalProduction} L</div>
+                <div className="text-2xl font-bold"><span className={'opacity-0'}>L</span> {collectTotalProduction} L</div>
               </div>
               <div className="bg-secondary/30 p-4 rounded-lg">
                 <div className="text-sm text-muted-foreground">البيع الإجمالي</div>
-                <div className="text-2xl font-bold"><span className={'opacity-0'}>L</span>{totalSales} L</div>
+                <div className="text-2xl font-bold"><span className={'opacity-0'}>L</span>{collectTotalSold} L</div>
               </div>
               <div className="bg-secondary/30 p-4 rounded-lg">
                 <div className="text-sm text-muted-foreground">الإيرادات الإجمالية</div>
-                <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+                <div className="text-2xl font-bold">${collectTotalPrice?.toFixed(2)}</div>
               </div>
               <div className="bg-secondary/30 p-4 rounded-lg">
                 <div className="text-sm text-muted-foreground">معدل السعر</div>
-                <div className="text-2xl font-bold">${averagePrice.toFixed(2)}/L</div>
+                <div className="text-2xl font-bold">${collectTotalPriceAvg?.toFixed(2)}/L</div>
               </div>
             </div>
           </CardContent>
@@ -243,13 +227,15 @@ export default function Milk() {
                 </tr>
               </thead>
               <tbody>
-                {records.map((record) => (
-                  <tr key={record.id} className="border-b">
-                    <td className="py-3 px-2">${record.revenue.toFixed(2)}</td>
-                    <td className="py-3 px-2">{record.productionLiters} L</td>
-                    <td className="py-3 px-2">{record.soldLiters} L</td>
-                    <td className="py-3 px-2">${record.pricePerLiter.toFixed(2)}</td>
-                    <td className="py-3 px-2">{record.date}</td>
+                {milkData.map((record) => (
+                  <tr key={record._id} className="border-b">
+                    <td className="py-3 px-2">₪{(record?.price * record?.sold).toFixed(2)}</td>
+                    <td className="py-3 px-2">{record?.production} L</td>
+                    <td className="py-3 px-2">{record?.sold} L</td>
+                    <td className="py-3 px-2">₪{record?.price.toFixed(2)}</td>
+                    <td className="py-3 px-2">
+                      {new Date(record?.date).toISOString().split('T')[0]}
+                    </td>
                   </tr>
                 ))}
               </tbody>

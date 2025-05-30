@@ -1,13 +1,6 @@
 import express from 'express';
-import {
-    getAllCycles,
-    getCycleById,
-    updateCycle,
-    deleteCycle,
-    createReport,
-    endCycle,
-    createCycle, addInjectionToCycle, getReportsByCycleId
-} from '../controllers/cycle.controller.js';
+import {getAllCycles, getCycleById, updateCycle, deleteCycle, createReport, endCycle, createCycle, addInjectionToCycle, getReportsByCycleId}
+from '../controllers/cycle.controller.js';
 
 const router = express.Router();
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { useForm } from 'react-hook-form';
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -20,20 +20,16 @@ interface StockItem {
     lastUpdated: Date;
     notes?: string;
 }
-
 interface StockCategory {
     category: string;
     items: StockItem[];
 }
-
 interface AddStockItemDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdd: (values: any) => void;
   stockType: 'sheep' | 'cycle';
 }
-
-
 interface AddStockItemDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -43,15 +39,8 @@ interface AddStockItemDialogProps {
     sheepStockData: StockCategory[];
 }
 
-type FormValues = {
-  name: string;
-  quantity: number;
-  unit: string;
-  itemType: string;
-  notes?: string;
-};
+const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChange, onAdd, onAddQuantity, stockType}) => {
 
-const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChange, onAdd, onAddQuantity, stockType, sheepStockData}) => {
     const form = useForm({
         defaultValues: {
             itemType: "",
@@ -69,16 +58,32 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
         },
     });
 
-    const selectedCategory = existingForm.watch("category");
-    const selectedItems = sheepStockData?.find(cat => cat?.category === selectedCategory)?.items || [];
-  const onSubmit = (values: FormValues) => {
-    onAdd({
-      ...values,
-      quantity: Number(values.quantity),
-    });
-    form.reset();
-  };
     const [activeTab, setActiveTab] = useState('new');
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [selectedItems, setSelectedItems] = useState<any[]>([]);
+
+console.log("stockType is :" , stockType )
+
+    useEffect(() => {
+        if (!selectedCategory) return;
+
+        const fetchItems = async () => {
+            try {
+                const response = await fetch(`http://localhost:3030/api/stock/category/${selectedCategory}`);
+                const data = await response.json();
+                console.log("data is :" , data);
+                const filteredData = data.filter(item => item.section === stockType)
+                console.log("The filtered data is : ", filteredData)
+                setSelectedItems(filteredData);
+            } catch (err) {
+                console.error("Error fetching stock items:", err);
+            }
+        };
+
+        fetchItems();
+    }, [selectedCategory]);
+
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,10 +102,7 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                     <TabsContent value="new" dir={'rtl'}>
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onAdd)} className="space-y-4 mt-4">
-                                <FormField
-                                    control={form.control}
-                                    name="itemType"
-                                    render={({ field }) => (
+                                <FormField control={form.control} name="itemType" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>نوع المنتج</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value} dir={'rtl'}>
@@ -110,11 +112,11 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    <SelectItem value="medicine">Medicine</SelectItem>
-                                                    <SelectItem value="injection">Injection</SelectItem>
-                                                    <SelectItem value="vitamin">Vitamin</SelectItem>
-                                                    <SelectItem value="feed">Feed</SelectItem>
-                                                    <SelectItem value="straw">Straw</SelectItem>
+                                                    <SelectItem value="Medicine">دواء</SelectItem>
+                                                    <SelectItem value="Injection">طعم</SelectItem>
+                                                    <SelectItem value="Vitamins">فيتامين</SelectItem>
+                                                    <SelectItem value="Feed">علف</SelectItem>
+                                                    <SelectItem value="Straw">قش</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -122,10 +124,7 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                                     )}
                                 />
 
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
+                                <FormField control={form.control} name="name" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>إسم المنتج</FormLabel>
                                             <FormControl>
@@ -136,10 +135,7 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                                     )}
                                 />
 
-                                <FormField
-                                    control={form.control}
-                                    name="quantity"
-                                    render={({ field }) => (
+                                <FormField control={form.control} name="quantity" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>الكمية</FormLabel>
                                             <FormControl>
@@ -155,10 +151,7 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                                     )}
                                 />
 
-                                <FormField
-                                    control={form.control}
-                                    name="unit"
-                                    render={({ field }) => (
+                                <FormField control={form.control} name="unit" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>الوحدة</FormLabel>
                                             <FormControl>
@@ -169,10 +162,7 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                                     )}
                                 />
 
-                                <FormField
-                                    control={form.control}
-                                    name="notes"
-                                    render={({ field }) => (
+                                <FormField control={form.control} name="notes" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>الملاحظات (إختياري)</FormLabel>
                                             <FormControl>
@@ -184,7 +174,11 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                                 />
 
                                 <DialogFooter>
-                                    <Button type="submit">إضافة العنصر</Button>
+                                    <Button type="submit" disabled={
+                                        !form.watch("name") ||
+                                        !(form.watch("quantity") || form.watch("quantity") == 0) ||
+                                        !form.watch("unit")
+                                    }>إضافة العنصر</Button>
                                 </DialogFooter>
                             </form>
                         </Form>
@@ -194,35 +188,34 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                     <TabsContent value="existing" dir={'rtl'}>
                         <Form {...existingForm}>
                             <form onSubmit={existingForm.handleSubmit(onAddQuantity)} className="space-y-4 mt-4">
-                                <FormField
-                                    control={existingForm.control}
-                                    name="category"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>نوع المنتج</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value} dir={'rtl'}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="اختر نوع المنتج" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {sheepStockData?.map(cat => (
-                                                        <SelectItem key={cat.category} value={cat.category}>
-                                                            {cat.category}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={existingForm.control}
-                                    name="itemId"
-                                    render={({ field }) => (
+                                <FormField control={existingForm.control} name="category" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>نوع المنتج</FormLabel>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                field.onChange(value);
+                                                setSelectedCategory(value); // track selected category
+                                            }}
+                                            defaultValue={field.value}
+                                            dir="rtl"
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="اختر نوع المنتج" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="Medicine">دواء</SelectItem>
+                                                <SelectItem value="Injection">طعم</SelectItem>
+                                                <SelectItem value="Vitamins">فيتامين</SelectItem>
+                                                <SelectItem value="Feed">علف</SelectItem>
+                                                <SelectItem value="Straw">قش</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                                <FormField control={existingForm.control} name="itemId" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>المنتج</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value} dir={'rtl'}>
@@ -233,7 +226,7 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                                                 </FormControl>
                                                 <SelectContent>
                                                     {selectedItems.map(item => (
-                                                        <SelectItem key={item.id} value={item.id}>
+                                                        <SelectItem key={item._id} value={item._id}>
                                                             {item.name}
                                                         </SelectItem>
                                                     ))}
@@ -241,13 +234,8 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                                             </Select>
                                             <FormMessage />
                                         </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={existingForm.control}
-                                    name="quantity"
-                                    render={({ field }) => (
+                                    )}/>
+                                <FormField control={existingForm.control} name="quantity" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>الكمية</FormLabel>
                                             <FormControl>
@@ -260,11 +248,14 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
-                                    )}
-                                />
+                                    )}/>
 
                                 <DialogFooter>
-                                    <Button type="submit">إضافة الكمية</Button>
+                                    <Button type="submit" disabled={
+                                        !existingForm.watch('category') ||
+                                        !existingForm.watch('itemId')||
+                                        !existingForm.watch('quantity')
+                                    }>إضافة الكمية</Button>
                                 </DialogFooter>
                             </form>
                         </Form>

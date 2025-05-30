@@ -95,28 +95,6 @@ const CycleManagement = () => {
   const [cycles, setCycles] = useState([]);
   const [allCycles, setAllCycles] = useState([]);
 
-  // Filter cycles based on search query and active tab
-  // const filteredCycles = mockCycles
-  //   .filter(cycle =>
-  //     cycle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     cycle.notes?.toLowerCase().includes(searchQuery.toLowerCase())
-  //   )
-  //   .filter(cycle => {
-  //     if (activeTab === 'all') return true;
-  //     if (activeTab === 'نشطة') return cycle.status === 'active';
-  //     if (activeTab === 'انتهت') return cycle.status === 'completed';
-  //     return true;
-  //   });
-
-  // Format date to a readable string
-  // const formatDate = (date?: Date) => {
-  //   if (!date) return ' مستمر';
-  //   return new Intl.DateTimeFormat('en-US', {
-  //     year: 'numeric',
-  //     month: 'short',
-  //     day: 'numeric'
-  //   }).format(date);
-  // };
 
   interface AddCycleData {
     cycleName: string;
