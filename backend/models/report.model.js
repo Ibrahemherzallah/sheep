@@ -1,18 +1,12 @@
 import mongoose from 'mongoose'
 
 const reportSchema = new mongoose.Schema({
-    cycleId : {
+    cycleId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'cycle',
     },
-    startDate: {
-        type: Date,
-        required: false,
-    },
-    endDate: {
-        type: Date,
-        required: false,
-    },
+    startDate: Date,
+    endDate: Date,
     numOfFeed: {
         type: Number,
         required: true,
@@ -21,10 +15,23 @@ const reportSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    vitamins: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Vitamins',
-    }]
+    vitamins: [
+        {
+            vitamin: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Vitamins',
+                required: true,
+            },
+            amount: {
+                type: Number,
+                required: true,
+            },
+        },
+    ],
+    notes: {
+        type: String,
+        required: false,
+    }
 },{timestamps: true})
 
 

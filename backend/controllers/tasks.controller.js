@@ -64,3 +64,26 @@ export const getNextInjectionTaskForSheep = async (req, res) => {
         res.status(500).json({error: 'Failed to fetch task.'});
     }
 }
+
+
+export const getUpcomingInjectionTasksForCycle = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const tasks = await Task.find({
+            type: 'injection',
+            cycleId: id,
+            completed: false,
+            dueDate: { $gte: new Date() },
+        }).sort({ dueDate: 1 });
+
+        if (!tasks || tasks.length === 0) {
+            return res.status(404).json({ message: 'No upcoming injection tasks found for this cycle.' });
+        }
+
+        res.json(tasks);
+    } catch (error) {
+        console.error('Error fetching injection tasks for cycle:', error);
+        res.status(500).json({ error: 'Failed to fetch tasks.' });
+    }
+};

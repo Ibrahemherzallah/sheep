@@ -60,26 +60,16 @@ const cycleSchema = new mongoose.Schema({
             ref: 'ReportModel',
         },
     ],
+    injectionCases: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CycleInjection',
+    }],
     notes: {
         type:String,
         required: false,
     },
-    injections: [{
-        injection: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'InjectionType',
-            required: true
-        },
-        hasRepetition: {
-            type: Boolean,
-            required: true
-        },
-        appliedDates: [{
-            type: Date
-        }]
-    }]//in slack details
 });
 
-const cycle = mongoose.model('cycle', cycleSchema);
+const Cycle = mongoose.model('Cycle', cycleSchema);
 
-export default cycle;
+export default Cycle;

@@ -1,17 +1,7 @@
-
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  Ear, 
-  Calendar, 
-  Activity, 
-  Syringe, 
-  Boxes, 
-  BarChart3, 
-  Settings, 
-  FileText,
-  Milk
-} from 'lucide-react';
+import {Link, useLocation, useNavigate} from 'react-router-dom';
+import {Ear, Calendar, Activity, Syringe, Boxes, BarChart3, Settings, FileText, Milk, LogOut} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {toast} from "@/hooks/use-toast.ts";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -25,11 +15,10 @@ interface NavItemProps {
 }
 
 const NavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, isActive }) => {
+
+
   return (
-    <Link
-      to={to}
-      className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+    <Link to={to} className={cn("flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
         isActive 
           ? "bg-sidebar-accent text-sidebar-accent-foreground" 
           : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -44,7 +33,8 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon: Icon, label, isActive }) =>
 export const AppSidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const location = useLocation();
   const currentPath = location.pathname;
-  
+  const navigate = useNavigate();
+
   const navItems = [
     { to: "/", icon: BarChart3, label: "الرئيسية" },
     { to: "/sheep", icon: Ear, label: "ادارة الأغنام" },
@@ -54,6 +44,14 @@ export const AppSidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     { to: "/stock-management", icon: Boxes, label: "المخزون" },
     { to: "/profile", icon: Settings, label: "الاعدادات" },
   ];
+
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    toast({ title: "Logged out successfully" });
+    navigate("/login");
+  };
 
   return (
     <aside 
@@ -74,12 +72,15 @@ export const AppSidebar: React.FC<SidebarProps> = ({ isOpen }) => {
             />
           ))}
         </div>
-        
+
         <div className="mt-auto border-t border-sidebar-border pt-4">
-          <div className="px-3 py-2 text-sidebar-foreground/70">
-            <div className="text-xs">FlockWatch Pro</div>
-            <div className="text-sm">v1.0.0</div>
-          </div>
+          <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground w-full text-left"
+          >
+            <LogOut size={20} />
+            <span>Logout</span>
+          </button>
         </div>
       </div>
     </aside>

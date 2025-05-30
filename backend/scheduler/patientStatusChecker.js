@@ -3,12 +3,11 @@ import Patient from '../models/patient.model.js';
 import Sheep from '../models/sheep.model.js';
 import Task from "../models/task.model.js";
 
-// Runs daily at midnight
+// 🕛 Patient status check — runs daily at midnight
 cron.schedule('0 0 * * *', async () => {
     console.log('⏳ Running patient status check...');
 
     try {
-        // Get patient cases older than 5 days
         const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
 
         const outdatedPatients = await Patient.find({
@@ -18,7 +17,6 @@ cron.schedule('0 0 * * *', async () => {
         for (const patient of outdatedPatients) {
             const sheep = await Sheep.findById(patient.sheepId);
 
-            // Only update if still marked as patient
             if (sheep && sheep.isPatient === true) {
                 sheep.isPatient = false;
                 sheep.medicalStatus = 'سليمة';
@@ -32,8 +30,7 @@ cron.schedule('0 0 * * *', async () => {
     }
 });
 
-
-// Task cleaner — daily at 1 AM
+// 🧹 Task cleanup — runs daily at 1 AM
 cron.schedule('0 1 * * *', async () => {
     console.log('🧹 Running task cleanup...');
 

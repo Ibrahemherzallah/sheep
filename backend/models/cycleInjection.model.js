@@ -6,16 +6,22 @@ const cycleInjectionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'cycle',
     },
-    injections: [{
-        inject: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'CycleInjectionType'
-        },
-        isTaken: {
-            type: Boolean,
-            required: true
-        },
-    }]
+    injectionType: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'InjectionType',
+    },
+    numOfInject: {
+        type: Number,
+        required: false
+    },
+    injectDate: {
+        type: Date,
+        required: true,
+    },
+    notes: {
+        type: String,
+        required: false,
+    }
 
 },{timestamps: true});
 

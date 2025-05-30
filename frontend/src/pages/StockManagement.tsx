@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react';
 import StockTable from '@/components/stock/StockTable';
 import AddStockItemDialog from '@/components/stock/AddStockItemDialog';
 import { StockCategory } from '@/types';
+import {toast} from "@/hooks/use-toast.ts";
 
 // Mock data for stock items
 const sheepStockData: StockCategory[] = [
@@ -44,75 +45,152 @@ const sheepStockData: StockCategory[] = [
   }
 ];
 
-const cycleStockData: StockCategory[] = [
-  {
-    category: 'Medicine',
-    items: [
-      { id: 'c1', itemType: 'medicine', itemId: 'm1', name: 'Penicillin', quantity: 10, unit: 'bottles', lastUpdated: new Date(), notes: 'For cycle #1' },
-      { id: 'c2', itemType: 'medicine', itemId: 'm3', name: 'Tetracycline', quantity: 8, unit: 'bottles', lastUpdated: new Date() }
-    ]
-  },
-  {
-    category: 'Injections',
-    items: [
-      { id: 'c3', itemType: 'injection', itemId: 'i3', name: 'Q Fever Vaccine', quantity: 15, unit: 'doses', lastUpdated: new Date() }
-    ]
-  },
-  {
-    category: 'Vitamins',
-    items: [
-      { id: 'c4', itemType: 'vitamin', itemId: 'v3', name: 'Vitamin D', quantity: 5, unit: 'bottles', lastUpdated: new Date() }
-    ]
-  },
-  {
-    category: 'Feed',
-    items: [
-      { id: 'c5', itemType: 'feed', name: 'Cycle Feed', quantity: 300, unit: 'kg', lastUpdated: new Date() }
-    ]
-  },
-  {
-    category: 'Straw',
-    items: [
-      { id: 'c6', itemType: 'straw', name: 'Cycle Bedding Straw', quantity: 100, unit: 'bales', lastUpdated: new Date() }
-    ]
-  }
-];
+
 
 const StockManagement = () => {
+
+  const [allStockItems, setAllStockItems] = useState([]);
   const [stockType, setStockType] = useState<'sheep' | 'cycle'>('sheep');
-  const [stockData, setStockData] = useState({
-    sheep: sheepStockData,
-    cycle: cycleStockData
-  });
+  const cycleStockData = [
+    {
+      category: 'الأدوية',
+      items: allStockItems.filter(item => item.type === 'Medicine' && item.section === stockType),
+    },
+    {
+      category: 'الطعومات',
+      items: allStockItems.filter(item => item.type === 'Injection' && item.section === stockType),
+    },
+    {
+      category: 'الفيتامينات',
+      items: allStockItems.filter(item => item.type === 'Vitamins' && item.section === stockType),
+    },
+    {
+      category: 'العلف',
+      items: allStockItems.filter(item => item.type === 'Feed' && item.section === stockType),
+    },
+    {
+      category: 'القش',
+      items: allStockItems.filter(item => item.type === 'Straw' && item.section === stockType),
+    }
+  ];
+
+  const [stockData, setStockData] = useState({sheep: sheepStockData, cycle: cycleStockData});
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const handleAddItem = (newItem: any) => {
-    const category = stockData[stockType].find(
-      cat => cat.category.toLowerCase() === newItem.itemType
-    );
-    
-    if (category) {
-      const updatedCategory = {
-        ...category,
-        items: [...category.items, { 
-          id: `${stockType[0]}${Date.now()}`, 
-          ...newItem,
-          lastUpdated: new Date()
-        }]
-      };
-      
-      const updatedCategories = stockData[stockType].map(cat => 
-        cat.category === category.category ? updatedCategory : cat
+  const handleAddItem = async (newItem: any) => {
+    try {
+      const response = await fetch('http://localhost:3030/api/stock/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: newItem.itemType,
+          name: newItem.name,
+          quantity: newItem.quantity,
+          section: stockType,
+          unit: newItem.unit,
+          notes: newItem.notes || "",
+        }),
+      });
+
+      const result = await response.json(); // 👈 get the JSON response
+
+      if (!response.ok) {
+        throw new Error(result.error || 'فشل في إضافة العنصر إلى المخزون');
+      }
+
+      const createdItem = result;
+
+      toast({
+        title: "Success",
+        description: "تمت إضافة العنصر بنجاح ✅",
+      });
+
+      const category = stockData[stockType].find(
+          cat => cat.category.toLowerCase() === newItem.itemType
       );
-      
-      setStockData({
-        ...stockData,
-        [stockType]: updatedCategories
+
+      if (category) {
+        const updatedCategory = {
+          ...category,
+          items: [...category.items, {
+            id: `${stockType[0]}${Date.now()}`,
+            ...createdItem,
+            lastUpdated: new Date()
+          }]
+        };
+
+        const updatedCategories = stockData[stockType].map(cat =>
+            cat.category === category.category ? updatedCategory : cat
+        );
+
+        setStockData({
+          ...stockData,
+          [stockType]: updatedCategories
+        });
+      }
+
+      setIsAddDialogOpen(false);
+
+    } catch (error: any) {
+      console.error('Error adding item:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء إضافة العنصر ❌",
       });
     }
-    
-    setIsAddDialogOpen(false);
   };
+  const handleAddQuantity = async (newItem: any) => {
+    try {
+      const response = await fetch('http://localhost:3030/api/stock/add-quantity', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          itemId: newItem.itemId,
+          quantity: Number(newItem.quantity),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('فشل في تحديث الكمية');
+      }
+
+      const updatedItem = await response.json();
+      toast({
+        title: "Success",
+        description: "تمت إضافة الكمية بنجاح ✅",
+      });
+
+      // Optionally update frontend state or refresh stock data here
+      console.log("Updated Item: ", updatedItem);
+      setIsAddDialogOpen(false);
+
+    } catch (err: any) {
+      console.error('Error updating quantity:', err);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء إضافة الكمية ❌",
+      });
+    }
+  };
+  useEffect(() => {
+    const fetchStockItems = async () => {
+      try {
+        const response = await fetch('http://localhost:3030/api/stock');
+        const data = await response.json();
+        setAllStockItems(data);
+      } catch (error) {
+        console.error('Failed to fetch stock items:', error);
+      }
+    };
+    fetchStockItems();
+  }, []);
+  console.log("The cycleStockData : ",  cycleStockData);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -130,13 +208,14 @@ const StockManagement = () => {
       </div>
 
       <Tabs defaultValue="sheep" className="mb-6" onValueChange={(value) => setStockType(value as 'sheep' | 'cycle')}>
+
         <TabsList className="grid grid-cols-2 mb-4">
           <TabsTrigger value="sheep">مخزون الأغنام</TabsTrigger>
           <TabsTrigger value="cycle">مخزون الدورات</TabsTrigger>
         </TabsList>
         
         <TabsContent value="sheep">
-          {stockData.sheep.map((category) => (
+          {cycleStockData.map((category) => (
             <Card key={category.category} className="mb-6" dir={'rtl'}>
               <CardHeader className="pb-3">
                 <CardTitle>{category.category}</CardTitle>
@@ -149,7 +228,7 @@ const StockManagement = () => {
         </TabsContent>
         
         <TabsContent value="cycle" dir={'rtl'}>
-          {stockData.cycle.map((category) => (
+          {cycleStockData.map((category) => (
             <Card key={category.category} className="mb-6">
               <CardHeader className="pb-3">
                 <CardTitle>{category.category}</CardTitle>
@@ -160,12 +239,15 @@ const StockManagement = () => {
             </Card>
           ))}
         </TabsContent>
+
       </Tabs>
 
       <AddStockItemDialog 
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onAdd={handleAddItem}
+        stockType={stockType}
+        onAddQuantity={handleAddQuantity}
         stockType={stockType}
       />
     </div>

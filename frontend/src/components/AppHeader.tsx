@@ -1,14 +1,8 @@
 import { useState } from 'react';
 import { Bell, Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import logo from '../assets/sheep-logo.png';
-import { 
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui';
+import {Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, toast} from '@/components/ui';
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
@@ -21,7 +15,14 @@ export const AppHeader = ({
   isSidebarOpen, 
   notificationCount 
 }: AppHeaderProps) => {
-  
+
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    toast({ title: "Logged out successfully" });
+    navigate("/login");
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm py-1 px-4 flex justify-between items-center">
       <div className="flex items-center">
@@ -52,10 +53,7 @@ export const AppHeader = ({
             <DropdownMenuItem asChild>
               <Link to="/profile">My Profile</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/settings">Settings</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem onClick={handleLogout} asChild>
               <Link to="/login">Sign Out</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

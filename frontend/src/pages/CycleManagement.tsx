@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { Link } from 'react-router-dom';
 import {Calendar, CalendarDays, Plus, ChevronRight, Search, Syringe, Pill, ChevronLeft} from 'lucide-react';
 import {Card, CardContent, CardHeader, CardTitle, CardDescription} from '@/components/ui/card';
@@ -69,7 +69,14 @@ const mockInjections = [
 ];
 
 
-interface CycleFormData {cycleName: string ;cycleNumber: number ;maleNum: number ;femaleNum: number ;startDate: string ;notes: string }
+interface CycleFormData {
+  cycleName: string ;
+  cycleNumber: number ;
+  maleNum: number ;
+  femaleNum: number ;
+  startDate: string ;
+  notes: string
+}
 
 
 
@@ -85,64 +92,91 @@ const CycleManagement = () => {
   const [notes, setNotes] = useState<string>('');
   const [addCycleDialog,setAddCycleDialog] = useState(false);
   const [useTodayDate,setUseTodayDate] = useState(true);
+  const [cycles, setCycles] = useState([]);
+  const [allCycles, setAllCycles] = useState([]);
 
 
-  // Filter cycles based on search query and active tab
-  const filteredCycles = mockCycles
-    .filter(cycle => 
-      cycle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cycle.notes?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .filter(cycle => {
-      if (activeTab === 'all') return true;
-      if (activeTab === 'نشطة') return cycle.status === 'active';
-      if (activeTab === 'انتهت') return cycle.status === 'completed';
-      return true;
-    });
+  interface AddCycleData {
+    cycleName: string;
+    cycleNumber: number;
+    femaleNum: number;
+    maleNum: number;
+    startDate: string;
+    notes: string;
+  }
 
-  // Format date to a readable string
-  const formatDate = (date?: Date) => {
-    if (!date) return ' مستمر';
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }).format(date);
-  };
-
-  const formSchema = z.object({
-    cycleName: z.string().min(1, "هذا الحقل مطلوب"),
-    cycleNumber: z.coerce.number().min(1, "رقم الدورة مطلوب"),
-    maleNum: z.coerce.number().min(1, "عدد الذكور مطلوب"),
-    femaleNum: z.coerce.number().min(1, "عدد الإناث مطلوب"),
-    startDate: z.string().min(1, "تاريخ البداية مطلوب"),
-    notes: z.string().optional(),
-  });
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<AddCycleData>({
     defaultValues: {
       cycleName: "",
       cycleNumber: 0,
       maleNum: 0,
       femaleNum: 0,
-      startDate: "",
+      startDate: new Date().toISOString().split("T")[0],
       notes: "",
     },
   });
 
 
-
-
-
-  const handleSubmitSheep = (data: CycleFormData) => {
-    hotToast({title: "الدورة أضيفت", description: ` تمت اضافة الدورة بنجاح .`});
-    setAddCycleDialog(false);
-    form.reset();
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB'); // e.g., 26/05/2025
   };
+  const handleSubmitSheep = async (data: AddCycleData) => {
+    if (useTodayDate) {
+      data.startDate = new Date().toISOString().split("T")[0];
+    }
 
+    const start = new Date(data.startDate!);
+    const expectedEndDate = new Date(start);
+    expectedEndDate.setMonth(expectedEndDate.getMonth() + 6);
+
+    const payload = {
+      name: data.cycleName,
+      number: data.cycleNumber,
+      status: "نشطة", // Automatically set to active
+      numOfMale: data.maleNum,
+      numOfFemale: data.femaleNum,
+      startDate: data.startDate,
+      expectedEndDate: expectedEndDate.toISOString().split("T")[0],
+      notes: data.notes || "",
+    };
+
+    console.log("Sending payload:", payload);
+
+    try {
+      const response = await fetch("http://localhost:3030/api/cycle", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add cycle");
+      }
+
+      const result = await response.json();
+      console.log("Cycle added:", result);
+
+      hotToast({
+        title: "الدورة أضيفت",
+        description: `تمت اضافة الدورة بنجاح.`,
+      });
+
+      setAddCycleDialog(false);
+      form.reset();
+    } catch (error) {
+      console.error("Error adding cycle:", error);
+      hotToast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء إضافة الدورة.",
+      });
+    }
+  };
   // Handle adding a medicine or injection to a cycle
   const handleAddMedication = () => {
+
     if (!selectedCycle) {
       toast.error("Please select a cycle");
       return;
@@ -168,12 +202,42 @@ const CycleManagement = () => {
     setNotes('');
   };
 
+
+  useEffect(() => {
+    const fetchCycles = async () => {
+      try {
+        const response = await fetch('http://localhost:3030/api/cycle');
+        const data = await response.json();
+        setAllCycles(data);
+        setCycles(data); // Default to all
+      } catch (error) {
+        console.error('Failed to fetch cycles:', error);
+      }
+    };
+
+    fetchCycles();
+  }, []);
+  useEffect(() => {
+    switch (activeTab) {
+      case 'all':
+        setCycles(allCycles);
+        break;
+      case 'active':
+        setCycles(allCycles.filter(cycle => cycle.status === 'نشطة'));
+        break;
+      case 'completed':
+        setCycles(allCycles.filter(cycle => cycle.status === 'منتهية'));
+        break;
+      default:
+        setCycles(allCycles);
+    }
+  }, [activeTab, allCycles]);
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">إدارة الدورات</h1>
-
         </div>
         <Button className="gap-2" onClick={() => {setAddCycleDialog(true);form.reset();}}>
           <Plus size={16} />
@@ -195,22 +259,22 @@ const CycleManagement = () => {
 
       <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="all">All Cycles</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="all">كل الدورات</TabsTrigger>
+          <TabsTrigger value="active">النشطة</TabsTrigger>
+          <TabsTrigger value="completed">المنتهية</TabsTrigger>
         </TabsList>
       </Tabs>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         <div className="col-span-1 md:col-span-3">
-          <Card>
+          <Card >
             <CardHeader className="pb-5" dir={'rtl'}>
               <CardTitle>الدورات</CardTitle>
             </CardHeader>
             <CardContent>
               <Table dir={'rtl'}>
                 <TableHeader>
-                  <TableRow >
+                  <TableRow>
                     <TableHead>إسم الدورة</TableHead>
                     <TableHead>تاريخ البداية</TableHead>
                     <TableHead>تاريخ النهاية</TableHead>
@@ -220,42 +284,50 @@ const CycleManagement = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCycles.length === 0 ? (
+                  {cycles.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No cycles found
+                        لا يوجد دوارت
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredCycles.map((cycle) => (
-                      <TableRow key={cycle.id}>
+                      cycles.map((cycle) => (
+                      <TableRow key={cycle._id}>
                         <TableCell className="font-medium" style={{textAlign:'end'}}>{cycle.name}</TableCell>
                         <TableCell>
+
                           <div className="flex items-center gap-2 justify-end" >
                             <Calendar size={16} className="text-muted-foreground " />
                             {formatDate(cycle.startDate)}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2 justify-end">
-                            <CalendarDays size={16} className="text-muted-foreground" />
-                            {formatDate(cycle.endDate)}
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-2">
+                              <CalendarDays size={16} className="text-muted-foreground" />
+                              <span>
+                                {formatDate(cycle.endDate || cycle.expectedEndDate)}
+                              </span>
+                            </div>
+                            {!cycle.endDate && (
+                                <span className="text-xs text-muted-foreground">(تاريخ نهاية متوقعة)</span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell style={{textAlign:'end'}}>
-                          {cycle.initialMaleCount + cycle.initialFemaleCount} الكل
+                          {cycle.numOfMale + cycle.numOfFemale} الكل
                           <div className="text-xs text-muted-foreground mt-1">
-                            {cycle.initialMaleCount} ذكور, {cycle.initialFemaleCount} إاناث
+                            {cycle.numOfMale} ذكور, {cycle.numOfFemale} إاناث
                           </div>
                         </TableCell>
                         <TableCell style={{textAlign:'end'}}>
-                          <Badge variant={cycle.status === 'active' ? 'default' : 'secondary'}>
-                            {cycle.status === 'active' ? 'Active' : 'Completed'}
+                          <Badge variant={cycle.status === 'نشطة' ? 'default' : 'secondary'}>
+                            {cycle.status}
                           </Badge>
                         </TableCell>
                         <TableCell style={{textAlign:'end'}}>
                           <Button variant="ghost" size="sm" asChild>
-                            <Link to={`/cycles/${cycle.id}`} className="flex items-center">
+                            <Link to={`/cycles/${cycle._id}`} className="flex items-center">
                               رؤية التفاصيل
                               <ChevronLeft size={16} className="ml-1" />
                             </Link>
@@ -284,6 +356,7 @@ const CycleManagement = () => {
             <form onSubmit={form.handleSubmit(handleSubmitSheep)} className="space-y-4"  dir={'rtl'}>
               <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
                 <div style={{display:'flex', justifyContent:'space-between'}}>
+
                   <FormField control={form.control} name="cycleName"  render={({ field }) => (
                       <FormItem style={{width:'45%'}}>
                         <FormLabel>اسم الدورة</FormLabel>
@@ -294,6 +367,7 @@ const CycleManagement = () => {
                       </FormItem>
                   )}/>
 
+
                   <FormField control={form.control} name="cycleNumber"  render={({ field }) => (
                       <FormItem style={{width:'45%'}}>
                         <FormLabel>رقم الدورة</FormLabel>
@@ -303,7 +377,6 @@ const CycleManagement = () => {
                         <FormMessage />
                       </FormItem>
                   )}/>
-
                 </div>
 
 
@@ -352,7 +425,6 @@ const CycleManagement = () => {
                           )
                       }
                     </div>
-
                 </div>
                 <FormField control={form.control} name="notes" render={({ field }) => (
                     <FormItem >
@@ -366,14 +438,12 @@ const CycleManagement = () => {
               </div>
 
               <DialogFooter>
-                <Button type="submit">
-                  إضافة النعجة
+                <Button type="submit" disabled={!form.watch("cycleName") || !form.watch("cycleNumber") || !form.watch("femaleNum") || !form.watch("maleNum")}>
+                  إضافة الدورة
                 </Button>
-
                 <Button type="button" variant="outline" onClick={() => {setAddCycleDialog(false);form.reset()}}>
                   الغاء
                 </Button>
-
               </DialogFooter>
             </form>
           </Form>
