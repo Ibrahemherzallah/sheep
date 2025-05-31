@@ -72,76 +72,80 @@ export const dashboard = async (req, res) => {
 export const medicalDashboard = async (req, res) => {
     try {
         const today = new Date();
-        const next20Days = new Date();
+        const day10 = new Date();
+        const day20 = new Date();
         const last20Days = new Date();
         const last14Days = new Date();
         const fiveDaysAgo = new Date();
 
-        next20Days.setDate(today.getDate() + 20);
+        day10.setDate(today.getDate() + 10);
+        day20.setDate(today.getDate() + 20);
         last20Days.setDate(today.getDate() - 20);
         last14Days.setDate(today.getDate() - 14);
         fiveDaysAgo.setDate(today.getDate() - 5);
 
-        // 1️⃣ Total upcoming injections (from today to next 20 days)
+        // 1️⃣ Total upcoming injections
         const upcomingInjections = await Task.countDocuments({
             type: 'injection',
-            dueDate: {
-                $gte: today,
-                $lte: next20Days,
-            },
+            dueDate: { $gte: today, $lte: day20 }
         });
 
-        // 2️⃣ Total patient sheeps
+        // 2️⃣ Total patient sheep
         const totalPatientSheep = await Sheep.countDocuments({ isPatient: true });
 
-        // 3️⃣ Number of distinct used medicine types in last 20 days
+        // 3️⃣ Distinct drug types used in last 20 days
         const recentPatients = await Patient.find({
             patientDate: { $gte: last20Days, $lte: today },
-        }).populate('drugs.drug');
+        }).populate("drugs.drug");
 
         const drugIdsSet = new Set();
-        for (const patient of recentPatients) {
-            for (const entry of patient.drugs) {
+        recentPatients.forEach(patient => {
+            patient.drugs.forEach(entry => {
                 drugIdsSet.add(entry.drug._id.toString());
-            }
-        }
+            });
+        });
         const differentMedicineTypesCount = drugIdsSet.size;
 
-        // 4️⃣ Total sheeps that became non-patient in the last 14 days
-        // Step 1: Get latest patient records
+        // 4️⃣ Sheep that became non-patient in the last 14 days
         const recentPatientRecords = await Patient.aggregate([
-            {
-                $sort: { updatedAt: -1 },
-            },
+            { $sort: { updatedAt: -1 } },
             {
                 $group: {
                     _id: "$sheepId",
-                    lastUpdated: { $first: "$updatedAt" },
-                },
+                    lastUpdated: { $first: "$updatedAt" }
+                }
             },
             {
                 $match: {
-                    lastUpdated: {
-                        $lte: fiveDaysAgo, // must be more than 5 days ago
-                        $gte: last14Days, // within last 14 days
-                    },
-                },
-            },
+                    lastUpdated: { $lte: fiveDaysAgo, $gte: last14Days }
+                }
+            }
         ]);
 
-        // Step 2: Check if sheep is not patient anymore
-        const nonPatientSheepIds = recentPatientRecords.map((r) => r._id);
+        const nonPatientSheepIds = recentPatientRecords.map(r => r._id);
         const nonPatientCount = await Sheep.countDocuments({
             _id: { $in: nonPatientSheepIds },
-            isPatient: false,
+            isPatient: false
         });
 
-        // ✅ Response
+        // 5️⃣ Very recent & recent injection tasks
+        const veryRecentTasks = await Task.find({
+            type: 'injection',
+            dueDate: { $gte: today, $lte: day10 }
+        }).sort({ dueDate: 1 });
+
+        const recentTasks = await Task.find({
+            type: 'injection',
+            dueDate: { $gt: day10, $lte: day20 }
+        }).sort({ dueDate: 1 });
+
         res.json({
             upcomingInjections,
             totalPatientSheep,
             differentMedicineTypesCount,
             nonPatientCount,
+            veryRecentTasks,
+            recentTasks
         });
 
     } catch (err) {
@@ -152,29 +156,33 @@ export const medicalDashboard = async (req, res) => {
 
 export const cycleDashboard = async (req, res) => {
     try {
+        const today = new Date();
+        const day10 = new Date();
+        const day20 = new Date();
+        const oneWeekAgo = new Date();
+
+        day10.setDate(today.getDate() + 10);
+        day20.setDate(today.getDate() + 20);
+        oneWeekAgo.setDate(today.getDate() - 7);
+
         // 1️⃣ Total cycles & active cycles
         const totalCycles = await Cycle.countDocuments({});
-        const activeCycles = await Cycle.countDocuments({ status: "نشطة" }); // adjust keyword if needed
+        const activeCycles = await Cycle.countDocuments({ status: "نشطة" });
 
-        // 2️⃣ Total number of sheep in all cycles
+        // 2️⃣ Total sheep in cycles
         const allCycles = await Cycle.find({}, "numOfMale numOfFemale");
-        let totalSheepInCycles = 0;
-        allCycles.forEach((cycle) => {
-            totalSheepInCycles += (cycle.numOfMale || 0) + (cycle.numOfFemale || 0);
-        });
+        const totalSheepInCycles = allCycles.reduce((sum, cycle) => {
+            return sum + (cycle.numOfMale || 0) + (cycle.numOfFemale || 0);
+        }, 0);
 
-        // 3️⃣ & 4️⃣ Feed and Milk stats for last 7 days
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
+        // 3️⃣ Feed & Milk stats from reports of last 7 days
         const weeklyReports = await ReportModel.find({
-            createdAt: { $gte: oneWeekAgo },
+            createdAt: { $gte: oneWeekAgo }
         });
 
         let totalFeed = 0;
         let totalMilk = 0;
-
-        weeklyReports.forEach((report) => {
+        weeklyReports.forEach(report => {
             totalFeed += report.numOfFeed || 0;
             totalMilk += report.numOfMilk || 0;
         });
@@ -183,14 +191,27 @@ export const cycleDashboard = async (req, res) => {
             ? totalFeed / weeklyReports.length
             : 0;
 
-        // ✅ Response
+        // 4️⃣ Very recent & recent tasks with cycleId
+        const veryRecentTasks = await Task.find({
+            cycleId: { $ne: null },
+            dueDate: { $gte: today, $lte: day10 }
+        }).sort({ dueDate: 1 });
+
+        const recentTasks = await Task.find({
+            cycleId: { $ne: null },
+            dueDate: { $gt: day10, $lte: day20 }
+        }).sort({ dueDate: 1 });
+
         res.json({
             totalCycles,
             activeCycles,
             totalSheepInCycles,
             feedAvgPerWeek: Math.round(feedAvgPerWeek * 100) / 100,
             totalMilkPerWeek: totalMilk,
+            veryRecentTasks,
+            recentTasks
         });
+
     } catch (err) {
         console.error("Error in cycle dashboard:", err);
         res.status(500).json({ error: "Server error while fetching cycle dashboard" });

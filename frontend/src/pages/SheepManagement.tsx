@@ -8,38 +8,7 @@ import { useForm } from 'react-hook-form';
 import {is} from "date-fns/locale";
 import * as React from "react";
 import {Combobox} from "@/components/ui/combobox.tsx";
-// /api/sheep
-// Mock data
-const sheepData = [
-  { id: '1001', number: '1001', status: '', sex: 'female', origin: 'farm-produced', birthDate: '2023-01-15', isPregnant: true },
-  { id: '1002', number: '1002', status: 'pregnant', sex: 'female', origin: 'farm-produced', birthDate: '2023-02-10', isPregnant: false },
-  { id: '1003', number: '1003', status: 'sick', sex: 'male', origin: 'bought', birthDate: '2023-01-05', isPregnant: false },
-  { id: '1004', number: '1004', status: 'giving-birth-soon', sex: 'female', origin: 'bought', birthDate: '2022-11-20', isPregnant: true },
-  { id: '1005', number: '1005', status: 'pregnant', sex: 'male', origin: 'farm-produced', birthDate: '2022-12-05', isPregnant: false },
-  { id: '1006', number: '1006', status: 'pregnant', sex: 'female', origin: 'bought', birthDate: '2023-03-14', isPregnant: false },
-  { id: '1007', number: '1007', status: 'born', sex: 'female', origin: 'bought', birthDate: '2023-03-14', isPregnant: false },
-  { id: '1008', number: '1008', status: '', sex: 'female', origin: 'farm-produced', birthDate: '2023-01-15', isPregnant: true },
-  { id: '1009', number: '1009', status: 'pregnant', sex: 'female', origin: 'farm-produced', birthDate: '2023-02-10', isPregnant: false },
-  { id: '1010', number: '1010', status: 'sick', sex: 'male', origin: 'bought', birthDate: '2023-01-05', isPregnant: false },
-  { id: '10011', number: '1011', status: 'giving-birth-soon', sex: 'female', origin: 'bought', birthDate: '2022-11-20', isPregnant: true },
-  { id: '1012', number: '1012', status: 'pregnant', sex: 'male', origin: 'farm-produced', birthDate: '2022-12-05', isPregnant: false },
-  { id: '1013', number: '1013', status: 'pregnant', sex: 'female', origin: 'bought', birthDate: '2023-03-14', isPregnant: false },
-  { id: '1014', number: '1014', status: 'born', sex: 'female', origin: 'bought', birthDate: '2023-03-14', isPregnant: false },
-  { id: '1015', number: '1015', status: '', sex: 'female', origin: 'farm-produced', birthDate: '2023-01-15', isPregnant: true },
-  { id: '1016', number: '1016', status: 'pregnant', sex: 'female', origin: 'farm-produced', birthDate: '2023-02-10', isPregnant: false },
-  { id: '1017', number: '1017', status: 'sick', sex: 'male', origin: 'bought', birthDate: '2023-01-05', isPregnant: false },
-  { id: '1018', number: '1018', status: 'giving-birth-soon', sex: 'female', origin: 'bought', birthDate: '2022-11-20', isPregnant: true },
-  { id: '1019', number: '1019', status: 'pregnant', sex: 'male', origin: 'farm-produced', birthDate: '2022-12-05', isPregnant: false },
-  { id: '1020', number: '1020', status: 'pregnant', sex: 'female', origin: 'bought', birthDate: '2023-03-14', isPregnant: false },
-  { id: '1021', number: '1021', status: 'born', sex: 'female', origin: 'bought', birthDate: '2023-03-14', isPregnant: false },
-  { id: '1022', number: '1022', status: '', sex: 'female', origin: 'farm-produced', birthDate: '2023-01-15', isPregnant: true },
-  { id: '1023', number: '1023', status: 'pregnant', sex: 'female', origin: 'farm-produced', birthDate: '2023-02-10', isPregnant: false },
-  { id: '1034', number: '1034', status: 'sick', sex: 'male', origin: 'bought', birthDate: '2023-01-05', isPregnant: false },
-  { id: '1043', number: '1441', status: 'giving-birth-soon', sex: 'female', origin: 'bought', birthDate: '2022-11-20', isPregnant: true },
-  { id: '1012', number: '1432', status: 'pregnant', sex: 'male', origin: 'farm-produced', birthDate: '2022-12-05', isPregnant: false },
-  { id: '1353', number: '1333', status: 'pregnant', sex: 'female', origin: 'bought', birthDate: '2023-03-14', isPregnant: false },
-  { id: '1564', number: '1364', status: 'born', sex: 'female', origin: 'bought', birthDate: '2023-03-14', isPregnant: false },
-];
+
 
 const sheepGender = [
   {id:'1', gender:'ذكر'},
@@ -257,7 +226,7 @@ const SheepManagement = () => {
 
       toast({
         title: 'تم تحديث السجلات بنجاح',
-        description: `${data.selectedSheep.length} سجلات ولادة تم تسجيلها.`,
+        description: `${selectedSheep.length} سجلات ولادة تم تسجيلها.`,
       });
 
       setBirthDialogOpen(false);
@@ -736,7 +705,7 @@ const SheepManagement = () => {
                   الغاء
                 </Button>
                 <Button type="submit" disabled={selectedSheep.length === 0}>
-                  احفظ تسجيلات الولادة
+                  احفظ تسجيلات الحمل
                 </Button>
               </DialogFooter>
             </form>
