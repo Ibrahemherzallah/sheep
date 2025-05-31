@@ -45,6 +45,11 @@ export const createSheep = async (req, res) => {
                     error: "Missing pregnancy data: 'pregnantDate', 'expectedBornDate', or 'order'."
                 });
             }
+            if (sheepData.sheepGender === 'ذكر') {
+                return res.status(400).json({
+                    error: "الذكر لا يمكن ان يحمل."
+                });
+            }
             const sheepId = newSheep._id;
 
             const pregnancy = await Pregnancy.create({
@@ -189,6 +194,15 @@ console.log("sickSheep is : ",  sickSheep)
     }
 };
 
+export const getListSheepById = async (req, res) => {
+    try {
+        const { ids } = req.body;
+        const sheep = await Sheep.find({ _id: { $in: ids } });
+        res.json(sheep);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch sheep' });
+    }
+}
 
 export const getSheepInjectionHistory = async (req, res) => {
     try {

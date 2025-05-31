@@ -3,32 +3,8 @@ import {Activity, Baby, Calendar, Ear, Info, Pill, Syringe, Truck} from 'lucide-
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger,} from '@/components/ui';
 import { Link } from 'react-router-dom';
 import Milk from "@/pages/Milk.tsx";
+import * as React from "react";
 
-// Mock data - in a real application this would come from an API
-// const mockStats = {
-//   totalSheep: 245,
-//   healthySheep: 230,
-//   sickSheep: 5,
-//   pregnantSheep: 10,
-//   upcomingBirths: 3,
-//   pendingInjections: 15,
-//   totalCycles: 4,
-//   activeCycles: 2,
-// };
-
-// const recentEvents = [
-//   { id: 1, type: 'birth', date: '2025-05-07', details: '12 نعجة يتوقع ان تلد' },
-//   { id: 2, type: 'injection', date: '2025-05-06', details: '8 نعجات تحتاج جرعة ثانية للتسمم الغذائي' },
-//   { id: 3, type: 'injection', date: '2025-05-10', details: '5 نعجات تحتاج للهرمون' },
-//   { id: 4, type: 'cycle', date: '2025-05-15', details: '20 نعجة تحتاج الاسفنجة' },
-// ];
-//
-// const upcomingTasks = [
-//   { id: 1, type: 'birth', date: '2025-05-07', details: '12 نعجة يتوقع ان تلد' },
-//   { id: 2, type: 'injection', date: '2025-05-06', details: '8 نعجات تحتاج جرعة ثانية للتسمم الغذائي' },
-//   { id: 3, type: 'injection', date: '2025-05-10', details: '5 نعجات تحتاج للهرمون' },
-//   { id: 4, type: 'cycle', date: '2025-05-15', details: '20 نعجة تحتاج الاسفنجة' },
-// ];
 
 const getEventIcon = (type: string) => {
   switch (type) {
@@ -78,9 +54,34 @@ const Dashboard = () => {
   const [upcomingTasks, setUpcomingTasks] = useState([]);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [showAllRecent, setShowAllRecent] = useState(false);
-
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sheepList, setSheepList] = useState([]);
+  const [modalLoading, setModalLoading] = useState(false);
   const displayedUpcoming = showAllUpcoming ? upcomingTasks : upcomingTasks.slice(0, 4);
   const displayedRecent = showAllRecent ? recentTasks : recentTasks.slice(0, 4);
+
+  const handleOpenModal = async (task: any) => {
+    console.log("task", task);
+    setModalLoading(true)
+    setSelectedTask(task);
+    setIsModalOpen(true);
+
+    try {
+      const response = await fetch(`http://localhost:3030/api/sheep/list-by-ids`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: task.sheepIds }),
+      });
+      const data = await response.json();
+      setSheepList(data);
+    } catch (error) {
+      console.error("Error fetching sheep list:", error);
+      setSheepList([]);
+    } finally {
+      setModalLoading(false)
+    }
+  };
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
@@ -165,7 +166,7 @@ const Dashboard = () => {
   if (!dashboardData) return <div>Something went wrong!</div>;
 
   console.log("recentTasks is : " , recentTasks);
-  console.log("upcomingTasks is : " , upcomingTasks)
+  console.log("modalLoading is : " , modalLoading)
 
   return (
     <div className="flex-1 space-y-6 p-6 animate-fade-in">
@@ -179,7 +180,7 @@ const Dashboard = () => {
           <TabsTrigger value="medical">الطب</TabsTrigger>
           <TabsTrigger value="cycles">الدورات</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard title="عدد الاغنام الكلي" value={dashboardData.totalSheep} icon={Ear} trend={{ value: dashboardData.sheepGrowthPercentage, label: "من الشهر الفائت", positive: true }}/>
@@ -217,16 +218,22 @@ const Dashboard = () => {
             {upcomingTasks?.length > 0 ? (
                 <>
                   <div className="space-y-5">
-                    {displayedUpcoming.map((event) => (
-                        <div key={event._id} className="flex">
-                          <div className="mr-3">{getEventIcon(event.type)}</div>
+                    {displayedUpcoming.map((task) => (
+                        <div key={task._id} className="flex">
+                          <div className="mr-3">{getEventIcon(task.type)}</div>
                           <div className="flex-grow">
-                            <div className="font-medium">{event.title}</div>
+                            <div className="font-medium">{task.title}</div>
                             <div className="text-sm text-muted-foreground">
-                              {new Date(event.dueDate).toLocaleDateString()}
+                              {new Date(task.dueDate).toLocaleDateString()}
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm">رؤية القائمة</Button>
+                          <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleOpenModal(task)}
+                          >
+                            رؤية القائمة
+                          </Button>
                         </div>
                     ))}
                   </div>
@@ -268,7 +275,13 @@ const Dashboard = () => {
                               {new Date(task.dueDate).toLocaleDateString()}
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm">رؤية القائمة</Button>
+                          <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleOpenModal(task)}
+                          >
+                            رؤية القائمة
+                          </Button>
                         </div>
                     ))}
                   </div>
@@ -290,7 +303,46 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
-      </div>    </div>
+      </div>
+      {isModalOpen && selectedTask && (
+          modalLoading ? <div className="text-center py-10">جاري التحميل ...</div> :
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg w-full max-w-md">
+              <h2 className="text-lg font-semibold mb-3">قائمة النعاج</h2>
+              <ul className="space-y-2 max-h-[300px] overflow-y-auto">
+                {isModalOpen && (
+                    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+                      <div className="bg-white p-6 rounded-lg w-full max-w-md">
+                        <h2 className="text-lg font-semibold mb-3">النعاج المرتبطة بالمهمة</h2>
+                        <ul className="space-y-2 max-h-[300px] overflow-y-auto">
+                          {sheepList.length > 0 ? (
+                              sheepList.map((sheep) => (
+                                  <li key={sheep._id} className="text-sm text-gray-800 border-b py-1">
+                                    🐑 النعجة رقم: {sheep.sheepNumber}
+                                  </li>
+                              ))
+                          ) : (
+                              <li className="text-muted-foreground text-sm">لا يوجد نعاج</li>
+                          )}
+                        </ul>
+                        <div className="flex justify-end mt-4">
+                          <Button size="sm" onClick={() => setIsModalOpen(false)}>
+                            إغلاق
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                )}
+              </ul>
+              <div className="flex justify-end mt-4">
+                <Button size="sm" onClick={() => setIsModalOpen(false)}>
+                  إغلاق
+                </Button>
+              </div>
+            </div>
+          </div>
+      )}
+    </div>
   );
 };
 

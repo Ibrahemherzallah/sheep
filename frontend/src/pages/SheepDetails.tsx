@@ -249,6 +249,8 @@ const SheepDetails = () => {
   const daysLeft = latestPregnancy ? Math.ceil((new Date(latestPregnancy.expectedBornDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   const slideBarWidth = 100 - daysLeft / 1.5;
   console.log("newwww latestPregnancy is : " , latestPregnancy)
+  console.log("newwww previousPregnancy is : " , previousPregnancy)
+
   console.log("newwww daysLeft is : " , daysLeft)
 
   console.log("The nextTask si : " , nextTask);
@@ -346,104 +348,87 @@ console.log("sheep.status : " , sheep.medicalStatus);
                 </Card>
             )}
 
-            { latestPregnancy  && (
 
-              <Card dir={'rtl'}>
-                <div className="flex items-center justify-between">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-medium">إنتاج الحليب</CardTitle>
-                  </CardHeader>
-                  {
-                      latestPregnancy.bornDate && latestPregnancy.milkAmount === 0 && (
-                          <Button style={{margin: '1rem'}} onClick={() => setMilkAmountModal(true)}>
-                            إدخال انتاج الحليب
-                          </Button>
-                      )
-                  }
-                </div>
-                {
-                  sheep.isPregnant ? (
-                          previousPregnancy ? <CardContent className="pt-4">
-                                    <div className="flex justify-between">
-                                      <div>
-                                        <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعدد اخر عملية ولادة</p>
-                                        <div className="flex items-end">
-                                          <span className="text-2xl font-bold">{ previousPregnancy?.milkAmount }</span>
-                                          <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
-                                        </div>
-                                      </div>
-                                      <div>
-                                      <p>تاريخ البداية</p>
-                                        <p className="text-xs text-muted-foreground">
-                                          {
-                                            previousPregnancy?.startMilkDate ? (
+            {latestPregnancy ? (
+                <Card dir="rtl">
+                  <div className="flex items-center justify-between">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg font-medium">إنتاج الحليب</CardTitle>
+                    </CardHeader>
+                    {latestPregnancy.bornDate && latestPregnancy.milkAmount === 0 && (
+                        <Button style={{ margin: '1rem' }} onClick={() => setMilkAmountModal(true)}>
+                          إدخال انتاج الحليب
+                        </Button>
+                    )}
+                  </div>
 
-                                                      latestPregnancy?.startMilkDate
-                                                        ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0] : ''
-
-                                            ):('غير متوفر')
-                                          }
-                                        </p>
-                                      <p>تاريخ التنشيف</p>
-                                        <p className="text-xs text-muted-foreground">
-                                          {
-                                            previousPregnancy?.endMilkDate ? (
-                                                latestPregnancy?.startMilkDate
-                                                    ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0] : ''
-
-                                            ):('غير متوفر')
-                                          }
-                                        </p>
-                                    </div>
-                                    </div>
-                                  </CardContent>
-                                   : <CardContent className="pt-4">
-                                      <div>
-                                        <p className="text-sm font-medium text-muted-foreground">لا يوجد تسجيلات حليب سابقة</p>
-                                      </div>
-                                    </CardContent>
-
-                  ) :
-                      latestPregnancy.milkAmount === 0 ?
-                          (
-                                  <CardContent className="pt-4">
-                                    <div className="flex justify-between">
-                                      <div>
-                                        <p className="text-sm font-medium text-muted-foreground">قم بإدخال انتاج النعجة للحليب لاخر ولادة</p>
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                          ) :
-                            (
-                                <CardContent className="pt-4">
-                                  <div className="flex justify-between">
-                                    <div>
-                                      <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعدد اخر عملية ولادة</p>
-                                      <div className="flex items-end">
-                                        <span className="text-2xl font-bold">{ latestPregnancy?.milkAmount }</span>
-                                        <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <p>تاريخ البداية</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {latestPregnancy?.endMilkDate
-                                            ? new Date(latestPregnancy?.startMilkDate).toISOString().split('T')[0]
-                                            : 'غير متوفر'}
-                                      </p>
-                                      <p>تاريخ التنشيف</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {latestPregnancy?.endMilkDate
-                                            ? new Date(latestPregnancy?.endMilkDate).toISOString().split('T')[0]
-                                            : 'غير متوفر'}
-                                      </p>
+                  {latestPregnancy.bornDate ? (
+                      latestPregnancy.milkAmount !== 0 ? (
+                          <CardContent className="pt-4">
+                            <div className="flex justify-between">
+                              <div>
+                                <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعد اخر عملية ولادة</p>
+                                <div className="flex items-end">
+                                  <span className="text-2xl font-bold">{latestPregnancy?.milkAmount}</span>
+                                  <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
+                                </div>
+                              </div>
+                              <div>
+                                <p>تاريخ البداية</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {latestPregnancy?.startMilkDate
+                                      ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0]
+                                      : 'غير متوفر'}
+                                </p>
+                                <p>تاريخ التنشيف</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {latestPregnancy?.endMilkDate
+                                      ? new Date(latestPregnancy.endMilkDate).toISOString().split('T')[0]
+                                      : 'غير متوفر'}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                      ) : null
+                  ) : (
+                      (
+                          previousPregnancy ? (
+                              <CardContent className="pt-4">
+                                <div className="flex justify-between">
+                                  <div>
+                                    <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعد اخر عملية ولادة</p>
+                                    <div className="flex items-end">
+                                      <span className="text-2xl font-bold">{previousPregnancy?.milkAmount}</span>
+                                      <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
                                     </div>
                                   </div>
-                                </CardContent>
-                            )
-                }
-              </Card>
+                                  <div>
+                                    <p>تاريخ البداية</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {previousPregnancy?.startMilkDate
+                                          ? new Date(previousPregnancy.startMilkDate).toISOString().split('T')[0]
+                                          : 'غير متوفر'}
+                                    </p>
+                                    <p>تاريخ التنشيف</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {previousPregnancy?.endMilkDate
+                                          ? new Date(previousPregnancy.endMilkDate).toISOString().split('T')[0]
+                                          : 'غير متوفر'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+
+                          ) : null
+                      )
+                  )}
+                </Card>
+            ) : (
+                <CardContent className="pt-4">
+                  <p className="text-sm font-medium text-muted-foreground">لا يوجد تسجيلات حليب سابقة</p>
+                </CardContent>
             )}
+
 
             <Card className="md:col-span-2" dir={'rtl'}>
               <CardHeader className="pb-2">

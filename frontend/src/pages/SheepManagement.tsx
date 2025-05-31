@@ -126,16 +126,14 @@ const SheepManagement = () => {
   const [selectedSheep, setSelectedSheep] = useState<string[]>([]);
   const [selectedSheepGender,setSelectedSheepGender] = useState('');
   const [selectedSheepSource,setSelectedSheepSource] = useState('');
-  const [isSheepPatient,setIsSheepPatient] = useState(false);
-  const [isSheepPregnant,setIsSheepPregnant] = useState(false);
-  const [patient,setPatient] = useState('');
-  const [selectedDrug,setSelectedDrug] = useState('');
   const [allDrugs, setAllDrugs] = useState<Drug[]>([]); // Drug should be your interface type
   const [allSheep, setAllSheep] = useState([]);
   const [pregnantSheep, setPregnantSheep] = useState([]);
   const [nonPregnantSheep, setNonPregnantSheep] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Forms
   const form = useForm<BirthFormData>({
@@ -195,6 +193,8 @@ const SheepManagement = () => {
 
   // Submit Forms
   const handleSubmitBirth = async (data: BirthFormData) => {
+    setIsSubmitting(true); // 🔄 Start loading
+
     const birthsArray = Object.entries(data.birthDetails).map(([sheepId, counts]) => ({
       sheepId,
       numberOfMaleLamb: counts.maleCount,
@@ -206,8 +206,6 @@ const SheepManagement = () => {
       notes: data.notes,
       births: birthsArray,
     };
-
-    console.log("data is:", payload);
 
     try {
       const response = await fetch('http://localhost:3030/api/pregnancies/update-after-birth', {
@@ -240,9 +238,13 @@ const SheepManagement = () => {
         description: error.message || 'تعذر حفظ سجلات الولادة.',
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false); // ✅ End loading
     }
   };
   const handleSubmitPregnant = async (data: PregnantFormData) => {
+    setIsSubmitting(true); // 🔄 Start loading
+
     // Sync selectedSheep from UI state
     data.selectedSheep = selectedSheep;
 
@@ -308,6 +310,8 @@ const SheepManagement = () => {
         description: error.message || "حدث خطأ أثناء حفظ بيانات الحمل.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false); // ✅ End loading
     }
   };
   const handleSubmitSheep = async (data: AddSheepFormData) => {
@@ -385,7 +389,7 @@ const SheepManagement = () => {
     
     form.setValue('selectedSheep', selectedSheep);
   };
-  const [searchTerm, setSearchTerm] = useState('');
+
   const handleSheepToggle = (sheepId: string) => {
     if (selectedSheep.includes(sheepId)) {
       setSelectedSheep(selectedSheep.filter(id => id !== sheepId));
@@ -394,7 +398,8 @@ const SheepManagement = () => {
     }
   };
 
-  console.log("visibleSheep is " , visibleSheep)
+  console.log("searchTerm is " , searchTerm)
+
   useEffect(() => {
     const fetchSheep = async () => {
       try {
@@ -481,7 +486,7 @@ const SheepManagement = () => {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
                 dir={'rtl'}
-                placeholder="ادخل رقم العجة ...."
+                placeholder="ادخل رقم النعجة ...."
                 className="pl-8" value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}/>
           </div>
@@ -558,8 +563,9 @@ const SheepManagement = () => {
                   </div>
 
                   {/* 🐑 Multi-selector */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3 max-h-[500px] overflow-y-auto">
-                    {pregnantSheep.map((sheep) => (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3 max-h-60 overflow-y-auto">
+                    {pregnantSheep.filter(sheep =>
+                        String(sheep.sheepNumber).toLowerCase().includes(searchTerm.toLowerCase())).map((sheep) => (
                         <div key={sheep._id} className="flex items-start space-x-2">
 
                           <div className="grid gap-1.5 w-full">
@@ -628,8 +634,8 @@ const SheepManagement = () => {
                 <Button type="button" variant="outline" onClick={() => {setBirthDialogOpen(false);form.reset();setSelectedSheep([]);}}>
                   الغاء
                 </Button>
-                <Button type="submit" disabled={selectedSheep.length === 0}>
-                  احفظ تسجيلات الولادة
+                <Button type="submit" disabled={selectedSheep.length === 0 || isSubmitting}>
+                  {isSubmitting ? "جاري الحفظ..." : "احفظ تسجيلات الولادة"}
                 </Button>
               </DialogFooter>
             </form>
@@ -673,7 +679,8 @@ const SheepManagement = () => {
                   {/* 🐑 Multi-selector */}
                   <div className="space-y-2">
                     <div className="max-h-60 overflow-y-auto p-2 border rounded-md">
-                      {nonPregnantSheep.map((sheep) => (
+                      {nonPregnantSheep.filter(sheep =>
+                          String(sheep.sheepNumber).toLowerCase().includes(searchTerm.toLowerCase())).map((sheep) => (
                           <div key={sheep._id} className="flex items-center space-x-2 py-2 border-b last:border-0">
                             <Label htmlFor={`sheep-${sheep._id}`} className="flex-grow cursor-pointer">
                               #{sheep.sheepNumber}
@@ -705,7 +712,7 @@ const SheepManagement = () => {
                   الغاء
                 </Button>
                 <Button type="submit" disabled={selectedSheep.length === 0}>
-                  احفظ تسجيلات الحمل
+                  {isSubmitting ? "جاري الحفظ..." : "احفظ تسجيلات الحمل"}
                 </Button>
               </DialogFooter>
             </form>
