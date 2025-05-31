@@ -247,6 +247,9 @@ const SheepDetails = () => {
   const pregnantSince = latestPregnancy ? new Date(latestPregnancy.pregnantDate).toLocaleDateString() : 'N/A';
   const expectedBirthDate = latestPregnancy ? new Date(latestPregnancy.expectedBornDate).toLocaleDateString() : 'N/A';
   const daysLeft = latestPregnancy ? Math.ceil((new Date(latestPregnancy.expectedBornDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+  const slideBarWidth = 100 - daysLeft / 1.5;
+  console.log("newwww latestPregnancy is : " , latestPregnancy)
+  console.log("newwww daysLeft is : " , daysLeft)
 
   console.log("The nextTask si : " , nextTask);
 console.log("sheep.status : " , sheep.medicalStatus);
@@ -335,7 +338,7 @@ console.log("sheep.status : " , sheep.medicalStatus);
                     </div>
                     <div className="pt-2">
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: `${100 - daysLeft / 1.5}%` }}></div>
+                        <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: `${slideBarWidth < 0 ? 0 : slideBarWidth}%` }}></div>
                       </div>
                       <p className="text-xs text-right mt-1 text-muted-foreground">باقي {daysLeft} يوم للولادة</p>
                     </div>
@@ -372,15 +375,24 @@ console.log("sheep.status : " , sheep.medicalStatus);
                                       <div>
                                       <p>تاريخ البداية</p>
                                         <p className="text-xs text-muted-foreground">
-                                          {previousPregnancy?.startMilkDate
-                                              ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0]
-                                              : 'غير متوفر'}
+                                          {
+                                            previousPregnancy?.startMilkDate ? (
+
+                                                      latestPregnancy?.startMilkDate
+                                                        ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0] : ''
+
+                                            ):('غير متوفر')
+                                          }
                                         </p>
                                       <p>تاريخ التنشيف</p>
                                         <p className="text-xs text-muted-foreground">
-                                          {previousPregnancy?.endMilkDate
-                                              ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0]
-                                              : 'غير متوفر'}
+                                          {
+                                            previousPregnancy?.endMilkDate ? (
+                                                latestPregnancy?.startMilkDate
+                                                    ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0] : ''
+
+                                            ):('غير متوفر')
+                                          }
                                         </p>
                                     </div>
                                     </div>
@@ -416,15 +428,16 @@ console.log("sheep.status : " , sheep.medicalStatus);
                                       <p>تاريخ البداية</p>
                                       <p className="text-xs text-muted-foreground">
                                         {latestPregnancy?.endMilkDate
-                                            ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0]
+                                            ? new Date(latestPregnancy?.startMilkDate).toISOString().split('T')[0]
                                             : 'غير متوفر'}
                                       </p>
                                       <p>تاريخ التنشيف</p>
                                       <p className="text-xs text-muted-foreground">
                                         {latestPregnancy?.endMilkDate
-                                            ? new Date(latestPregnancy.endMilkDate).toISOString().split('T')[0]
+                                            ? new Date(latestPregnancy?.endMilkDate).toISOString().split('T')[0]
                                             : 'غير متوفر'}
-                                      </p>                                    </div>
+                                      </p>
+                                    </div>
                                   </div>
                                 </CardContent>
                             )
