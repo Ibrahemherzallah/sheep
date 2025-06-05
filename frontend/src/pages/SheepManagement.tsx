@@ -1,111 +1,110 @@
-
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Baby, 
-  Calendar, 
-  Download, 
-  Filter, 
-  Plus, 
-  Search,
-  Users
-} from 'lucide-react';
-import { 
-  Button, 
-  Input,
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  Checkbox,
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/ui';
+import {Baby, Calendar, Download, Filter, Plus, Search, Users} from 'lucide-react';
+import { GiSheep } from 'react-icons/gi';
+import {Button, Input, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Checkbox, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Label,} from '@/components/ui';
 import { toast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
+import {is} from "date-fns/locale";
+import * as React from "react";
+import {Combobox} from "@/components/ui/combobox.tsx";
 
-// Mock data
-const sheepData = [
-  { id: '1001', number: '1001', status: 'healthy', sex: 'female', origin: 'farm-produced', birthDate: '2023-01-15', isPregnant: true },
-  { id: '1002', number: '1002', status: 'healthy', sex: 'female', origin: 'farm-produced', birthDate: '2023-02-10', isPregnant: false },
-  { id: '1003', number: '1003', status: 'sick', sex: 'male', origin: 'bought', birthDate: '2023-01-05', isPregnant: false },
-  { id: '1004', number: '1004', status: 'giving-birth-soon', sex: 'female', origin: 'bought', birthDate: '2022-11-20', isPregnant: true },
-  { id: '1005', number: '1005', status: 'healthy', sex: 'male', origin: 'farm-produced', birthDate: '2022-12-05', isPregnant: false },
-  { id: '1006', number: '1006', status: 'healthy', sex: 'female', origin: 'bought', birthDate: '2023-03-14', isPregnant: false },
-];
+
+const sheepGender = [
+  {id:'1', gender:'ذكر'},
+  {id:'2', gender:'أنثى'},
+]
+
+const sheepSource = [
+  {id:'1', source:'شراء'},
+  {id:'2', source:'إنتاج المزرعة'},
+]
+
 
 // Types for the birth record form
 interface BirthFormData {
   selectedSheep: string[];
-  birthDetails: Record<string, { maleCount: number, femaleCount: number }>;
-  birthDate: string;
+  birthDetails: Record<string, { maleCount: number, femaleCount: number }>;birthDate: string;notes: string;
+}
+interface PregnantFormData {
+  selectedSheep: string[];
+  pregnantDuration: number;
+  pregnantDate: string;
+  expectedBornDate: string;
+  bornDate: string;
+  notes: string;
+}
+interface AddSheepFormData {
+  sheepNumber: number;
+  sheepGender: string;
+  isPregnant: boolean;
+  isPatient: boolean;
+  source: string;
+  status: string;
+  sellPrice: number;
+  patientName: string;
+  drug: string;
+  order: number;
+  pregnantDate: string;
+  expectedBornDate: string;
+  patientDate: string;
+  pregnantDuration: number;
+  notes: string;
+}
+interface Drug {
+  _id: string;
+  name: string;
+  patientTakeFor: string;
   notes: string;
 }
 
-const SheepCard = ({ sheep }: { sheep: typeof sheepData[0] }) => {
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'healthy':
-        return <span className="sheep-status-healthy">Healthy</span>;
-      case 'sick':
-        return <span className="sheep-status-alert">Sick</span>;
-      case 'giving-birth-soon':
-        return <span className="sheep-status-attention">Birth Soon</span>;
-      default:
-        return <span className="sheep-status-healthy">Healthy</span>;
-    }
-  };
+
+const SheepCard = ({ sheep }: { sheep: any }) => {
 
   return (
-    <div className="sheep-card">
+    <div className="sheep-card" dir="rtl">
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-bold text-lg">#{sheep.number}</h3>
-          <div>
-            {getStatusBadge(sheep.status)}
-            {sheep.isPregnant && <span className="sheep-status-pregnant ml-2">Pregnant</span>}
-          </div>
+          <h3 className="font-bold text-lg">#{sheep.sheepNumber}</h3>
         </div>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Sex:</span>
-            <span className="font-medium">{sheep.sex === 'male' ? 'Male' : 'Female'}</span>
+            <span className="text-muted-foreground">الجنس :</span>
+            <span className="font-medium">{sheep.sheepGender}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Origin:</span>
-            <span className="font-medium">{sheep.origin === 'farm-produced' ? 'Farm Produced' : 'Bought'}</span>
+            <span className="text-muted-foreground">المصدر :</span>
+            <span className="font-medium">{sheep.origin === 'farm-produced' ? 'إنتاج المزرعة' : 'شراء'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Birth Date:</span>
-            <span className="font-medium">{sheep.birthDate}</span>
+            <span className="text-muted-foreground">تاريخ الإدخال :</span>
+            <span className="font-medium">
+              {new Date(sheep.createdAt).toLocaleDateString('ar-EG')} {/* or 'en-US' */}
+            </span>
           </div>
-          {sheep.isPregnant && (
-            <div className="flex items-center gap-1 mt-2 text-farm-blue-700">
-              <Baby size={16} />
-              <span className="text-xs font-medium">Expected birth in 23 days</span>
-            </div>
-          )}
+            { sheep.isPregnant && sheep.pregnantCases.length > 0 && (() =>
+              {
+                  const lastPregnancy = sheep.pregnantCases[sheep.pregnantCases.length - 1];
+                  const expectedDate = new Date(lastPregnancy.expectedBornDate);
+                  const today = new Date();
+                  const timeDiff = expectedDate.getTime() - today.getTime();
+                  const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+                  return (
+                      <div className="flex items-center gap-1 mt-2 text-farm-blue-700">
+                        <Baby size={16} />
+                        <span className="text-xs font-medium">
+                          متوقع أن تلد خلال {daysRemaining > 0 ? `${daysRemaining} يوم` : 'اليوم أو قريبا'}
+                        </span>
+                      </div>
+                );
+              })()
+            }
         </div>
       </div>
       <div className="border-t p-3 bg-muted/30 flex justify-between">
         <Button variant="ghost" size="sm" asChild>
-          <Link to={`/sheep/${sheep.id}`}>View Details</Link>
+          <Link to={`/sheep/${sheep._id}`}>رؤوية التفاصيل</Link>
         </Button>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -117,55 +116,258 @@ const SheepCard = ({ sheep }: { sheep: typeof sheepData[0] }) => {
   );
 };
 
+
 const SheepManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [addSheepDialog,setAddSheepDialog] = useState(false);
   const [birthDialogOpen, setBirthDialogOpen] = useState(false);
+  const [pregnantDialogOpen, setPregnantDialogOpen] = useState(false);
   const [selectedSheep, setSelectedSheep] = useState<string[]>([]);
-  
+  const [selectedSheepGender,setSelectedSheepGender] = useState('');
+  const [selectedSheepSource,setSelectedSheepSource] = useState('');
+  const [isSheepPatient,setIsSheepPatient] = useState(false);
+  const [isSheepPregnant,setIsSheepPregnant] = useState(false);
+  const [patient,setPatient] = useState('');
+  const [selectedDrug,setSelectedDrug] = useState('');
+  const [allDrugs, setAllDrugs] = useState<Drug[]>([]); // Drug should be your interface type
+  const [allSheep, setAllSheep] = useState([]);
+  const [pregnantSheep, setPregnantSheep] = useState([]);
+  const [nonPregnantSheep, setNonPregnantSheep] = useState([]);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+
+  // Forms
   const form = useForm<BirthFormData>({
     defaultValues: {
       selectedSheep: [],
       birthDetails: {},
       birthDate: new Date().toISOString().split('T')[0],
-      notes: '',
+      notes: ''
+    }
+  });
+  const pregnantForm = useForm<PregnantFormData>({
+    defaultValues: {
+      selectedSheep: [],
+      pregnantDuration: 0,
+      pregnantDate: new Date().toISOString().split('T')[0],
+      expectedBornDate: new Date().toISOString().split('T')[0],
+      bornDate: undefined,
+      notes: ''
+    }
+  })
+  const addSheepForm = useForm<AddSheepFormData>({
+    defaultValues: {
+      sheepNumber: 0,
+      sheepGender: '',
+      isPregnant: false,
+      isPatient: false,
+      source: '',
+      status: '',
+      sellPrice: 0,
+      order: 1,
+      patientName: '',
+      drug:'',
+      pregnantDuration:0 ,
+      pregnantDate: new Date().toISOString().split('T')[0],
+      expectedBornDate: new Date().toISOString().split('T')[0],
+      patientDate: new Date().toISOString().split('T')[0],
+      notes: ''
     },
   });
-
-  // Filter for female sheep that could give birth
-  const femaleSheep = sheepData.filter(sheep => sheep.sex === 'female');
-  
-  const filteredSheep = sheepData.filter(sheep => {
+  const sheepNumber = addSheepForm.watch("sheepNumber");
+  //methods
+  const filteredSheep = allSheep.filter(sheep => {
     if (activeTab === 'pregnant' && !sheep.isPregnant) return false;
-    if (activeTab === 'male' && sheep.sex !== 'male') return false;
-    if (activeTab === 'female' && sheep.sex !== 'female') return false;
-    if (activeTab === 'sick' && sheep.status !== 'sick') return false;
-    
-    if (searchQuery) {
-      return sheep.number.includes(searchQuery);
-    }
-    
+    if (activeTab === 'male' && sheep.sheepGender !== 'ذكر') return false;
+    if (activeTab === 'female' && sheep.sheepGender !== 'أنثى') return false;
+    if (activeTab === 'sick' && !sheep.isPatient) return false;
+    if (statusFilter === 'sells' && !sheep.status === 'مباع') return false;
+    if (statusFilter === 'died' && !sheep.status === 'نفوق') return false;
     return true;
   });
+  const dropdownSheep = filteredSheep.filter(sheep =>
+    statusFilter === 'sells' ? sheep.status === 'مباعة'  : statusFilter === 'died' ? sheep.status ===  'نافقة' : sheep
+  )
+  const visibleSheep = dropdownSheep.filter(sheep =>
+      sheep.sheepNumber?.toString().includes(searchQuery.trim())
+  );
 
-  const handleSubmitBirth = (data: BirthFormData) => {
-    console.log({
-      selectedSheep: data.selectedSheep,
-      birthDetails: data.birthDetails,
-      birthDate: data.birthDate,
-      notes: data.notes
-    });
-    
-    toast({
-      title: "Birth records added",
-      description: `${data.selectedSheep.length} birth records have been successfully added.`
-    });
-    
-    setBirthDialogOpen(false);
-    form.reset();
-    setSelectedSheep([]);
+  // Submit Forms
+  const handleSubmitBirth = async (data: BirthFormData) => {
+    const birthsArray = Object.entries(data.birthDetails).map(([sheepId, counts]) => ({
+      sheepId,
+      numberOfMaleLamb: counts.maleCount,
+      numberOfFemaleLamb: counts.femaleCount,
+    }));
+
+    const payload = {
+      bornDate: data.birthDate,
+      notes: data.notes,
+      births: birthsArray,
+    };
+
+    console.log("data is:", payload);
+
+    try {
+      const response = await fetch('http://localhost:3030/api/pregnancies/update-after-birth', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Something went wrong');
+      }
+
+      toast({
+        title: 'تم تحديث السجلات بنجاح',
+        description: `${selectedSheep.length} سجلات ولادة تم تسجيلها.`,
+      });
+
+      setBirthDialogOpen(false);
+      form.reset();
+      setSelectedSheep([]);
+
+    } catch (error: any) {
+      console.error('Failed to submit birth data:', error);
+      toast({
+        title: 'حدث خطأ',
+        description: error.message || 'تعذر حفظ سجلات الولادة.',
+        variant: 'destructive',
+      });
+    }
   };
+  const handleSubmitPregnant = async (data: PregnantFormData) => {
+    // Sync selectedSheep from UI state
+    data.selectedSheep = selectedSheep;
 
+    // Calculate dates
+    let pregnantDate = '';
+    let expectedBornDate = '';
+
+    if (data.pregnantDuration || data.pregnantDuration === 0) {
+      const today = new Date();
+
+      // Subtract duration
+      const calculatedPregnantDate = new Date(today);
+      calculatedPregnantDate.setDate(today.getDate() - data.pregnantDuration);
+
+      // Add 150 days to get expected birth date
+      const calculatedExpectedBornDate = new Date(calculatedPregnantDate);
+      calculatedExpectedBornDate.setDate(calculatedPregnantDate.getDate() + 150);
+
+      pregnantDate = calculatedPregnantDate.toISOString();
+      expectedBornDate = calculatedExpectedBornDate.toISOString();
+    }
+
+    const requestData = {
+      sheepIds: data.selectedSheep,
+      pregnantDate,
+      expectedBornDate,
+      notes: data.notes
+    };
+
+    console.log("📤 Request Data:", requestData);
+
+    try {
+      const response = await fetch('http://localhost:3030/api/pregnancies/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'فشل في إرسال بيانات الحمل');
+      }
+
+      console.log("✅ Created pregnancies:", result);
+
+      toast({
+        title: "تم تسجيل الحمل",
+        description: "تمت إضافة سجلات الحمل بنجاح.",
+      });
+
+      // Reset form & state
+      pregnantForm.reset();
+      setSelectedSheep([]);
+      setPregnantDialogOpen(false);
+
+    } catch (error: any) {
+      console.error("❌ Error submitting pregnancy:", error);
+      toast({
+        title: "خطأ أثناء التسجيل",
+        description: error.message || "حدث خطأ أثناء حفظ بيانات الحمل.",
+        variant: "destructive"
+      });
+    }
+  };
+  const handleSubmitSheep = async (data: AddSheepFormData) => {
+    const requestData = { ...data };
+    if (requestData.isPregnant && requestData.pregnantDuration) {
+      const today = new Date();
+
+      // Calculate pregnantDate
+      const pregnantDate = new Date(today);
+      pregnantDate.setDate(today.getDate() - requestData.pregnantDuration);
+
+      // Calculate expectedBornDate
+      const expectedBornDate = new Date(pregnantDate);
+      expectedBornDate.setDate(pregnantDate.getDate() + 150);
+
+      // Add to requestData in ISO format (or as needed by backend)
+      requestData.pregnantDate = pregnantDate.toISOString();
+      requestData.expectedBornDate = expectedBornDate.toISOString();
+    }
+    // ✅ Ensure `order` is explicitly added if it's not coming from form
+    requestData.order = 1;
+
+    console.log("The requestData is:", requestData);
+
+
+    try {
+      const response = await fetch('http://localhost:3030/api/sheep', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const result = await response.json(); // read response body
+
+      if (!response.ok) {
+        // Display backend error message if available
+        throw new Error(result.error || 'فشل في إرسال البيانات');
+      }
+
+      console.log('تمت الإضافة بنجاح:', result);
+
+      toast({
+        title: 'النعجة أضيفت',
+        description: 'تم إضافة النعجة بنجاح.',
+      });
+
+      setAddSheepDialog(false);
+      addSheepForm.reset();
+    } catch (error: any) {
+      console.error('خطأ في الإرسال:', error);
+
+      toast({
+        title: 'حدث خطأ',
+        description: error.message || 'لم يتم إضافة النعجة. حاول مرة أخرى.',
+        variant: 'destructive',
+      });
+    }
+  };
   const handleSheepSelection = (sheepId: string, checked: boolean) => {
     if (checked) {
       setSelectedSheep(prev => [...prev, sheepId]);
@@ -183,25 +385,82 @@ const SheepManagement = () => {
     
     form.setValue('selectedSheep', selectedSheep);
   };
+  const [searchTerm, setSearchTerm] = useState('');
+  const handleSheepToggle = (sheepId: string) => {
+    if (selectedSheep.includes(sheepId)) {
+      setSelectedSheep(selectedSheep.filter(id => id !== sheepId));
+    } else {
+      setSelectedSheep([...selectedSheep, sheepId]);
+    }
+  };
 
+  console.log("visibleSheep is " , visibleSheep)
+  useEffect(() => {
+    const fetchSheep = async () => {
+      try {
+        const response = await fetch('http://localhost:3030/api/sheep');
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'فشل في جلب البيانات');
+        }
+
+        console.log('تم جلب النعاج بنجاح:', result);
+
+        setAllSheep(result); // full list
+
+        const pregnant = result.filter((sheep: any) => sheep.isPregnant === true && sheep.status !== 'نافقة');
+        const nonPregnant = result.filter((sheep: any) => sheep.isPregnant === false && sheep.sheepGender === 'أنثى' && sheep.status !== 'نافقة');
+
+        setPregnantSheep(pregnant);
+        setNonPregnantSheep(nonPregnant);
+
+      } catch (error: any) {
+        console.error('فشل في جلب النعاج:', error);
+      }finally {
+        setLoading(false);
+      }
+    };
+    const fetchDrug = async () => {
+      try {
+        const response = await fetch('http://localhost:3030/api/supplement/drug');
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'فشل في جلب البيانات');
+        }
+
+        console.log('تم جلب الأدوية بنجاح:', result);
+
+        setAllDrugs(result);
+
+      } catch (error: any) {
+        console.error('فشل في جلب الأدوية:', error);
+      }
+    };
+
+    fetchSheep();
+    fetchDrug();
+  }, []);
+  if (loading) {
+    return <div className="p-6 text-center">جارٍ تحميل البيانات...</div>;
+  }
   return (
     <div className="flex-1 space-y-6 p-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Sheep Management</h1>
+        <h1 className="text-2xl font-bold tracking-tight">إدارة الأغنام</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-1">
-            <Download size={18} />
-            <span>Export</span>
+          <Button onClick={() => setPregnantDialogOpen(true)} variant="outline" className="gap-1">
+            <GiSheep className="mr-1" />
+            <span>إضافة حمل</span>
           </Button>
           <Button onClick={() => setBirthDialogOpen(true)} variant="outline" className="gap-1">
             <Baby size={18} />
-            <span>Add Born</span>
+            <span>إضافة ولادة</span>
           </Button>
-          <Button asChild>
-            <Link to="/sheep/new" className="flex items-center gap-1">
+          <Button onClick={() => setAddSheepDialog(true)}>
               <Plus size={18} />
-              <span>Add Sheep</span>
-            </Link>
+                <span>إضافة أغنام</span>
           </Button>
         </div>
       </div>
@@ -209,11 +468,11 @@ const SheepManagement = () => {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
           <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="pregnant">Pregnant</TabsTrigger>
-            <TabsTrigger value="male">Male</TabsTrigger>
-            <TabsTrigger value="female">Female</TabsTrigger>
-            <TabsTrigger value="sick">Sick</TabsTrigger>
+            <TabsTrigger value="all">الكل</TabsTrigger>
+            <TabsTrigger value="pregnant">الحوامل</TabsTrigger>
+            <TabsTrigger value="male">الذكور</TabsTrigger>
+            <TabsTrigger value="female">الاناث</TabsTrigger>
+            <TabsTrigger value="sick">المرضى</TabsTrigger>
           </TabsList>
         </Tabs>
         
@@ -221,35 +480,33 @@ const SheepManagement = () => {
           <div className="relative flex-grow">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by ID..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+                dir={'rtl'}
+                placeholder="ادخل رقم العجة ...."
+                className="pl-8" value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}/>
           </div>
           <Button variant="outline" size="icon" className="flex-shrink-0">
             <Filter size={18} />
           </Button>
-          <Select defaultValue="newest">
+          <Select defaultValue="all" dir={'rtl'} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="newest">Newest</SelectItem>
-                <SelectItem value="oldest">Oldest</SelectItem>
-                <SelectItem value="id-asc">ID (Asc)</SelectItem>
-                <SelectItem value="id-desc">ID (Desc)</SelectItem>
+                <SelectItem value="all">الكل</SelectItem>
+                <SelectItem value="sells">المبيوعات</SelectItem>
+                <SelectItem value="died">النفوق</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
         </div>
       </div>
-      
-      {filteredSheep.length > 0 ? (
+      {
+        visibleSheep.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredSheep.map((sheep) => (
-            <SheepCard key={sheep.id} sheep={sheep} />
+          {visibleSheep.filter(sheep => sheep._id).map((sheep) => (
+            <SheepCard key={sheep._id} sheep={sheep} />
           ))}
         </div>
       ) : (
@@ -261,14 +518,7 @@ const SheepManagement = () => {
           <p className="text-muted-foreground mt-2">
             We couldn't find any sheep matching your search criteria.
           </p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => {
-              setSearchQuery('');
-              setActiveTab('all');
-            }}
-          >
+          <Button variant="outline" className="mt-4" onClick={() => {setSearchQuery('');setActiveTab('all');}}>
             Reset filters
           </Button>
         </div>
@@ -276,25 +526,22 @@ const SheepManagement = () => {
 
       {/* Add Birth Dialog */}
       <Dialog open={birthDialogOpen} onOpenChange={setBirthDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Record New Births</DialogTitle>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign: "end"}}>
+            <DialogTitle>تسجيل ولادات جديدة</DialogTitle>
             <DialogDescription>
-              Select sheep that have given birth and record the number of offspring.
+              حدد الأغنام التي سوف تلد وحدد عدد المواليد
             </DialogDescription>
           </DialogHeader>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmitBirth)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(handleSubmitBirth)} className="space-y-4" dir={'rtl'}>
               <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
-                <FormField
-                  control={form.control}
-                  name="birthDate"
-                  render={({ field }) => (
+                <FormField control={form.control} name="birthDate" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Birth Date</FormLabel>
+                      <FormLabel>تاريخ الميلاد</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" {...field} dir={'rtl'}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -304,66 +551,72 @@ const SheepManagement = () => {
                 <div>
                   <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
                     <Users size={16} />
-                    Select Mother Sheep
+                    حدد الأغنام التي سوف تلد
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3">
-                    {femaleSheep.map((sheep) => (
-                      <div key={sheep.id} className="flex items-start space-x-2">
-                        <Checkbox 
-                          id={`sheep-${sheep.id}`} 
-                          checked={selectedSheep.includes(sheep.id)}
-                          onCheckedChange={(checked) => handleSheepSelection(sheep.id, checked === true)}
-                        />
-                        <div className="grid gap-1.5 w-full">
-                          <label
-                            htmlFor={`sheep-${sheep.id}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                          >
-                            #{sheep.number}
-                          </label>
-                          
-                          {selectedSheep.includes(sheep.id) && (
-                            <div className="flex items-center gap-3 mt-1">
-                              <div className="flex-1">
-                                <label className="text-xs text-muted-foreground">Males</label>
-                                <Input 
-                                  type="number" 
-                                  min="0"
-                                  {...form.register(`birthDetails.${sheep.id}.maleCount`, { 
-                                    valueAsNumber: true,
-                                    min: 0 
-                                  })}
-                                  className="h-8"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <label className="text-xs text-muted-foreground">Females</label>
-                                <Input 
-                                  type="number" 
-                                  min="0"
-                                  {...form.register(`birthDetails.${sheep.id}.femaleCount`, { 
-                                    valueAsNumber: true,
-                                    min: 0 
-                                  })}
-                                  className="h-8"
-                                />
-                              </div>
-                            </div>
-                          )}
+                  <div className="mb-3">
+                    <Input type="text" placeholder="ادخل رقم النعجة" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full md:w-1/2"/>
+                  </div>
+
+                  {/* 🐑 Multi-selector */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3 max-h-[500px] overflow-y-auto">
+                    {pregnantSheep.map((sheep) => (
+                        <div key={sheep._id} className="flex items-start space-x-2">
+
+                          <div className="grid gap-1.5 w-full">
+                            <label htmlFor={`sheep-${sheep._id}`} className="text-sm font-medium leading-none cursor-pointer">
+                              {sheep.sheepNumber}#
+                            </label>
+                            {selectedSheep.includes(sheep._id) && (
+                                <div className="flex items-center gap-3 mt-1">
+                                  <div className="flex-1">
+                                    <label className="text-xs text-muted-foreground">Males</label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        {...form.register(`birthDetails.${sheep._id}.maleCount`, {
+                                          valueAsNumber: true,
+                                          min: 0
+                                        })}
+                                        className="h-8"
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <label className="text-xs text-muted-foreground">Females</label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        {...form.register(`birthDetails.${sheep._id}.femaleCount`, {
+                                          valueAsNumber: true,
+                                          min: 0
+                                        })}
+                                        className="h-8"
+                                    />
+                                  </div>
+
+                                </div>
+                            )}
+                          </div>
+                          <Checkbox
+                              id={`sheep-${sheep._id}`}
+                              checked={selectedSheep.includes(sheep._id)}
+                              onCheckedChange={(checked) => handleSheepSelection(sheep._id, checked === true)}
+                          />
                         </div>
-                      </div>
                     ))}
+
+                    {pregnantSheep.length === 0 && (
+                        <p className="text-sm text-muted-foreground col-span-full">No sheep found with that number.</p>
+                    )}
                   </div>
                 </div>
-                
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
+                <div className="text-sm text-muted-foreground mt-1">
+                  {selectedSheep.length} الأغنام المحددة
+                </div>
+                <FormField control={form.control} name="notes" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes</FormLabel>
+                      <FormLabel>ملاحظات</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Any additional notes..." />
+                        <Input {...field} placeholder="أي ملاحظات إضافية .." />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -372,23 +625,290 @@ const SheepManagement = () => {
               </div>
               
               <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    setBirthDialogOpen(false);
-                    form.reset();
-                    setSelectedSheep([]);
-                  }}
-                >
-                  Cancel
+                <Button type="button" variant="outline" onClick={() => {setBirthDialogOpen(false);form.reset();setSelectedSheep([]);}}>
+                  الغاء
                 </Button>
-                <Button 
-                  type="submit"
-                  disabled={selectedSheep.length === 0}
-                >
-                  Save Birth Records
+                <Button type="submit" disabled={selectedSheep.length === 0}>
+                  احفظ تسجيلات الولادة
                 </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Pregnant Dialog */}
+      <Dialog open={pregnantDialogOpen} onOpenChange={setPregnantDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign: "end"}}>
+            <DialogTitle>تسجيل حوامل جديدة</DialogTitle>
+            <DialogDescription>
+              حدد الأغنام الحاملة
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...pregnantForm}>
+            <form onSubmit={pregnantForm.handleSubmit(handleSubmitPregnant)} className="space-y-4" dir={'rtl'}>
+              <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
+                <FormField control={pregnantForm.control} name="pregnantDuration" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>مدة الحمل</FormLabel>
+                      <FormControl>
+                        <Input type="text" placeholder={"كم يوم وهي النعجة حامل ؟"} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+                <div>
+                  <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <Users size={16} />
+                    حدد الأغنام الحامل
+                  </h3>
+                  <div className="mb-3">
+                    <Input type="text" placeholder="ابحث عن رقم النعجة" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full md:w-1/2"/>
+                  </div>
+
+                  {/* 🐑 Multi-selector */}
+                  <div className="space-y-2">
+                    <div className="max-h-60 overflow-y-auto p-2 border rounded-md">
+                      {nonPregnantSheep.map((sheep) => (
+                          <div key={sheep._id} className="flex items-center space-x-2 py-2 border-b last:border-0">
+                            <Label htmlFor={`sheep-${sheep._id}`} className="flex-grow cursor-pointer">
+                              #{sheep.sheepNumber}
+                            </Label>
+                            <Checkbox id={`sheep-${sheep._id}`} checked={selectedSheep.includes(sheep._id)} onCheckedChange={() => handleSheepToggle(sheep._id)}/>
+                          </div>
+                      ))}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {selectedSheep.length} الأغنام المحددة
+                    </div>
+                  </div>
+                </div>
+
+                <FormField control={pregnantForm.control} name="notes" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>الملاحظات</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder=" أي ملاحظات اضافية ..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => {setBirthDialogOpen(false);form.reset();setSelectedSheep([]);}}>
+                  الغاء
+                </Button>
+                <Button type="submit" disabled={selectedSheep.length === 0}>
+                  احفظ تسجيلات الحمل
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Sheep Dialog */}
+      <Dialog open={addSheepDialog} onOpenChange={setAddSheepDialog}>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign: "end"}}>
+            <DialogTitle>إضافة أغنام جديدة</DialogTitle>
+            <DialogDescription>
+              أضف أغنام جديدة للمزرعة
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...addSheepForm} >
+            <form onSubmit={addSheepForm.handleSubmit(handleSubmitSheep)} className="space-y-4"  dir={'rtl'}>
+              <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <FormField control={addSheepForm.control} name="sheepNumber"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>رقم النعجة</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال رقم النعجة الجديدة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                  <div className="space-y-1" style={{width:'45%'}}>
+                    <FormField control={addSheepForm.control} name="sheepGender" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>جنس النعجة</FormLabel>
+                          <Select dir={'rtl'} value={field.value} onValueChange={(value) => {
+                                field.onChange(value);
+                                setSelectedSheepGender(value);
+                              }}>
+                            <SelectTrigger id="sheep-gender">
+                              <SelectValue placeholder="حدد جنس النعجة" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                {sheepGender.map(sheep => (
+                                    <SelectItem key={sheep.id} value={sheep.gender}>
+                                    {sheep.gender}
+                                    </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                    )} />
+                  </div>
+                </div>
+
+                <div className="space-y-1" >
+                  <FormField control={addSheepForm.control} name="source" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>مصدر النعجة</FormLabel>
+                        <Select dir={'rtl'} value={field.value} onValueChange={(value) => {
+                          console.log("value is : " , value);
+                          field.onChange(value);
+                          setSelectedSheepSource(value);
+                        }}>
+                          <SelectTrigger id="sheep-source">
+                            <SelectValue placeholder="حدد مصدر النعجة" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {
+                                sheepSource.map(sheep => (
+                                    <SelectItem key={sheep.id} value={sheep.source}>{sheep.source}</SelectItem>
+                                ))
+                              }
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+
+                        <FormMessage />
+                      </FormItem>
+                  )} />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  {/* هل هي حامل؟ */}
+                  <div style={{ width: '45%' }}>
+                    <FormField
+                        control={addSheepForm.control}
+                        name="isPregnant"
+                        render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="sheep-pregnant"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                                <Label htmlFor="sheep-pregnant" className="cursor-pointer">
+                                  &nbsp; هل هي حامل ؟
+                                </Label>
+                              </div>
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* مدة الحمل */}
+                    {addSheepForm.watch('isPregnant') && (
+                        <FormField
+                            control={addSheepForm.control}
+                            name="pregnantDuration"
+                            render={({ field }) => (
+                                <FormItem className="mt-3">
+                                  <FormControl>
+                                    <Input type="text" placeholder="قم بإدخال مدة الحمل" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                  </div>
+
+                  {/* هل هي مريضة؟ */}
+                  <div style={{ width: '45%' }}>
+                    <FormField
+                        control={addSheepForm.control}
+                        name="isPatient"
+                        render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="sheep-patient"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                                <Label htmlFor="sheep-patient" className="cursor-pointer">
+                                  &nbsp;   هل هي مريضة ؟
+                                </Label>
+                              </div>
+                            </FormItem>
+                        )}
+                    />
+
+                    {addSheepForm.watch('isPatient') && (
+                        <>
+                          {/* المرض */}
+                          <FormField
+                              control={addSheepForm.control}
+                              name="patientName"
+                              render={({ field }) => (
+                                  <FormItem className="mt-3">
+                                    <FormControl>
+                                      <Input placeholder="قم بإدخال المرض المصابة به" {...field} />
+                                    </FormControl>
+                                  </FormItem>
+                              )}
+                          />
+
+                          {/* الدواء */}
+                          <FormField
+                              control={addSheepForm.control}
+                              name="drug"
+                              render={({ field }) => (
+                                  <FormItem className="mt-3">
+                                    <FormLabel>الدواء</FormLabel>
+                                    <Combobox
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        options={allDrugs.map((drug) => ({
+                                          label: drug.name,
+                                          value: drug._id,
+                                        }))}
+                                        placeholder="ابحث واختر الدواء"
+                                        dir="rtl"
+                                    />
+                                  </FormItem>
+                              )}
+                          />
+                        </>
+                    )}
+                  </div>
+                </div>
+                <FormField control={addSheepForm.control} name="notes" render={({ field }) => (
+                    <FormItem >
+                      <FormLabel>الملاحظات</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder=" أي ملاحظات اضافية ..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}/>
+              </div>
+
+              <DialogFooter>
+                <Button type="submit" disabled={!sheepNumber || !selectedSheepGender || !selectedSheepSource}>
+                  إضافة النعجة
+                </Button>
+
+                <Button type="button" variant="outline" onClick={() => {setAddSheepDialog(false);addSheepForm.reset()}}>
+                  الغاء
+                </Button>
+
               </DialogFooter>
             </form>
           </Form>

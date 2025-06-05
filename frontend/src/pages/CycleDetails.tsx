@@ -1,52 +1,38 @@
-
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Calendar, 
-  ArrowLeft,
-  Ear, 
-  FileText, 
-  PlusCircle, 
-  BarChart3, 
-  ListPlus 
-} from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
-} from '@/components/ui/card';
+import {Calendar, ArrowLeft, Ear, FileText, PlusCircle, BarChart3, ListPlus, Syringe, History, Users, Heart} from 'lucide-react';
+import {Card, CardContent, CardHeader, CardTitle, CardDescription} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
-  Table, 
-  TableHeader, 
-  TableBody, 
-  TableHead, 
-  TableRow, 
-  TableCell 
-} from '@/components/ui/table';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
+import {Table, TableHeader, TableBody, TableHead, TableRow, TableCell} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Cycle, WeeklyCycleRecord, Sheep } from '@/types';
+import { WeeklyCycleRecord, Sheep } from '@/types';
+import { useForm } from 'react-hook-form';
+import {toast} from "@/hooks/use-toast.ts";
+import {Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Label, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui";
+import {Combobox} from "@/components/ui/combobox.tsx";
+import * as React from "react";
 
 // Mock data for a specific cycle
 const mockCycle: Cycle = {
   id: "c1",
-  name: "Spring Lambs 2025",
+  name: "دورة شتاء 2025",
   startDate: new Date(2025, 2, 15),
   endDate: undefined,
   sheepIds: ["s1", "s2", "s3", "s4", "s5"],
   initialMaleCount: 3,
   initialFemaleCount: 2,
   status: "active",
-  notes: "This cycle focuses on the spring lamb breeding program. The group consists of young lambs being raised for both milk production and eventual meat stock. Weekly monitoring of feed, milk, and medical treatments is essential for optimal growth.",
+  notes: "تُركز هذه الدورة على برنامج تربية الحملان الربيعي. تتكون المجموعة من حملان صغيرة تُربى لإنتاج الحليب ولحوم الماشية. تُعدّ المراقبة الأسبوعية للأعلاف والحليب والعلاجات الطبية ضرورية لتحقيق نمو مثالي.",
 };
+
+const cycleInjections = [
+  { injectName: 'تسمم غذائي' , doseNum: 1, givenDate: new Date()},
+  { injectName: 'تسمم غذائي' , doseNum: 1, givenDate: new Date()},
+  { injectName: 'تسمم غذائي' , doseNum: 1, givenDate: new Date()},
+  { injectName: 'تسمم غذائي' , doseNum: 1, givenDate: new Date()},
+  { injectName: 'تسمم غذائي' , doseNum: 1, givenDate: new Date()},
+]
 
 // Mock weekly records
 const mockWeeklyRecords: WeeklyCycleRecord[] = [
@@ -58,7 +44,7 @@ const mockWeeklyRecords: WeeklyCycleRecord[] = [
     milkQuantity: 32.8,
     vitaminsGiven: ["B12", "D3"],
     syringesGiven: 5,
-    notes: "First week went well, sheep are adapting to the new schedule",
+    notes: "الأسبوع الأول جيد الأغنام تفاعلت مع النظام الجديد",
   },
   {
     id: "wr2",
@@ -83,346 +69,1068 @@ const mockWeeklyRecords: WeeklyCycleRecord[] = [
 ];
 
 // Mock sheep data
-const mockSheep: Sheep[] = [
-  {
-    id: "s1",
-    sheepNumber: "SH-2023-001",
-    origin: "farm-produced",
-    birthDate: new Date(2023, 5, 15),
-    sex: "female",
-    isPregnant: false,
-    status: "healthy",
-    createdAt: new Date(2023, 5, 15),
-    updatedAt: new Date(2025, 2, 10),
-  },
-  {
-    id: "s2",
-    sheepNumber: "SH-2023-002",
-    origin: "farm-produced",
-    birthDate: new Date(2023, 5, 15),
-    sex: "female",
-    isPregnant: false,
-    status: "healthy",
-    createdAt: new Date(2023, 5, 15),
-    updatedAt: new Date(2025, 2, 10),
-  },
-  {
-    id: "s3",
-    sheepNumber: "SH-2023-005",
-    origin: "bought",
-    birthDate: new Date(2023, 3, 10),
-    sex: "male",
-    isPregnant: false,
-    status: "healthy",
-    createdAt: new Date(2023, 6, 20),
-    updatedAt: new Date(2025, 2, 10),
-  },
-  {
-    id: "s4",
-    sheepNumber: "SH-2023-008",
-    origin: "bought",
-    birthDate: new Date(2023, 3, 12),
-    sex: "male",
-    isPregnant: false,
-    status: "healthy",
-    createdAt: new Date(2023, 6, 20),
-    updatedAt: new Date(2025, 2, 10),
-  },
-  {
-    id: "s5",
-    sheepNumber: "SH-2023-009",
-    origin: "bought",
-    birthDate: new Date(2023, 3, 12),
-    sex: "male",
-    isPregnant: false,
-    status: "healthy",
-    createdAt: new Date(2023, 6, 20),
-    updatedAt: new Date(2025, 2, 10),
-  },
-];
+
+const vitamins = [
+  {id: 1 ,name: 'vitamin B'},
+  {id: 2 ,name: 'vitamin C'},
+  {id: 3 ,name: 'vitamin D'},
+  {id: 4 ,name: 'vitamin S'},
+]
+
+
+interface AddInject {
+  injectId: string;   // selected injection from combobox
+  dose: number;
+  notes: string;
+  date: string;
+}
+interface AddReport {
+  startDate: string;
+  endDate: string;
+  feedAmount: number;
+  milkAmount: number;
+  vitaminAmounts: Record<string, number>;
+  notes: string;
+}
+interface EndCycle {
+  sellNumber: number;
+  diedNumber: number;
+  totalKilos: number;
+  priceOfKilo: number;
+  addToStock: number;
+  endDate: string;
+  notes: string;
+}
+export interface InjectionEntry {
+  injection: string; // ObjectId as string
+  hasRepetition: boolean;
+  appliedDates: string[]; // ISO date strings
+}
+export interface Cycle {
+  _id: string;
+  name: string;
+  number: number;
+  startDate: string; // ISO string
+  endDate?: string;
+  expectedEndDate: string;
+  numOfMale: number;
+  numOfFemale: number;
+  status: string;
+  numOfSell?: number;
+  totalKilos?: number;
+  priceOfKilo?: number;
+  numOfDied?: number;
+  numOfStock?: number;
+  reports: string[]; // ObjectId references
+  notes?: string;
+  injections: InjectionEntry[];
+}
+
+
 
 const CycleDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
-
+  const [addInjectDialog,setAddInjectDialog] = useState(false);
+  const [addReportDialog,setAddReportDialog] = useState(false);
+  const [selectedVitamins, setSelectedVitamins] = useState<number[]>([]);
+  const [useTodayDate, setUseTodayDate] = useState(true);
+  const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
+  const [deleteReportDialog,setDeleteReportDialog] = useState(false);
+  const [endReportDialog,setEndReportDialog] = useState(false);
+  const [cycleData, setCycleData] = useState<Cycle | null>(null);
+  const [allVitamins, setAllVitamins] = useState<number[]>([]);
+  const [allInjections,setAllInjections] = useState([]);
+  const [selectedInjection, setSelectedInjection] = useState("");
+  const [injectionTypes,setInjectionTypes] = useState([]);
+  const [nextTask,setNextTask] = useState([]);
+  const [allReports, setAllReports] = useState([]);
+  const [loading,setLoading] = useState(true);
   // Format date to a readable string
-  const formatDate = (date?: Date) => {
-    if (!date) return 'Ongoing';
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }).format(date);
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB'); // e.g., 26/05/2025
   };
 
-  // Format week date range
-  const formatWeekRange = (startDate: Date) => {
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 6);
-    
-    const startFormatted = startDate.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
-    const endFormatted = endDate.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
-    
-    return `${startFormatted} - ${endFormatted}`;
+
+
+  const form = useForm<AddInject>({
+    defaultValues: {
+      injectId: '',
+      dose: 1,
+      notes: '',
+      date: '',
+    }
+  });
+
+  const reportForm = useForm<AddReport>({
+    defaultValues : {startDate: new Date().toISOString().split('T')[0],endDate: new Date().toISOString().split('T')[0],feedAmount: 0,milkAmount: 0,vitaminAmounts: {},notes: ''}
+  })
+
+  const endCycleForm = useForm<EndCycle>({
+    defaultValues : {sellNumber: 0,diedNumber: 0,totalKilos: 0,priceOfKilo: 0,addToStock: 0,endDate: new Date().toISOString().split('T')[0],notes: ''}
+  })
+
+
+  const handleSubmitInject = async (data: AddInject) => {
+    try {
+      const payload = {
+        cycleId: id,
+        injectionTypeId: selectedInjection,
+        numOfInject: data.dose,
+        injectDate: useTodayDate ? new Date().toISOString() : new Date(dueDate).toISOString(),
+        notes: data.notes,
+      };
+      console.log("The payload us : ", payload);
+      const response = await fetch('http://localhost:3030/api/cycle/cycle-injections', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'فشل في إضافة الحقنة');
+      }
+
+      toast({
+        title: "الحقنة أضيفت",
+        description: `تمت إضافة الحقنة وربطها بالدورة بنجاح`,
+      });
+
+      setAddInjectDialog(false);
+      form.reset();
+    } catch (err: any) {
+      toast({
+        title: "خطأ",
+        description: err.message || "حدث خطأ أثناء الإرسال",
+        variant: "destructive",
+      });
+    }
+  };
+  const handleSubmitReport = async (data: AddReport) => {
+    console.log("data : ",data);
+    try {
+      const vitaminEntries =
+          typeof data.vitaminAmounts === "object" && data.vitaminAmounts !== null
+              ? Object.entries(data.vitaminAmounts)
+              : [];
+
+      const formattedVitamins = vitaminEntries.map(([vitamin, amount]) => ({
+        vitamin,
+        amount: Number(amount),
+      }));
+      // Send the POST request to the backend API
+      const response = await fetch("http://localhost:3030/api/cycle/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cycleId: id,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          numOfFeed: data.feedAmount,
+          numOfMilk: data.milkAmount,
+          vitamins: formattedVitamins
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'فشل في إرسال التقرير');
+      }
+
+      toast({ title: "تم الإضافة", description: "تمت إضافة التقرير بنجاح" });
+      setAddReportDialog(false);
+      reportForm.reset();
+
+    } catch (error: any) {
+      console.error("Failed to submit report:", error);
+      toast({ title: "خطأ", description: error.message || "فشل في إرسال التقرير" });
+    }
+  };
+  const handleSubmitEndCycle = async (data: EndCycle) => {
+    // Use today's date or manually entered date
+    const finalEndDate = useTodayDate
+        ? new Date().toISOString().split("T")[0]
+        : dueDate;
+
+    // Construct request payload
+    const payload = {
+      cycleId: id, // Make sure this is available
+      numOfSell: data.sellNumber,
+      totalKilos: data.totalKilos,
+      priceOfKilo: data.priceOfKilo,
+      numOfDied: data.diedNumber,
+      numOfStock: data.addToStock,
+      endDate: finalEndDate,
+    };
+
+    try {
+      const response = await fetch("http://localhost:3030/api/cycle/cycle-end", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Something went wrong");
+      }
+
+      toast({ description: `تم إنهاء الدورة بنجاح` });
+      setEndReportDialog(false);
+      endCycleForm.reset();
+    } catch (err) {
+      console.error(err);
+      toast({ description: "حدث خطأ أثناء إنهاء الدورة", variant: "destructive" });
+    }
+  };
+  const handleDeleteCycle = async () => {
+    try {
+      const response = await fetch(`http://localhost:3030/api/cycle/${id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Something went wrong');
+      }
+
+      toast({ description: '✅ تم حذف الدورة بنجاح' });
+      setDeleteReportDialog(false);
+      // Optional: refresh data or redirect user
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({ description: '❌ فشل في حذف الدورة' });
+    }
   };
 
-  // Calculate statistics
-  const totalFeed = mockWeeklyRecords.reduce((sum, record) => sum + record.feedQuantity, 0);
-  const totalMilk = mockWeeklyRecords.reduce((sum, record) => sum + record.milkQuantity, 0);
-  const totalSyringes = mockWeeklyRecords.reduce((sum, record) => sum + record.syringesGiven, 0);
-  
-  // Count vitamins
-  const vitaminCounts: Record<string, number> = mockWeeklyRecords.reduce((acc, record) => {
-    record.vitaminsGiven.forEach(vitamin => {
-      acc[vitamin] = (acc[vitamin] || 0) + 1;
-    });
-    return acc;
-  }, {} as Record<string, number>);
 
+  const handleVitaminSelection = (id: number, checked: boolean) => {
+    setSelectedVitamins((prev) =>
+        checked ? [...prev, id] : prev.filter((vid) => vid !== id)
+    );
+  };
+  const watch = reportForm.watch();
+
+// Basic checks
+  const isFeedValid = !!watch.feedAmount && Number(watch.feedAmount) > 0;
+  const isMilkValid = !!watch.milkAmount && Number(watch.milkAmount) > 0;
+
+// Check if every selected vitamin has a non-zero amount
+  const areSelectedVitaminsValid = selectedVitamins.every((vitaminId) => {
+    const amount = watch.vitaminAmounts?.[vitaminId];
+    return amount !== undefined && Number(amount) > 0;
+  });
+
+// Final button state
+  const isFormValid = isFeedValid && isMilkValid && areSelectedVitaminsValid;
+
+
+
+
+
+
+  const totalVitaminAmount = cycleData?.reports?.reduce((sum, report) => {
+    return sum + report.vitamins.reduce((vitaminSum, v) => vitaminSum + (v.amount || 0), 0);
+  }, 0);
+
+  const vitaminTypesSet = new Set(
+      cycleData?.reports?.flatMap(report => report.vitamins.map(v => v.vitamin))
+  );
+
+  const numberOfVitaminTypes = vitaminTypesSet.size;
+
+
+
+  useEffect(() => {
+    const fetchAllInitialData = async () => {
+      try {
+        const [
+          cycleRes,
+          vitaminsRes,
+          injectionsRes,
+          injectionTypesRes,
+          nextTaskRes
+        ] = await Promise.all([
+          fetch(`http://localhost:3030/api/cycle/${id}`),
+          fetch(`http://localhost:3030/api/supplement/vitamins`),
+          fetch(`http://localhost:3030/api/supplement/injections`),
+          fetch(`http://localhost:3030/api/sheep/${id}/injection-history`),
+          fetch(`http://localhost:3030/api/tasks/next-injection-cycle/${id}`)
+        ]);
+
+        const cycleData = await cycleRes.json();
+        const vitaminsData = await vitaminsRes.json();
+        const injectionsData = await injectionsRes.json();
+        const injectionTypesData = await injectionTypesRes.json();
+        const nextTaskData = await nextTaskRes.json();
+
+        setCycleData(cycleData);
+        setAllVitamins(vitaminsData);
+        setAllInjections(injectionsData);
+        setInjectionTypes(injectionTypesData.injectionTypes || []);
+        setNextTask(nextTaskData);
+
+      } catch (err) {
+        console.error("Error loading initial data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllInitialData();
+  }, []);
+  useEffect(() => {
+    if (activeTab === 'weekly') {
+      const fetchReport = async () => {
+        setLoading(true); // start loading before fetch
+        try {
+          const response = await fetch(`http://localhost:3030/api/cycle/reports/${id}`);
+          const data = await response.json();
+          setAllReports(data);
+        } catch (error) {
+          console.error('Failed to fetch reports:', error);
+        } finally {
+          setLoading(false); // stop loading when done
+        }
+      };
+
+      fetchReport();
+    }
+  }, [activeTab, id]);
+
+
+console.log("The cycleData dataa  : ", cycleData);
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <Button 
-        variant="ghost" 
-        className="mb-6 pl-0 flex items-center gap-2"
-        onClick={() => navigate('/cycles')}
-      >
+      <Button variant="ghost" className="mb-6 pl-0 flex items-center gap-2" onClick={() => navigate('/cycles')}>
         <ArrowLeft size={16} />
-        Back to Cycles
+       الرجوع إلى الدورات
       </Button>
       
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">{mockCycle.name}</h1>
-            <Badge variant={mockCycle.status === 'active' ? 'default' : 'secondary'}>
-              {mockCycle.status === 'active' ? 'Active' : 'Completed'}
+            <h1 className="text-3xl font-bold">{cycleData?.name}</h1>
+            <Badge variant={cycleData?.status === 'active' ? 'default' : 'secondary'}>
+              {cycleData?.status}
             </Badge>
           </div>
           <div className="flex items-center gap-4 mt-2 text-muted-foreground">
             <div className="flex items-center gap-1">
               <Calendar size={16} />
-              <span>Started: {formatDate(mockCycle.startDate)}</span>
+              <span>بدأت : {formatDate(cycleData?.startDate)}</span>
             </div>
-            {mockCycle.endDate && (
+            {cycleData?.endDate && (
               <div className="flex items-center gap-1">
                 <Calendar size={16} />
-                <span>Ended: {formatDate(mockCycle.endDate)}</span>
+                <span>إنتهت : {formatDate(cycleData?.endDate)}</span>
               </div>
             )}
           </div>
         </div>
-        
-        <div className="flex gap-3">
-          <Button variant="outline" className="gap-2">
-            <FileText size={16} />
-            <span>Edit Details</span>
-          </Button>
-          {mockCycle.status === 'active' && (
-            <Button className="gap-2">
-              <PlusCircle size={16} />
-              <span>Add Weekly Record</span>
-            </Button>
-          )}
-        </div>
+        {
+          activeTab === 'overview' && (
+                <div className="flex gap-3">
+                  {cycleData?.status === 'نشطة' && (
+                      <Button className="gap-2" onClick={()=> { setAddInjectDialog(true) } }>
+                        <Syringe className="mr-1" size={16} />
+                        <span>إضافة حقنة</span>
+                      </Button>
+                  )}
+                </div>
+            )
+        }
+
       </div>
       
       <Tabs defaultValue="overview" className="mt-6" onValueChange={setActiveTab}>
+
         <TabsList className="mb-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="sheep">Sheep</TabsTrigger>
-          <TabsTrigger value="weekly">Weekly Records</TabsTrigger>
-          {mockCycle.status === 'completed' && (
-            <TabsTrigger value="summary">Cycle Summary</TabsTrigger>
-          )}
+          <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
+          <TabsTrigger value="weekly">التقرير الأسبوعي</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Total Feed</CardDescription>
-                <CardTitle className="text-2xl">{totalFeed.toFixed(1)} kg</CardTitle>
-              </CardHeader>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Total Milk Produced</CardDescription>
-                <CardTitle className="text-2xl">{totalMilk.toFixed(1)} L</CardTitle>
-              </CardHeader>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Sheep Count</CardDescription>
-                <CardTitle className="text-2xl">{mockCycle.initialMaleCount + mockCycle.initialFemaleCount}</CardTitle>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {mockCycle.initialMaleCount} male, {mockCycle.initialFemaleCount} female
+        <TabsContent value="overview" dir={'rtl'}>
+          {loading ? (
+              <div className="text-center py-10">جاري التحميل ...</div>
+          ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>إستهلاك العلف الكلي</CardDescription>
+                      <CardTitle className="text-2xl">
+                        {cycleData?.reports?.reduce((sum, report) => sum + (report.numOfFeed || 0), 0)} kg
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>إستهلاك الحليب الكلي</CardDescription>
+                      <CardTitle className="text-2xl">
+                        {cycleData?.reports?.reduce((sum, report) => sum + (report.numOfMilk || 0), 0)} L
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>عدد الأغنام الكلي</CardDescription>
+                      <CardTitle className="text-2xl">{cycleData?.numOfFemale + cycleData?.numOfMale}</CardTitle>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {cycleData?.numOfMale} male, {cycleData?.numOfFemale} female
+                      </div>
+                    </CardHeader>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardDescription>إستهلاك الفيتامينات الكلي</CardDescription>
+                      <CardTitle> {totalVitaminAmount}</CardTitle>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {numberOfVitaminTypes}  أنواع مختلفة
+                      </div>
+                    </CardHeader>
+                  </Card>
                 </div>
-              </CardHeader>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Medical Injections</CardDescription>
-                <CardTitle className="text-2xl">{totalSyringes}</CardTitle>
-              </CardHeader>
-            </Card>
-          </div>
-          
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Cycle Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{mockCycle.notes || "No notes available for this cycle."}</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Vitamins Administered</CardTitle>
-              <CardDescription>Vitamins given throughout the cycle</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(vitaminCounts).map(([vitamin, count]) => (
-                  <Badge key={vitamin} variant="outline" className="py-1.5">
-                    {vitamin}: {count} times
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="sheep">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle>Sheep in this Cycle</CardTitle>
-              <Button variant="outline" size="sm" className="gap-2">
-                <ListPlus size={16} />
-                <span>Manage Sheep</span>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Sheep ID</TableHead>
-                    <TableHead>Origin</TableHead>
-                    <TableHead>Sex</TableHead>
-                    <TableHead>Birth Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockSheep.map((sheep) => (
-                    <TableRow key={sheep.id}>
-                      <TableCell className="font-medium">{sheep.sheepNumber}</TableCell>
-                      <TableCell className="capitalize">{sheep.origin}</TableCell>
-                      <TableCell className="capitalize">{sheep.sex}</TableCell>
-                      <TableCell>{formatDate(sheep.birthDate)}</TableCell>
-                      <TableCell>
-                        <Badge variant={sheep.status === 'healthy' ? 'default' : 'destructive'}>
-                          {sheep.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" asChild className="gap-1">
-                          <a href={`/sheep/${sheep.id}`}>
-                            <Ear size={16} />
-                            <span>View</span>
-                          </a>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+
+                <div className={cycleData.status === 'نشطة' ? '' : 'flex justify-between' }>
+                  <Card dir={'rtl'} style={{width : cycleData.status === 'نشطة' ? '' : '49%'}} >
+                    <CardHeader className="pb-2">
+                      <CardTitle className="flex items-center gap-2">
+                        <Heart size={18} />
+                        <span>الطعومات</span>
+                      </CardTitle>
+                      <CardDescription style={{fontWeight:'bold'}}>سجل الطعومات الفائتة والقادمة لهذه النعجة</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {cycleData?.injectionCases?.length > 0 ? (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead style={{textAlign:"start"}}>اسم الطعم</TableHead>
+                                <TableHead style={{textAlign:"start"}}>تاريخ الاعطاء</TableHead>
+                                <TableHead style={{textAlign:"start"}}>الجرعة</TableHead>
+                                <TableHead style={{textAlign:"start"}}>الملاحظات</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {injectionTypes.map((type) => {
+                                // Find injection for this cycle with this type
+                                const givenInjection = cycleData?.injectionCases?.find(
+                                    inj => inj.injectionType?._id === type._id || inj.injectionType === type._id
+                                );
+
+                                return (
+                                    <TableRow key={type._id}>
+                                      <TableCell>{type.name}</TableCell>
+                                      <TableCell>
+                                        {givenInjection?.injectDate
+                                            ? new Date(givenInjection.injectDate).toLocaleDateString('en-CA')
+                                            : 'لم يتم إعطاؤه'}
+                                      </TableCell>
+                                      <TableCell>
+                                        {givenInjection?.numOfInject === 1
+                                            ? 'جرعة أولى'
+                                            : givenInjection?.numOfInject === 2
+                                                ? 'جرعة ثانية'
+                                                : '—'}
+                                      </TableCell>
+                                      <TableCell>{givenInjection?.notes || '—'}</TableCell>
+                                    </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                      ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
+                            <p>No medical history available for this sheep.</p>
+                          </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                  {
+                    cycleData.status === 'نشطة' ? (
+                            nextTask &&
+                            <Card className="my-6">
+                              <CardHeader className="pb-2" dir="rtl">
+                                <CardTitle className="text-lg">الحقن القادمة</CardTitle>
+                              </CardHeader>
+                              <CardContent className="pt-4 space-y-4">
+                                {Array.isArray(nextTask) && nextTask.length > 0 ? (
+                                    nextTask.map((task) => (
+                                        <div key={task._id} className="flex justify-between items-center" dir="rtl">
+                                          <div>
+                                            <p className="text-sm font-medium">{task.title}</p>
+                                            <p className="text-muted-foreground">
+                                              خلال {Math.ceil((new Date(task.dueDate) - new Date()) / (1000 * 60 * 60 * 24))} يوم
+                                            </p>
+                                          </div>
+                                          <Button variant="outline" size="sm">الإعطاء</Button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-muted-foreground text-center">لا توجد مهام قادمة</p>
+                                )}
+                              </CardContent>
+                            </Card>              ):
+                        <Card dir={'rtl'} style={{width : cycleData.status === 'نشطة' ? '' : '49%'}} >
+                          <CardHeader className="pb-2">
+                            <CardTitle className="flex items-center gap-2">
+                              <span>مخرجات الدورة </span>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            {
+                              cycleInjections.length > 0 ? (
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead style={{textAlign:"start"}}>مخرجات الدورة</TableHead>
+                                        <TableHead style={{textAlign:"start"}}>العدد</TableHead>
+                                        <TableHead style={{textAlign:"start"}}>عدد الكيلوات</TableHead>
+                                        <TableHead style={{textAlign:"start"}}>سعر الكيلو</TableHead>
+                                        <TableHead style={{textAlign:"start"}}>تاريخ النهاية</TableHead>
+
+
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      <TableRow>
+                                        <TableCell>البيع</TableCell>
+                                        <TableCell>{cycleData?.numOfSell}</TableCell>
+                                        <TableCell>{cycleData?.totalKilos}</TableCell>
+                                        <TableCell>{cycleData?.priceOfKilo}</TableCell>
+                                        <TableCell>{new Date(cycleData?.endDate).toLocaleDateString('en-CA')}</TableCell>
+                                      </TableRow>
+
+                                      <TableRow>
+                                        <TableCell>النفوق</TableCell>
+                                        <TableCell>{cycleData?.numOfDied}</TableCell>
+                                      </TableRow>
+
+                                      <TableRow>
+                                        <TableCell>إضافة للمخزون</TableCell>
+                                        <TableCell>{cycleData?.numOfStock}</TableCell>
+                                      </TableRow>
+                                    </TableBody>
+                                  </Table>
+                              ) : (
+                                  <div className="text-center py-8 text-muted-foreground">
+                                    <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
+                                    <p>No medical history available for this sheep.</p>
+                                  </div>
+                              )}
+                          </CardContent>
+                        </Card>
+                  }
+                </div>
+                <Card className="my-6">
+                  <CardHeader>
+                    <CardTitle>ملاحظات الدورة</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>{mockCycle.notes || "No notes available for this cycle."}</p>
+                  </CardContent>
+                </Card>
+
+
+              </>
+          )}
         </TabsContent>
         
         <TabsContent value="weekly">
           <div className="grid gap-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold">Weekly Records</h3>
-              {mockCycle.status === 'active' && (
-                <Button className="gap-2">
+              <h3 className="text-xl font-semibold opacity-0">Weekly Records</h3>
+              {cycleData?.status === 'نشطة' && (
+                <Button className="gap-2" onClick={()=>{setAddReportDialog(true)}}>
                   <PlusCircle size={16} />
-                  <span>Add Record</span>
+                  <span>إضافة تقرير</span>
                 </Button>
               )}
             </div>
-            
-            {mockWeeklyRecords.map((record) => (
-              <Card key={record.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">Week of {formatWeekRange(record.weekStartDate)}</CardTitle>
-                      <CardDescription>Record #{record.id}</CardDescription>
-                    </div>
-                    <Button variant="outline" size="sm">Edit</Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Feed Quantity</p>
-                      <p className="font-medium">{record.feedQuantity} kg</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Milk Production</p>
-                      <p className="font-medium">{record.milkQuantity} L</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Medical Injections</p>
-                      <p className="font-medium">{record.syringesGiven}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Vitamins Given</p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {record.vitaminsGiven.map(vitamin => (
-                          <Badge key={vitamin} variant="secondary" className="text-xs">
-                            {vitamin}
-                          </Badge>
+            {
+              loading ? (
+                <div className="text-center py-10">جاري التحميل ...</div>
+            ) : (
+                allReports.length > 0 ?
+                  (
+                      <>
+                        {allReports.map((record) => (
+                            <Card key={record.id} dir="rtl">
+                              <CardHeader>
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <CardTitle className="text-lg">
+                                      التقرير {new Date(record.startDate).toLocaleDateString('en-CA', { month: '2-digit', day: '2-digit' })} - {new Date(record.endDate).toLocaleDateString('en-CA', { month: '2-digit', day: '2-digit' })}
+                                    </CardTitle>
+                                    <CardDescription> التقرير رقم {record.order}</CardDescription>
+                                  </div>
+                                </div>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">كمية العلف</p>
+                                    <p className="font-medium">{record.numOfFeed} kg</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">كمية الحليب</p>
+                                    <p className="font-medium">{record.numOfMilk} L</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">الفيتامينات المعطاة</p>
+                                    <div className="flex flex-wrap gap-2 mt-1">
+                                      {record.vitamins.map((vitamin) => (
+                                          <Badge
+                                              key={vitamin.vitamin._id}
+                                              variant="secondary"
+                                              className="text-xs"
+                                          >
+                                            {vitamin.vitamin.vitaminName} - {vitamin.amount}
+                                          </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {record.notes && (
+                                    <div className="mt-4 pt-4 border-t">
+                                      <p className="text-sm text-muted-foreground mb-1">الملاحظات</p>
+                                      <p>{record.notes}</p>
+                                    </div>
+                                )}
+                              </CardContent>
+                            </Card>
                         ))}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {record.notes && (
-                    <div className="mt-4 pt-4 border-t">
-                      <p className="text-sm text-muted-foreground mb-1">Notes</p>
-                      <p>{record.notes}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                      </>
+                  ) :
+                  (
+                      <Card dir="rtl" className="text-center py-10">
+                        <CardHeader>
+                          <CardTitle className="text-lg">لا يوجد تقارير لهذه الدورة</CardTitle>
+                          <CardDescription className="text-muted-foreground mt-2">
+                            لم يتم إضافة أي تقارير بعد. يرجى الرجوع لاحقًا أو إضافة تقرير جديد.
+                          </CardDescription>
+                        </CardHeader>
+                      </Card>
+                  )
+            )}
           </div>
+          {
+            loading ? ''
+              : <div className={'flex gap-2 mt-6'} dir={'rtl'}>
+                <Button className="gap-2" onClick={()=>{setDeleteReportDialog(true)}}>
+                  <span>حذف الدورة</span>
+                </Button>
+                  {
+                    cycleData?.status === 'نشطة' && (
+                          <Button className="gap-2" onClick={()=>{setEndReportDialog(true)}}>
+                            <span>إنهاء الدورة</span>
+                          </Button>
+                      )
+                  }
+
+              </div>
+          }
+
         </TabsContent>
-        
-        <TabsContent value="summary">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Cycle Summary is not available</CardTitle>
-              <CardDescription>This cycle is still active. A summary will be available once the cycle is completed.</CardDescription>
-            </CardHeader>
-          </Card>
-        </TabsContent>
+
       </Tabs>
+      {/*   Add Inject Dialog   */}
+      <Dialog open={addInjectDialog} onOpenChange={setAddInjectDialog}>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign: "end"}}>
+            <DialogTitle>إضافة طعم جديد</DialogTitle>
+            <DialogDescription>
+              أضف طعم جيديد للدورة
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmitInject)} className="space-y-4" dir="rtl">
+              <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
+
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  {/* 🧪 Injection Type */}
+                  <div className="space-y-1" style={{ width: '45%' }}>
+                    <Label htmlFor="injection-type">نوع الطعم</Label>
+                    <Combobox
+                        value={selectedInjection}
+                        onChange={setSelectedInjection}
+                        options={allInjections.map((inj) => ({
+                          label: inj.name,
+                          value: inj._id,
+                        }))}
+                        placeholder="ابحث واختر نوع الطعم"
+                        dir="rtl"
+                    />
+                  </div>
+
+                  {/* 💉 Dose */}
+                  <FormField control={form.control} name="dose" render={({ field }) => (
+                      <FormItem style={{ width: '45%' }}>
+                        <FormLabel>الجرعة</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={1} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )} />
+                </div>
+
+                {/* 📅 Date Selector */}
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id={`use-today-date`}
+                        checked={useTodayDate}
+                        onCheckedChange={() => setUseTodayDate(!useTodayDate)}
+                    />
+                    <Label htmlFor={`use-today-date`} className="flex-grow cursor-pointer">
+                      &nbsp; إستخدام تاريخ اليوم
+                    </Label>
+                  </div>
+
+                  {!useTodayDate && (
+                      <div className="space-y-2">
+                        <Label htmlFor="due-date">تاريخ التطعيم</Label>
+                        <Input
+                            id="due-date"
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                        />
+                      </div>
+                  )}
+                </div>
+
+                {/* 📝 Notes */}
+                <FormField control={form.control} name="notes" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>الملاحظات</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder=" أي ملاحظات إضافية ..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )} />
+              </div>
+
+              <DialogFooter>
+                <Button
+                    type="submit"
+                    disabled={!selectedInjection || (!useTodayDate && !dueDate)}
+                >
+                  إضافة الطعم
+                </Button>
+
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setAddInjectDialog(false);
+                      form.reset();
+                      setSelectedInjection('');
+                      setDueDate('');
+                      setUseTodayDate(true);
+                    }}
+                >
+                  الغاء
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>        </DialogContent>
+      </Dialog>
+      {/*   Add Report Dialog   */}
+      <Dialog open={addReportDialog} onOpenChange={setAddReportDialog}>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign: "end"}}>
+            <DialogTitle>إضافة تقرير جديد</DialogTitle>
+            <DialogDescription>
+              أضف تقرير جيديد للدورة
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...reportForm} >
+            <form onSubmit={reportForm.handleSubmit(handleSubmitReport)} className="space-y-4"  dir={'rtl'}>
+              <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
+
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <FormField control={reportForm.control} name="startDate" render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>تاريخ البداية</FormLabel>
+                        <FormControl>
+                          <Input type="date" placeholder={'الرجاء إدخال رقم الدورة الجديدة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                  <FormField control={reportForm.control} name="endDate"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>تاريخ النهاية</FormLabel>
+                        <FormControl>
+                          <Input type="date" placeholder={'الرجاء إدخال رقم الدورة الجديدة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                </div>
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <FormField control={reportForm.control} name="feedAmount"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>كمية العلف</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال كمية العلف المستهلكة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                  <FormField control={reportForm.control} name="milkAmount"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>كمية الحليب</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال كمية الحليب المستهلكة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                </div>
+
+                {/* 🐑 Multi-selector */}
+                <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <Syringe size={16} />
+                  حدد الفيتامينات المستخدمة
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3 max-h-[500px] overflow-y-auto">
+                  {allVitamins?.map((vitamin) => {
+                    const isSelected = selectedVitamins.includes(vitamin._id);
+                    return (
+                        <div key={vitamin._id} className="flex items-start gap-2 w-full">
+                          {/* Checkbox & Label */}
+                          <div className="pt-1">
+                            <Checkbox
+                                id={`vitamin-${vitamin._id}`}
+                                checked={isSelected}
+                                onCheckedChange={(checked) =>
+                                    handleVitaminSelection(vitamin._id, checked === true)
+                                }
+                            />
+                          </div>
+
+                          {/* Vitamin Info & Input */}
+                          <div className="flex-1 space-y-1">
+                            <label
+                                htmlFor={`vitamin-${vitamin?._id}`}
+                                className="text-sm font-medium leading-none cursor-pointer"
+                            >
+                              {vitamin?.vitaminName}
+                            </label>
+
+                            {isSelected && (
+                                <div className="mt-1">
+                                  <label className="text-xs text-muted-foreground">الكمية</label>
+                                  <Input
+                                      type="number"
+                                      min="0"
+                                      className="h-8 mt-1"
+                                      {...reportForm.register(`vitaminAmounts.${vitamin._id}`, {
+                                        valueAsNumber: true,
+                                        min: 0,
+                                      })}
+                                  />
+                                </div>
+                            )}
+                          </div>
+                        </div>
+                    );
+                  })}
+
+                  {vitamins.length === 0 && (
+                      <p className="text-sm text-muted-foreground col-span-full">
+                        لا توجد فيتامينات متاحة.
+                      </p>
+                  )}
+                </div>
+
+                <FormField control={reportForm.control} name="notes" render={({ field }) => (
+                    <FormItem >
+                      <FormLabel>الملاحظات</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder=" أي ملاحظات اضافية ..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}/>
+              </div>
+
+              <DialogFooter>
+                <Button type="submit" disabled={!isFormValid}>
+                  إضافة التقرير
+                </Button>
+
+                <Button type="button" variant="outline" onClick={() => {setAddReportDialog(false);reportForm.reset()}}>
+                  الغاء
+                </Button>
+
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      {/*   Delete Report Dialog   */}
+      <Dialog open={deleteReportDialog} onOpenChange={setDeleteReportDialog}>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign: "end"}}>
+            <DialogTitle>حذف الدورة</DialogTitle>
+          </DialogHeader>
+
+          <Form {...reportForm} >
+            <form onSubmit={reportForm.handleSubmit(handleDeleteCycle)} className="space-y-4"  dir={'rtl'}>
+              <p className="text-red-600 font-semibold pb-5 pt-3" dir={'rtl'}>هل أنت متأكد أنك تريد حذف هذه الدورة؟ هذا الإجراء لا يمكن التراجع عنه.</p>
+              <DialogFooter>
+                <Button type="submit">
+                  حذف
+                </Button>
+                <Button type="button" variant="outline">
+                  الغاء
+                </Button>
+
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/*   End Report Dialog   */}
+      <Dialog open={endReportDialog} onOpenChange={setEndReportDialog}>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign: "end"}}>
+            <DialogTitle>إنهاء الدورة</DialogTitle>
+          </DialogHeader>
+
+          <Form {...endCycleForm} >
+            <form onSubmit={endCycleForm.handleSubmit(handleSubmitEndCycle)} className="space-y-4"  dir={'rtl'}>
+              <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
+
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <FormField control={endCycleForm.control} name="sellNumber"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>البيع</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'أدخل عدد الأغنام المباعة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                  <FormField control={endCycleForm.control} name="diedNumber"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>النفوق</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'أدخل عدد الأغنام النافقة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                </div>
+
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <FormField control={endCycleForm.control} name="totalKilos"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>عدد الكيلو الكلي</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'أدخل وزن الأغنام المباعة من الدورة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                  <FormField control={endCycleForm.control} name="addToStock"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>إضافة الى المخزون</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'أدخل عدد الأغنام المضافة للمخزون'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                </div>
+
+
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <FormField control={endCycleForm.control} name="priceOfKilo"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>سعر الكيلو</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'أدخل سعر الكيلو'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id={`use-today-date`}  checked={useTodayDate} onCheckedChange={(e) => setUseTodayDate(!useTodayDate)}/>
+                      <Label htmlFor={`use-today-date`} className="flex-grow cursor-pointer">
+                        &nbsp; إستخدام تاريخ اليوم
+                      </Label>
+                    </div>
+                    {
+                        !useTodayDate && (
+                            <div className="space-y-2">
+                              <Label htmlFor="due-date">تاريخ نهاية الدورة</Label>
+                              <Input id="due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}/>
+                            </div>
+                        )
+                    }
+                  </div>
+                </div>
+
+                <FormField control={endCycleForm.control} name="notes" render={({ field }) => (
+                    <FormItem >
+                      <FormLabel>الملاحظات</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder=" أي ملاحظات اضافية ..." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}/>
+              </div>
+
+              <DialogFooter>
+                <Button type="submit"
+                        disabled={
+                            !endCycleForm.watch("sellNumber") ||
+                            !endCycleForm.watch("diedNumber") ||
+                            !endCycleForm.watch("totalKilos") ||
+                            !endCycleForm.watch("addToStock") ||
+                            !endCycleForm.watch("priceOfKilo")}>
+                  إضافة الطعم
+                </Button>
+
+                <Button type="button" variant="outline" onClick={() => {setEndReportDialog(false);reportForm.reset()}}>
+                  الغاء
+                </Button>
+
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+
     </div>
   );
 };

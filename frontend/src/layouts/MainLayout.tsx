@@ -23,7 +23,7 @@ export const MainLayout = () => {
       <div className="flex">
         <AppSidebar isOpen={isSidebarOpen} />
         
-        <main className="flex-1 md:ml-64 min-h-screen pt-16">
+        <main className="flex-1 md:ml-64 min-h-screen pt-5">
           <Outlet />
         </main>
       </div>
