@@ -8,7 +8,7 @@ const cycleInjectionSchema = new mongoose.Schema({
     },
     injectionType: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'InjectionType',
+        ref: 'StockModel',
     },
     numOfInject: {
         type: Number,

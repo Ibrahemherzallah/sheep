@@ -32,6 +32,38 @@ export const login = async (req, res) => {
     }
 };
 
+export const signup = async (req, res) => {
+    const { name, password } = req.body;
+
+    try {
+        // Check if user already exists
+        const existingUser = await User.findOne({ name });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username is already taken' });
+        }
+
+        // Create and save new user
+        const newUser = new User({ name, password });
+        await newUser.save();
+
+        // Generate JWT token
+        const token = jwt.sign({ userId: newUser._id }, JWT_SECRET, {
+            expiresIn: '7d',
+        });
+
+        res.status(201).json({
+            token,
+            user: {
+                name: newUser.name,
+            },
+        });
+    } catch (err) {
+        console.error('Signup error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
 export const updateUser = async (req, res) => {
     try {
         const { name } = req.body;
@@ -54,7 +86,7 @@ export const updateUser = async (req, res) => {
 
         res.json({ message: "Updated successfully", user });
     } catch (err) {
-        res.status(500).json({ error: "Failed to update" });
+        res.status(500).json({ error: "فشل التعديل" });
     }
 };
 

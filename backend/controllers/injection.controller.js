@@ -2,6 +2,7 @@ import InjectionModel from '../models/injection.model.js';
 import Sheep from '../models/sheep.model.js';
 import InjectionType from '../models/injectionType.model.js'; // Assuming you have this
 import Task from '../models/task.model.js';
+import StockModel from "../models/stock.model.js";
 
 export const createInjection = async (req, res) => {
     try {
@@ -24,14 +25,14 @@ export const createInjection = async (req, res) => {
         );
 
         // 2. Check for the reputation and create tasks
-        const injectionTypeDoc = await InjectionType.findById(injectionType);
+        const injectionTypeDoc = await StockModel.findById(injectionType);
+        if (!injectionTypeDoc) {
+            return res.status(400).json({ error: 'Injection type not found in stock' });
+        }
         const injectionName = injectionTypeDoc.name;
 
         if (injectionTypeDoc?.reputation === '6m' ) {
             const baseDate = new Date(injectDate || Date.now());
-
-
-
 
             if(numOfInject === 1) {
                 const reinject15DaysLater = new Date(baseDate);
@@ -42,7 +43,7 @@ export const createInjection = async (req, res) => {
 
                 const tasks = [
                     {
-                        title: ` جرعة ثانية من دواء${injectionName}`,
+                        title: ` جرعة ثانية من دواء ${injectionName}`,
                         dueDate: reinject15DaysLater,
                         sheepIds: sheepId,
                         type: 'injection',
@@ -60,7 +61,7 @@ export const createInjection = async (req, res) => {
 
                 const tasks = [
                     {
-                        title: ` جرعة أولى من دواء${injectionName}`,
+                        title: ` جرعة أولى من دواء ${injectionName}`,
                         dueDate: reinject6MonthsLater,
                         sheepIds: sheepId,
                         type: 'injection',
@@ -70,6 +71,24 @@ export const createInjection = async (req, res) => {
                 await Task.insertMany(tasks);
             }
         }
+
+
+        if (injectionTypeDoc?.reputation === '1y') {
+            const baseDate = new Date(injectDate || Date.now());
+            const reInject1YearLater = new Date(baseDate);
+            reInject1YearLater.setFullYear(reInject1YearLater.getFullYear() + 1);
+
+            await Task.insertMany([
+                {
+                    title: `جرعة متابعة من دواء ${injectionName}`,
+                    dueDate: reInject1YearLater,
+                    sheepIds: sheepId,
+                    type: 'injection',
+                    notes: 'تطعيم متابعة بعد سنة',
+                },
+            ]);
+        }
+
 
         res.status(201).json({ message: 'تمت الإضافة بنجاح', injection: newInjection });
 

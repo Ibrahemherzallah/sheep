@@ -45,6 +45,8 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
         defaultValues: {
             itemType: "",
             name: "",
+            price: "",
+            reputation: "",
             quantity: 0,
             unit: "",
             notes: "",
@@ -61,8 +63,6 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
     const [activeTab, setActiveTab] = useState('new');
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [selectedItems, setSelectedItems] = useState<any[]>([]);
-
-console.log("stockType is :" , stockType )
 
     useEffect(() => {
         if (!selectedCategory) return;
@@ -84,7 +84,7 @@ console.log("stockType is :" , stockType )
     }, [selectedCategory]);
 
 
-
+console.log("selected item is : ", form.watch('itemType'))
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
@@ -101,7 +101,7 @@ console.log("stockType is :" , stockType )
                     {/* Add New Item */}
                     <TabsContent value="new" dir={'rtl'}>
                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onAdd)} className="space-y-4 mt-4">
+                            <form onSubmit={form.handleSubmit(onAdd)} className="space-y-2 mt-2">
                                 <FormField control={form.control} name="itemType" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>نوع المنتج</FormLabel>
@@ -134,6 +134,42 @@ console.log("stockType is :" , stockType )
                                         </FormItem>
                                     )}
                                 />
+                                {
+                                    form.watch('itemType') === 'Vitamins' && (
+                                        <FormField control={form.control} name="price" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>سعر الفيتامين</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="أدخل سعر الفيتامين" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                    )
+                                }
+                                {
+                                    form.watch('itemType') === 'Injection' && (
+                                        <FormField control={form.control} name="reputation" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>تكرار الطعم</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value} dir={'rtl'}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="اختر تكرار الطعم" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="6m">كل ست شهور</SelectItem>
+                                                        <SelectItem value="1y">كل سنة</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                    )
+                                }
 
                                 <FormField control={form.control} name="quantity" render={({ field }) => (
                                         <FormItem>

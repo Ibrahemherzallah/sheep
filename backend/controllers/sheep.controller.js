@@ -3,8 +3,8 @@ import Pregnancy from '../models/pregnancy.model.js';
 
 import Patient from '../models/patient.model.js';
 import Task from "../models/task.model.js";
-import InjectionType from "../models/injectionType.model.js";
 import InjectionModel from "../models/injection.model.js";
+import StockModel from "../models/stock.model.js";
 
 export const createSheep = async (req, res) => {
     try {
@@ -43,6 +43,11 @@ export const createSheep = async (req, res) => {
             if (!pregnantDate || !expectedBornDate || !order) {
                 return res.status(400).json({
                     error: "Missing pregnancy data: 'pregnantDate', 'expectedBornDate', or 'order'."
+                });
+            }
+            if (sheepData.sheepGender === 'ذكر') {
+                return res.status(400).json({
+                    error: "الذكر لا يمكن ان يحمل."
                 });
             }
             const sheepId = newSheep._id;
@@ -116,16 +121,18 @@ export const createSheep = async (req, res) => {
     }
 };
 
-// PUT /api/sheep/:id/status
 export const updateSheepStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status, sellPrice } = req.body;
 
+        // Step 1: Update the sheep
         const updatedSheep = await Sheep.findByIdAndUpdate(
             id,
             {
                 status,
+                isPregnant: false,
+                isPatient: false,
                 ...(sellPrice !== undefined ? { sellPrice } : {}),
             },
             { new: true }
@@ -135,9 +142,19 @@ export const updateSheepStatus = async (req, res) => {
             return res.status(404).json({ message: "Sheep not found" });
         }
 
-        res.status(200).json(updatedSheep);
+        // Step 2: Remove the sheep ID from any tasks
+        await Task.updateMany(
+            { sheepIds: id },
+            { $pull: { sheepIds: id } }
+        );
+
+        res.status(200).json({
+            message: 'Sheep status updated and removed from tasks.',
+            sheep: updatedSheep
+        });
     } catch (error) {
-        res.status(500).json({ message: "Error updating status" });
+        console.error(error);
+        res.status(500).json({ message: "Error updating status or tasks" });
     }
 };
 
@@ -149,7 +166,7 @@ export const getAllSheep = async (req, res) => {
                 path: 'patientCases',
                 populate: {
                     path: 'drugs.drug', // 👈 populate the nested drug field
-                    model: 'DrugType',
+                    model: 'StockModel',
                 },
             });
 
@@ -159,7 +176,6 @@ export const getAllSheep = async (req, res) => {
         res.status(500).json({ error: 'Failed to retrieve sheep' });
     }
 };
-
 
 export const getLatestPatientCasesForSickSheep = async (req, res) => {
     try {
@@ -189,13 +205,22 @@ console.log("sickSheep is : ",  sickSheep)
     }
 };
 
+export const getListSheepById = async (req, res) => {
+    try {
+        const { ids } = req.body;
+        const sheep = await Sheep.find({ _id: { $in: ids } });
+        res.json(sheep);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch sheep' });
+    }
+}
 
 export const getSheepInjectionHistory = async (req, res) => {
     try {
         const { id } = req.params;
 
         const [injectionTypes, injections] = await Promise.all([
-            InjectionType.find({}),
+            StockModel.find({ type: 'Injection', section: 'sheep' }),
             InjectionModel.find({ sheepId: id }).populate('injectionType')
         ]);
 
@@ -241,7 +266,6 @@ export const updateSheep = async (req, res) => {
     }
 };
 
-// DELETE /api/sheep/:id
 export const deleteSheep = async (req, res) => {
     console.log("Enteredd ")
     try {

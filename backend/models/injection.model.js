@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import StockModel from "./stock.model.js";
 
 const injectionSchema = new mongoose.Schema({
     sheepId: [{
@@ -8,7 +9,7 @@ const injectionSchema = new mongoose.Schema({
     }],
     injectionType: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'InjectionType',
+        ref: 'StockModel',
     },
     numOfInject: {
         type: Number,

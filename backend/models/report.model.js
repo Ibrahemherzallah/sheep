@@ -19,7 +19,7 @@ const reportSchema = new mongoose.Schema({
         {
             vitamin: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'Vitamins',
+                ref: 'StockModel',
                 required: true,
             },
             amount: {
