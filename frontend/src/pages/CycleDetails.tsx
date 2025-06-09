@@ -149,7 +149,7 @@ const CycleDetails = () => {
         notes: data.notes,
       };
       console.log("The payload us : ", payload);
-      const response = await fetch('http://localhost:3030/api/cycle/cycle-injections', {
+      const response = await fetch('https://thesheep.top/api/cycle/cycle-injections', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ const CycleDetails = () => {
       }));
       console.log("formattedVitamins : ", formattedVitamins)
       // Send the POST request to the backend API
-      const response = await fetch("http://localhost:3030/api/cycle/report", {
+      const response = await fetch("https://thesheep.top/api/cycle/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -237,7 +237,7 @@ const CycleDetails = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:3030/api/cycle/cycle-end", {
+      const response = await fetch("https://thesheep.top/api/cycle/cycle-end", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -261,7 +261,7 @@ const CycleDetails = () => {
   };
   const handleDeleteCycle = async () => {
     try {
-      const response = await fetch(`http://localhost:3030/api/cycle/${id}`, {
+      const response = await fetch(`https://thesheep.top/api/cycle/${id}`, {
         method: 'DELETE',
       });
 
@@ -324,11 +324,11 @@ const CycleDetails = () => {
           injectionTypesRes,
           nextTaskRes
         ] = await Promise.all([
-          fetch(`http://localhost:3030/api/cycle/${id}`),
-          fetch(`http://localhost:3030/api/stock`),
-          fetch(`http://localhost:3030/api/stock/category/Injection`),
-          fetch(`http://localhost:3030/api/sheep/${id}/injection-history`),
-          fetch(`http://localhost:3030/api/tasks/next-injection-cycle/${id}`)
+          fetch(`http://https://thesheep.top/api/cycle/${id}`),
+          fetch(`http://https://thesheep.top/api/stock`),
+          fetch(`http://https://thesheep.top/api/stock/category/Injection`),
+          fetch(`http://https://thesheep.top/api/sheep/${id}/injection-history`),
+          fetch(`http://https://thesheep.top/api/tasks/next-injection-cycle/${id}`)
         ]);
 
         const cycleData = await cycleRes.json();
@@ -361,7 +361,7 @@ const CycleDetails = () => {
       const fetchReport = async () => {
         setLoading(true); // start loading before fetch
         try {
-          const response = await fetch(`http://localhost:3030/api/cycle/reports/${id}`);
+          const response = await fetch(`https://thesheep.top/api/cycle/reports/${id}`);
           const data = await response.json();
           setAllReports(data);
         } catch (error) {

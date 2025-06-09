@@ -54,7 +54,7 @@ export default function Profile() {
       console.log("data : " , data);
         setIsLoading(true);
         try {
-            const response = await fetch("http://localhost:3030/api/auth/update", {
+            const response = await fetch("https://thesheep.top/api/auth/update", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -93,7 +93,7 @@ export default function Profile() {
         try {
             const token = localStorage.getItem("token"); // your JWT token
 
-            const response = await fetch("http://localhost:3030/api/auth/change-password", {
+            const response = await fetch("https://thesheep.top/api/auth/change-password", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

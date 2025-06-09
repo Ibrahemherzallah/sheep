@@ -84,7 +84,7 @@ const Dashboard = () => {
 
   const markTaskAsCompleted = async (taskId) => {
     try {
-      const res = await fetch(`http://localhost:3030/api/tasks/${taskId}/complete`, {
+      const res = await fetch(`https://thesheep.top/api/tasks/${taskId}/complete`, {
         method: 'PUT',
       });
 
@@ -121,7 +121,7 @@ const Dashboard = () => {
       try {
         const token = localStorage.getItem("token");
 
-        const res = await fetch("http://localhost:3030/api/dashboard/summary", {
+        const res = await fetch("https://thesheep.top/api/dashboard/summary", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -145,7 +145,7 @@ const Dashboard = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:3030/api/dashboard/summary-medical", {
+        const res = await fetch("https://thesheep.top/api/dashboard/summary-medical", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -170,7 +170,7 @@ const Dashboard = () => {
       try {
         const token = localStorage.getItem("token");
 
-        const res = await fetch("http://localhost:3030/api/dashboard/summary-cycle", {
+        const res = await fetch("https://thesheep.top/api/dashboard/summary-cycle", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

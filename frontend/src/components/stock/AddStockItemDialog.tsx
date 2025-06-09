@@ -69,7 +69,7 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
 
         const fetchItems = async () => {
             try {
-                const response = await fetch(`http://localhost:3030/api/stock/category/${selectedCategory}`);
+                const response = await fetch(`https://thesheep.top/api/stock/category/${selectedCategory}`);
                 const data = await response.json();
                 console.log("data is :" , data);
                 const filteredData = data.filter(item => item.section === stockType)

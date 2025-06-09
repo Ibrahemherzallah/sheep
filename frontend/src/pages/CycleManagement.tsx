@@ -144,7 +144,7 @@ const CycleManagement = () => {
     console.log("Sending payload:", payload);
 
     try {
-      const response = await fetch("http://localhost:3030/api/cycle", {
+      const response = await fetch("https://thesheep.top/api/cycle", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -206,7 +206,7 @@ const CycleManagement = () => {
   useEffect(() => {
     const fetchCycles = async () => {
       try {
-        const response = await fetch('http://localhost:3030/api/cycle');
+        const response = await fetch('https://thesheep.top/api/cycle');
         const data = await response.json();
         setAllCycles(data);
         setCycles(data); // Default to all

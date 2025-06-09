@@ -79,7 +79,7 @@ const StockManagement = () => {
 
   const handleAddItem = async (newItem: any) => {
     try {
-      const response = await fetch('http://localhost:3030/api/stock/add', {
+      const response = await fetch('https://thesheep.top/api/stock/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ const StockManagement = () => {
   };
   const handleAddQuantity = async (newItem: any) => {
     try {
-      const response = await fetch('http://localhost:3030/api/stock/add-quantity', {
+      const response = await fetch('https://thesheep.top/api/stock/add-quantity', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -183,7 +183,7 @@ const StockManagement = () => {
   useEffect(() => {
     const fetchStockItems = async () => {
       try {
-        const response = await fetch('http://localhost:3030/api/stock');
+        const response = await fetch('https://thesheep.top/api/stock');
         const data = await response.json();
         setAllStockItems(data);
       } catch (error) {
