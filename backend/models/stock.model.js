@@ -14,6 +14,14 @@ const stockSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    price: {
+        type: Number,
+        required: false,
+    },
+    reputation: {
+        type: String,
+        required: false,
+    },
     section: {
         type: String,
         required: true,

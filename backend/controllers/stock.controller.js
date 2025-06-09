@@ -1,7 +1,5 @@
 import StockModel from '../models/stock.model.js';
 
-
-
 export const getStockType = async (req, res) => {
     const { type } = req.params;
     try {
@@ -15,7 +13,7 @@ export const getStockType = async (req, res) => {
 
 export const createStockItem = async (req, res) => {
     try {
-        const { type, name, quantity, section, unit, notes } = req.body;
+        const { type, name, price, reputation, quantity, section, unit, notes } = req.body;
 
         // Check if item with same name, type, and section already exists
         const existingItem = await StockModel.findOne({
@@ -28,7 +26,7 @@ export const createStockItem = async (req, res) => {
             return res.status(400).json({ error: 'هذا العنصر موجود بالفعل في هذا القسم' });
         }
 
-        const newStock = new StockModel({type, name, quantity, section, unit, notes,});
+        const newStock = new StockModel({type, name, quantity, section, unit, notes, price, reputation,});
         await newStock.save();
 
         res.status(201).json(newStock);
@@ -37,7 +35,6 @@ export const createStockItem = async (req, res) => {
         res.status(500).json({ error: 'حدث خطأ أثناء إضافة العنصر' });
     }
 };
-
 
 export const addStockQuantity = async (req, res) => {
     const { itemId, quantity } = req.body;

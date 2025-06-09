@@ -139,7 +139,7 @@ export const updateOnePregnancy = async (req, res) => {
         res.status(200).json(updated);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Failed to update pregnancy" });
+        res.status(500).json({ error: "فشل تعديل الولادة" });
     }
 };
 
@@ -197,7 +197,7 @@ export const updateLastPregnanciesAfterBirth = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Failed to update pregnancies after birth." });
+        res.status(500).json({ error: "فشل تعديل الحمل بعد الولادة" });
     }
 };
 

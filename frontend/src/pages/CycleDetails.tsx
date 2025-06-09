@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
 import {Table, TableHeader, TableBody, TableHead, TableRow, TableCell} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { WeeklyCycleRecord, Sheep } from '@/types';
 import { useForm } from 'react-hook-form';
 import {toast} from "@/hooks/use-toast.ts";
 import {Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Label, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui";
@@ -33,40 +32,6 @@ const cycleInjections = [
   { injectName: 'تسمم غذائي' , doseNum: 1, givenDate: new Date()},
   { injectName: 'تسمم غذائي' , doseNum: 1, givenDate: new Date()},
 ]
-
-// Mock weekly records
-const mockWeeklyRecords: WeeklyCycleRecord[] = [
-  {
-    id: "wr1",
-    cycleId: "c1",
-    weekStartDate: new Date(2025, 2, 15),
-    feedQuantity: 45.5,
-    milkQuantity: 32.8,
-    vitaminsGiven: ["B12", "D3"],
-    syringesGiven: 5,
-    notes: "الأسبوع الأول جيد الأغنام تفاعلت مع النظام الجديد",
-  },
-  {
-    id: "wr2",
-    cycleId: "c1",
-    weekStartDate: new Date(2025, 2, 22),
-    feedQuantity: 48.2,
-    milkQuantity: 36.7,
-    vitaminsGiven: ["B12", "D3", "Iron"],
-    syringesGiven: 0,
-    notes: "Increased feed slightly, milk production improving",
-  },
-  {
-    id: "wr3",
-    cycleId: "c1",
-    weekStartDate: new Date(2025, 3, 1),
-    feedQuantity: 50.0,
-    milkQuantity: 39.2,
-    vitaminsGiven: ["B12", "D3"],
-    syringesGiven: 2,
-    notes: "Two sheep needed routine injections",
-  },
-];
 
 // Mock sheep data
 
@@ -147,6 +112,7 @@ const CycleDetails = () => {
   const [nextTask,setNextTask] = useState([]);
   const [allReports, setAllReports] = useState([]);
   const [loading,setLoading] = useState(true);
+  const filteredVitamins = allVitamins?.filter(vitamin => vitamin.type === "Vitamins" && vitamin.section === "cycle")
   // Format date to a readable string
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -178,7 +144,7 @@ const CycleDetails = () => {
       const payload = {
         cycleId: id,
         injectionTypeId: selectedInjection,
-        numOfInject: data.dose,
+        numOfInject: data.dose || 1,
         injectDate: useTodayDate ? new Date().toISOString() : new Date(dueDate).toISOString(),
         notes: data.notes,
       };
@@ -224,6 +190,7 @@ const CycleDetails = () => {
         vitamin,
         amount: Number(amount),
       }));
+      console.log("formattedVitamins : ", formattedVitamins)
       // Send the POST request to the backend API
       const response = await fetch("http://localhost:3030/api/cycle/report", {
         method: "POST",
@@ -281,7 +248,7 @@ const CycleDetails = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Something went wrong");
+        throw new Error(result.error || "حدث شيء خاطئ");
       }
 
       toast({ description: `تم إنهاء الدورة بنجاح` });
@@ -301,7 +268,7 @@ const CycleDetails = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Something went wrong');
+        throw new Error(result.error || 'حدث شيء خاطئ');
       }
 
       toast({ description: '✅ تم حذف الدورة بنجاح' });
@@ -323,7 +290,7 @@ const CycleDetails = () => {
 
 // Basic checks
   const isFeedValid = !!watch.feedAmount && Number(watch.feedAmount) > 0;
-  const isMilkValid = !!watch.milkAmount && Number(watch.milkAmount) > 0;
+  // const isMilkValid = !!watch.milkAmount && Number(watch.milkAmount) > 0 || ;
 
 // Check if every selected vitamin has a non-zero amount
   const areSelectedVitaminsValid = selectedVitamins.every((vitaminId) => {
@@ -332,11 +299,7 @@ const CycleDetails = () => {
   });
 
 // Final button state
-  const isFormValid = isFeedValid && isMilkValid && areSelectedVitaminsValid;
-
-
-
-
+  const isFormValid = isFeedValid && areSelectedVitaminsValid;
 
 
   const totalVitaminAmount = cycleData?.reports?.reduce((sum, report) => {
@@ -362,8 +325,8 @@ const CycleDetails = () => {
           nextTaskRes
         ] = await Promise.all([
           fetch(`http://localhost:3030/api/cycle/${id}`),
-          fetch(`http://localhost:3030/api/supplement/vitamins`),
-          fetch(`http://localhost:3030/api/supplement/injections`),
+          fetch(`http://localhost:3030/api/stock`),
+          fetch(`http://localhost:3030/api/stock/category/Injection`),
           fetch(`http://localhost:3030/api/sheep/${id}/injection-history`),
           fetch(`http://localhost:3030/api/tasks/next-injection-cycle/${id}`)
         ]);
@@ -374,9 +337,12 @@ const CycleDetails = () => {
         const injectionTypesData = await injectionTypesRes.json();
         const nextTaskData = await nextTaskRes.json();
 
+        // Filter injections to only include those with section: 'sheep'
+        const sheepInjections = injectionsData.filter(inj => inj.section === 'sheep');
+
         setCycleData(cycleData);
         setAllVitamins(vitaminsData);
-        setAllInjections(injectionsData);
+        setAllInjections(sheepInjections);
         setInjectionTypes(injectionTypesData.injectionTypes || []);
         setNextTask(nextTaskData);
 
@@ -389,6 +355,7 @@ const CycleDetails = () => {
 
     fetchAllInitialData();
   }, []);
+  console.log("allReports :" , allReports);
   useEffect(() => {
     if (activeTab === 'weekly') {
       const fetchReport = async () => {
@@ -408,15 +375,17 @@ const CycleDetails = () => {
     }
   }, [activeTab, id]);
 
-
-console.log("The cycleData dataa  : ", cycleData);
+  const selectedInjectionObj = allInjections?.find(
+      (inj) => inj._id === selectedInjection
+  );
+console.log("The selectedInjection  : ", selectedInjection);
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <Button variant="ghost" className="mb-6 pl-0 flex items-center gap-2" onClick={() => navigate('/cycles')}>
         <ArrowLeft size={16} />
        الرجوع إلى الدورات
       </Button>
-      
+
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="flex items-center gap-3">
@@ -452,14 +421,12 @@ console.log("The cycleData dataa  : ", cycleData);
         }
 
       </div>
-      
-      <Tabs defaultValue="overview" className="mt-6" onValueChange={setActiveTab}>
 
+      <Tabs defaultValue="overview" className="mt-6" onValueChange={setActiveTab}>
         <TabsList className="mb-6">
           <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
           <TabsTrigger value="weekly">التقرير الأسبوعي</TabsTrigger>
         </TabsList>
-        
         <TabsContent value="overview" dir={'rtl'}>
           {loading ? (
               <div className="text-center py-10">جاري التحميل ...</div>
@@ -489,7 +456,7 @@ console.log("The cycleData dataa  : ", cycleData);
                       <CardDescription>عدد الأغنام الكلي</CardDescription>
                       <CardTitle className="text-2xl">{cycleData?.numOfFemale + cycleData?.numOfMale}</CardTitle>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {cycleData?.numOfMale} male, {cycleData?.numOfFemale} female
+                        {cycleData?.numOfMale}ذكر ,   {cycleData?.numOfFemale} أنثى
                       </div>
                     </CardHeader>
                   </Card>
@@ -528,9 +495,13 @@ console.log("The cycleData dataa  : ", cycleData);
                             <TableBody>
                               {injectionTypes.map((type) => {
                                 // Find injection for this cycle with this type
-                                const givenInjection = cycleData?.injectionCases?.find(
-                                    inj => inj.injectionType?._id === type._id || inj.injectionType === type._id
-                                );
+
+                                const givenInjection = cycleData?.injectionCases
+                                    ?.slice() // create a shallow copy to avoid mutating the original array
+                                    .reverse()
+                                    .find(
+                                        inj => inj.injectionType?._id === type._id || inj.injectionType === type._id
+                                    );
 
                                 return (
                                     <TableRow key={type._id}>
@@ -556,7 +527,7 @@ console.log("The cycleData dataa  : ", cycleData);
                       ) : (
                           <div className="text-center py-8 text-muted-foreground">
                             <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                            <p>No medical history available for this sheep.</p>
+                            <p>لا يوجد تسجيلات طبية ماحة لهذه النعجة</p>
                           </div>
                       )}
                     </CardContent>
@@ -578,7 +549,6 @@ console.log("The cycleData dataa  : ", cycleData);
                                               خلال {Math.ceil((new Date(task.dueDate) - new Date()) / (1000 * 60 * 60 * 24))} يوم
                                             </p>
                                           </div>
-                                          <Button variant="outline" size="sm">الإعطاء</Button>
                                         </div>
                                     ))
                                 ) : (
@@ -630,7 +600,7 @@ console.log("The cycleData dataa  : ", cycleData);
                               ) : (
                                   <div className="text-center py-8 text-muted-foreground">
                                     <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                                    <p>No medical history available for this sheep.</p>
+                                    <p>لا يوجد تسجيلات طبية ماحة لهذه النعجة</p>
                                   </div>
                               )}
                           </CardContent>
@@ -642,7 +612,7 @@ console.log("The cycleData dataa  : ", cycleData);
                     <CardTitle>ملاحظات الدورة</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p>{mockCycle.notes || "No notes available for this cycle."}</p>
+                    <p>{cycleData.notes || "لا يوجد ملاحظات على هذه الدورة."}</p>
                   </CardContent>
                 </Card>
 
@@ -650,11 +620,10 @@ console.log("The cycleData dataa  : ", cycleData);
               </>
           )}
         </TabsContent>
-        
         <TabsContent value="weekly">
           <div className="grid gap-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold opacity-0">Weekly Records</h3>
+              <h3 className="text-xl font-semibold opacity-0">التسجيلات الأسبوعية</h3>
               {cycleData?.status === 'نشطة' && (
                 <Button className="gap-2" onClick={()=>{setAddReportDialog(true)}}>
                   <PlusCircle size={16} />
@@ -696,11 +665,11 @@ console.log("The cycleData dataa  : ", cycleData);
                                     <div className="flex flex-wrap gap-2 mt-1">
                                       {record.vitamins.map((vitamin) => (
                                           <Badge
-                                              key={vitamin.vitamin._id}
+                                              key={vitamin?.vitamin?._id}
                                               variant="secondary"
                                               className="text-xs"
                                           >
-                                            {vitamin.vitamin.vitaminName} - {vitamin.amount}
+                                            {vitamin?.vitamin?.name} - {vitamin?.amount}
                                           </Badge>
                                       ))}
                                     </div>
@@ -748,8 +717,8 @@ console.log("The cycleData dataa  : ", cycleData);
           }
 
         </TabsContent>
-
       </Tabs>
+
       {/*   Add Inject Dialog   */}
       <Dialog open={addInjectDialog} onOpenChange={setAddInjectDialog}>
         <DialogContent className="sm:max-w-[600px]" >
@@ -833,7 +802,7 @@ console.log("The cycleData dataa  : ", cycleData);
               <DialogFooter>
                 <Button
                     type="submit"
-                    disabled={!selectedInjection || (!useTodayDate && !dueDate)}
+                    disabled={!selectedInjection || (!useTodayDate && !dueDate) || selectedInjectionObj.reputation === '6m' && !form.watch('dose') }
                 >
                   إضافة الطعم
                 </Button>
@@ -916,7 +885,7 @@ console.log("The cycleData dataa  : ", cycleData);
                   حدد الفيتامينات المستخدمة
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3 max-h-[500px] overflow-y-auto">
-                  {allVitamins?.map((vitamin) => {
+                  {filteredVitamins?.map((vitamin) => {
                     const isSelected = selectedVitamins.includes(vitamin._id);
                     return (
                         <div key={vitamin._id} className="flex items-start gap-2 w-full">
@@ -937,7 +906,7 @@ console.log("The cycleData dataa  : ", cycleData);
                                 htmlFor={`vitamin-${vitamin?._id}`}
                                 className="text-sm font-medium leading-none cursor-pointer"
                             >
-                              {vitamin?.vitaminName}
+                              {vitamin?.name}
                             </label>
 
                             {isSelected && (
@@ -1005,7 +974,7 @@ console.log("The cycleData dataa  : ", cycleData);
                 <Button type="submit">
                   حذف
                 </Button>
-                <Button type="button" variant="outline">
+                <Button type="button" variant="outline" onClick={()=>{setDeleteReportDialog(false)}}>
                   الغاء
                 </Button>
 
@@ -1014,7 +983,6 @@ console.log("The cycleData dataa  : ", cycleData);
           </Form>
         </DialogContent>
       </Dialog>
-
       {/*   End Report Dialog   */}
       <Dialog open={endReportDialog} onOpenChange={setEndReportDialog}>
         <DialogContent className="sm:max-w-[600px]" >
@@ -1117,7 +1085,7 @@ console.log("The cycleData dataa  : ", cycleData);
                             !endCycleForm.watch("totalKilos") ||
                             !endCycleForm.watch("addToStock") ||
                             !endCycleForm.watch("priceOfKilo")}>
-                  إضافة الطعم
+                  إنهاء الدورة
                 </Button>
 
                 <Button type="button" variant="outline" onClick={() => {setEndReportDialog(false);reportForm.reset()}}>

@@ -82,24 +82,40 @@ const SheepCard = ({ sheep }: { sheep: any }) => {
               {new Date(sheep.createdAt).toLocaleDateString('ar-EG')} {/* or 'en-US' */}
             </span>
           </div>
-            { sheep.isPregnant && sheep.pregnantCases.length > 0 && (() =>
-              {
-                  const lastPregnancy = sheep.pregnantCases[sheep.pregnantCases.length - 1];
-                  const expectedDate = new Date(lastPregnancy.expectedBornDate);
-                  const today = new Date();
-                  const timeDiff = expectedDate.getTime() - today.getTime();
-                  const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+          {sheep.isPregnant && sheep.pregnantCases.length > 0 && (() => {
+            const lastPregnancy = sheep.pregnantCases[sheep.pregnantCases.length - 1];
+            const expectedDate = new Date(lastPregnancy.expectedBornDate);
+            const today = new Date();
+            const timeDiff = expectedDate.getTime() - today.getTime();
+            const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
-                  return (
-                      <div className="flex items-center gap-1 mt-2 text-farm-blue-700">
-                        <Baby size={16} />
-                        <span className="text-xs font-medium">
-                          متوقع أن تلد خلال {daysRemaining > 0 ? `${daysRemaining} يوم` : 'اليوم أو قريبا'}
-                        </span>
+            return (
+                <div className="flex items-center gap-1 mt-2 text-farm-blue-700">
+                  <Baby size={16} />
+                  <span className="text-xs font-medium">
+                    متوقع أن تلد خلال {daysRemaining > 0 ? `${daysRemaining} يوم` : 'اليوم أو قريبا'}
+                  </span>
+                </div>
+            );
+          })()}
+
+          {sheep?.sellPrice > 0 && (() => {
+            const lastPregnancy = sheep.pregnantCases[sheep.pregnantCases.length - 1];
+            const expectedDate = new Date(lastPregnancy.expectedBornDate);
+            const today = new Date();
+            const timeDiff = expectedDate.getTime() - today.getTime();
+            const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+            return (
+                <>
+                  {sheep?.sellPrice > 0 && (
+                      <div className="flex items-center gap-1 mt-2 text-red-700 font-medium">
+                        💰 تم بيع هذه النعجة بسعر {sheep.sellPrice} شيكل
                       </div>
-                );
-              })()
-            }
+                  )}
+                </>
+            );
+          })()}
         </div>
       </div>
       <div className="border-t p-3 bg-muted/30 flex justify-between">
@@ -134,7 +150,7 @@ const SheepManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const filteredDrug = allDrugs.filter(drug => drug.section === 'sheep' && drug.type === "Medicine")
   // Forms
   const form = useForm<BirthFormData>({
     defaultValues: {
@@ -219,7 +235,7 @@ const SheepManagement = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Something went wrong');
+        throw new Error(result.error || 'حدث شيء خاطئ');
       }
 
       toast({
@@ -398,7 +414,6 @@ const SheepManagement = () => {
     }
   };
 
-  console.log("searchTerm is " , searchTerm)
 
   useEffect(() => {
     const fetchSheep = async () => {
@@ -415,7 +430,7 @@ const SheepManagement = () => {
         setAllSheep(result); // full list
 
         const pregnant = result.filter((sheep: any) => sheep.isPregnant === true && sheep.status !== 'نافقة');
-        const nonPregnant = result.filter((sheep: any) => sheep.isPregnant === false && sheep.sheepGender === 'أنثى' && sheep.status !== 'نافقة');
+        const nonPregnant = result.filter((sheep: any) => sheep.isPregnant === false && sheep.sheepGender === 'أنثى' && sheep.status !== 'نافقة' && !sheep.sellPrice);
 
         setPregnantSheep(pregnant);
         setNonPregnantSheep(nonPregnant);
@@ -428,7 +443,7 @@ const SheepManagement = () => {
     };
     const fetchDrug = async () => {
       try {
-        const response = await fetch('http://localhost:3030/api/supplement/drug');
+        const response = await fetch('http://localhost:3030/api/stock');
         const result = await response.json();
 
         if (!response.ok) {
@@ -575,7 +590,7 @@ const SheepManagement = () => {
                             {selectedSheep.includes(sheep._id) && (
                                 <div className="flex items-center gap-3 mt-1">
                                   <div className="flex-1">
-                                    <label className="text-xs text-muted-foreground">Males</label>
+                                    <label className="text-xs text-muted-foreground">الذكور</label>
                                     <Input
                                         type="number"
                                         min="0"
@@ -587,7 +602,7 @@ const SheepManagement = () => {
                                     />
                                   </div>
                                   <div className="flex-1">
-                                    <label className="text-xs text-muted-foreground">Females</label>
+                                    <label className="text-xs text-muted-foreground">الإناث</label>
                                     <Input
                                         type="number"
                                         min="0"
@@ -882,7 +897,7 @@ const SheepManagement = () => {
                                     <Combobox
                                         value={field.value}
                                         onChange={field.onChange}
-                                        options={allDrugs.map((drug) => ({
+                                        options={filteredDrug.map((drug) => ({
                                           label: drug.name,
                                           value: drug._id,
                                         }))}

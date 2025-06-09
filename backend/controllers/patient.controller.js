@@ -28,6 +28,7 @@ export const createPatient = async (req, res) => {
 
             // Update sheep with new pregnancy
             sheep.isPatient = true;
+            sheep.medicalStatus = "مريضة";
             sheep.patientCases.push(patient._id);
             await sheep.save();
 
@@ -75,8 +76,6 @@ export const getPatientById = async (req, res) => {
     }
 };
 
-
-
 export const addDrugToLatestPatient = async (req, res) => {
     try {
         const { sheepId } = req.params;
@@ -106,12 +105,9 @@ export const addDrugToLatestPatient = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Failed to update patient with new drug" });
+        res.status(500).json({ error: "فشل التعديل المرض مع الدواء الجديد" });
     }
 };
-
-
-
 
 export const updatePatient = async (req, res) => {
     try {
@@ -127,10 +123,9 @@ export const updatePatient = async (req, res) => {
         res.status(200).json({ message: "Patient updated", data: updatedPatient });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Failed to update patient" });
+        res.status(500).json({ error: "فشل تعديل المرض" });
     }
 };
-
 
 export const deletePatient = async (req, res) => {
     try {

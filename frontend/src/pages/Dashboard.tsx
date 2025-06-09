@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Activity, Baby, Calendar, Ear, Info, Pill, Syringe, Truck} from 'lucide-react';
-import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger,} from '@/components/ui';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
 import { Link } from 'react-router-dom';
 import Milk from "@/pages/Milk.tsx";
 import * as React from "react";
@@ -62,7 +62,6 @@ const Dashboard = () => {
   const displayedRecent = showAllRecent ? recentTasks : recentTasks.slice(0, 4);
 
   const handleOpenModal = async (task: any) => {
-    console.log("task", task);
     setModalLoading(true)
     setSelectedTask(task);
     setIsModalOpen(true);
@@ -82,6 +81,40 @@ const Dashboard = () => {
       setModalLoading(false)
     }
   };
+
+  const markTaskAsCompleted = async (taskId) => {
+    try {
+      const res = await fetch(`http://localhost:3030/api/tasks/${taskId}/complete`, {
+        method: 'PUT',
+      });
+
+      if (res.ok) {
+        const updated = displayedRecent.map((task) =>
+            task._id === taskId ? { ...task, completed: true } : task
+        );
+        console.log(updated);
+
+        toast({
+          title: "تمت المهمة ✅",
+          description: "تم تحديث حالة المهمة إلى مكتملة بنجاح.",
+          duration: 3000,
+        });
+      } else {
+        toast({
+          title: "حدث خطأ",
+          description: "فشل في تحديث حالة المهمة.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "خطأ في الاتصال",
+        description: "تعذر الاتصال بالخادم.",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
@@ -163,7 +196,7 @@ const Dashboard = () => {
   }, [activeTab]);
 
   if (loading) return <div className={"text-center mt-4"}>جار تحميل البيانات...</div>;
-  if (!dashboardData) return <div>Something went wrong!</div>;
+  if (!dashboardData) return <div>حدث شيء خاطئ!</div>;
 
   console.log("recentTasks is : " , recentTasks);
   console.log("modalLoading is : " , modalLoading)
@@ -184,8 +217,8 @@ const Dashboard = () => {
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard title="عدد الاغنام الكلي" value={dashboardData.totalSheep} icon={Ear} trend={{ value: dashboardData.sheepGrowthPercentage, label: "من الشهر الفائت", positive: true }}/>
-            <StatCard title="الاغنام الحوامل" value={dashboardData.pregnantSheep} description={`${dashboardData.upcomingPregnancies} births in next 7 days`} icon={Baby}/>
-            <StatCard title="الدورات النشطة" value={dashboardData.activeCycles} description={`${dashboardData.totalCycles} total cycles`} icon={Calendar}/>
+            <StatCard title="الاغنام الحوامل" value={dashboardData.pregnantSheep} description={`${dashboardData.upcomingPregnancies} تلد في ال7 أيام القادمة `} icon={Baby}/>
+            <StatCard title="الدورات النشطة" value={dashboardData.activeCycles} description={`${dashboardData.totalCycles} جميع الدورات `} icon={Calendar}/>
             <StatCard title="الحالات الصحية" value={`${dashboardData.totalSheep - dashboardData.patientSheep}نعجة سليمة `} description={`${dashboardData.patientSheep} مريضات`} icon={Activity}/>
           </div>
         </TabsContent>
@@ -219,7 +252,7 @@ const Dashboard = () => {
                 <>
                   <div className="space-y-5">
                     {displayedUpcoming.map((task) => (
-                        <div key={task._id} className="flex">
+                        <div key={task._id} className="flex items-center">
                           <div className="mr-3">{getEventIcon(task.type)}</div>
                           <div className="flex-grow">
                             <div className="font-medium">{task.title}</div>
@@ -227,13 +260,23 @@ const Dashboard = () => {
                               {new Date(task.dueDate).toLocaleDateString()}
                             </div>
                           </div>
-                          <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleOpenModal(task)}
-                          >
-                            رؤية القائمة
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleOpenModal(task)}
+                            >
+                              رؤية القائمة
+                            </Button>
+                            {!task.completed && (
+                                <Button
+                                    variant="outline" size="sm"
+                                    onClick={() => markTaskAsCompleted(task._id)}
+                                >
+                                  تم
+                                </Button>
+                            )}
+                          </div>
                         </div>
                     ))}
                   </div>
@@ -267,7 +310,7 @@ const Dashboard = () => {
                 <>
                   <div className="space-y-5">
                     {displayedRecent.map((task) => (
-                        <div key={task._id} className="flex">
+                        <div key={task._id} className="flex items-center">
                           <div className="mr-3">{getEventIcon(task.type)}</div>
                           <div className="flex-grow">
                             <div className="font-medium">{task.title}</div>
@@ -275,13 +318,24 @@ const Dashboard = () => {
                               {new Date(task.dueDate).toLocaleDateString()}
                             </div>
                           </div>
-                          <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleOpenModal(task)}
-                          >
-                            رؤية القائمة
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleOpenModal(task)}
+                            >
+                              رؤية القائمة
+                            </Button>
+                            {!task.completed && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => markTaskAsCompleted(task._id)}
+                                >
+                                  تم
+                                </Button>
+                            )}
+                          </div>
                         </div>
                     ))}
                   </div>
