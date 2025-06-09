@@ -196,11 +196,11 @@ export default function Milk() {
               </div>
               <div className="bg-secondary/30 p-4 rounded-lg">
                 <div className="text-sm text-muted-foreground">الإيرادات الإجمالية</div>
-                <div className="text-2xl font-bold">${collectTotalPrice?.toFixed(2)}</div>
+                <div className="text-2xl font-bold">₪{collectTotalPrice?.toFixed(2)}</div>
               </div>
               <div className="bg-secondary/30 p-4 rounded-lg">
                 <div className="text-sm text-muted-foreground">معدل السعر</div>
-                <div className="text-2xl font-bold">${collectTotalPriceAvg?.toFixed(2)}/L</div>
+                <div className="text-2xl font-bold">₪{collectTotalPriceAvg?.toFixed(2)}/L</div>
               </div>
             </div>
           </CardContent>

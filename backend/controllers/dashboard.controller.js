@@ -43,11 +43,13 @@ export const dashboard = async (req, res) => {
 
         // 📋 Task Time Filtering
         const veryRecentTasks = await Task.find({
-            dueDate: { $gte: today, $lte: day10 },
+            dueDate: { $lte: day10 }, // includes overdue tasks too
+            completed: false,
         }).sort({ dueDate: 1 });
 
         const recentTasks = await Task.find({
             dueDate: { $gt: day10, $lte: day20 },
+            completed: false,
         }).sort({ dueDate: 1 });
 
         // ✅ Final Response
@@ -131,12 +133,14 @@ export const medicalDashboard = async (req, res) => {
         // 5️⃣ Very recent & recent injection tasks
         const veryRecentTasks = await Task.find({
             type: 'injection',
-            dueDate: { $gte: today, $lte: day10 }
+            dueDate: { $lte: day10 },
+            completed: false,
         }).sort({ dueDate: 1 });
 
         const recentTasks = await Task.find({
             type: 'injection',
-            dueDate: { $gt: day10, $lte: day20 }
+            dueDate: { $gt: day10, $lte: day20 },
+            completed: false
         }).sort({ dueDate: 1 });
 
         res.json({
@@ -194,12 +198,14 @@ export const cycleDashboard = async (req, res) => {
         // 4️⃣ Very recent & recent tasks with cycleId
         const veryRecentTasks = await Task.find({
             cycleId: { $ne: null },
-            dueDate: { $gte: today, $lte: day10 }
+            dueDate: { $lte: day10 },
+            completed: false,
         }).sort({ dueDate: 1 });
 
         const recentTasks = await Task.find({
             cycleId: { $ne: null },
-            dueDate: { $gt: day10, $lte: day20 }
+            dueDate: { $gt: day10, $lte: day20 },
+            completed: false,
         }).sort({ dueDate: 1 });
 
         res.json({
@@ -217,3 +223,4 @@ export const cycleDashboard = async (req, res) => {
         res.status(500).json({ error: "Server error while fetching cycle dashboard" });
     }
 };
+

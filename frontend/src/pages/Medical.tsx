@@ -46,32 +46,32 @@ const TreatmentCard = ({ treatment,allDrugs }: { treatment: any;allDrugs: any })
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">المرض :</span>
-                <span className="font-medium">{treatment.latestPatient.patientName}</span>
+                <span className="font-medium">{treatment?.latestPatient?.patientName}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">الدواء :</span>
                 <span className="font-medium">
-                  {treatment.latestPatient.drugs?.[treatment.latestPatient.drugs.length - 1]?.drug.name || 'غير متوفر'}
+                  {treatment?.latestPatient?.drugs?.[treatment?.latestPatient?.drugs?.length - 1]?.drug?.name || 'غير متوفر'}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">رقم الدواء :</span>
-                <span className="font-medium">{treatment.latestPatient.drugs?.[treatment.latestPatient.drugs.length - 1]?.order || 1}</span>
+                <span className="font-medium">{treatment?.latestPatient?.drugs?.[treatment?.latestPatient?.drugs?.length - 1]?.order || 1}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">تاريخ المرض :</span>
                 <span className="font-medium">
-                  {new Date(treatment.latestPatient.patientDate).toLocaleDateString('ar-EG')}
+                  {new Date(treatment?.latestPatient?.patientDate).toLocaleDateString('ar-EG')}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">تاريخ الشفاء المتوقع :</span>
                 <span className="font-medium">
-                {new Date(new Date(treatment.latestPatient.updatedAt).getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('ar-EG')}
+                {new Date(new Date(treatment?.latestPatient?.drugs?.length > 1 ? treatment?.latestPatient?.updatedAt : treatment?.latestPatient?.patientDate ).getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('ar-EG')}
               </span>
               </div>
               <div className="pt-2">
-                    <ChangeMedicine id={treatment.sheepId} allDrugs={allDrugs} />
+                    <ChangeMedicine id={treatment?.sheepId} allDrugs={allDrugs} />
               </div>
             </div>
           </CardContent>
@@ -90,8 +90,9 @@ const NewInjectionModal = ({allSheep}) => {
   const [useTodayDate,setTodayDate] = useState(true)
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
+  const filteredInjection = allInjections.filter(injection => injection.section === 'sheep' && injection.type === "Injection")
 
-  const selectedInjectionObj = allInjections?.find(
+  const selectedInjectionObj = filteredInjection?.find(
       (inj) => inj._id === selectedInjection
   );
   const handleSheepToggle = (sheepId: string) => {
@@ -103,21 +104,21 @@ const NewInjectionModal = ({allSheep}) => {
   };
 
   const filteredSheepMultiSelector = allSheep.filter((sheep) =>
-      sheep.sheepNumber.toString().includes(searchTerm.trim())
+      sheep.sheepNumber.toString().includes(searchTerm.trim()) && sheep.status === ''
   );
-  console.log('dueDate : ' , dueDate);
+  console.log('filteredInjection : ' , filteredInjection);
+  //
 
   useEffect(() => {
     const fetchInjections = async () => {
       try {
-        const response = await fetch('http://localhost:3030/api/supplement/injections');
+        const response = await fetch('http://localhost:3030/api/stock');
         const result = await response.json();
 
         if (!response.ok) {
           throw new Error(result.error || 'فشل في جلب البيانات');
         }
 
-        console.log('تم جلب الأدوية بنجاح:', result);
 
         setAllInjections(result);
 
@@ -128,7 +129,7 @@ const NewInjectionModal = ({allSheep}) => {
     fetchInjections();
 
   }, []);
-
+  console.log('allInjections : ', allInjections);
 
   const handleSubmitAddInject = async () => {
     try {
@@ -139,7 +140,7 @@ const NewInjectionModal = ({allSheep}) => {
         injectDate: useTodayDate ? new Date() : new Date(dueDate),
         notes,
       };
-
+      console.log("payload is : ", payload)
       const response = await fetch('http://localhost:3030/api/injections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -162,7 +163,6 @@ const NewInjectionModal = ({allSheep}) => {
     }
   };
 
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -181,10 +181,8 @@ const NewInjectionModal = ({allSheep}) => {
         <div className="space-y-3 py-2" dir={'rtl'}>
           <div className="space-y-1">
             <Label htmlFor="injection-type">نوع الطعم</Label>
-            <Combobox
-                value={selectedInjection}
-                onChange={setSelectedInjection}
-                options={allInjections.map((injection) => ({
+            <Combobox value={selectedInjection} onChange={setSelectedInjection}
+                  options={filteredInjection.map((injection) => ({
                   label: injection.name,
                   value: injection._id,
                 }))}
@@ -240,7 +238,6 @@ const NewInjectionModal = ({allSheep}) => {
                       )
                   }
                 </div>
-
               </div>
             </div>
 
@@ -255,18 +252,15 @@ const NewInjectionModal = ({allSheep}) => {
               ))}
             </div>
             <div className="text-sm text-muted-foreground mt-1">
-              {selectedSheep.length} sheep selected
+              {selectedSheep.length} الأغنام المحددة
             </div>
           </div>
           {/* Notes */}
           <div className="space-y-1">
             <Label htmlFor="notes">ملاحظات (إختياري)</Label>
-            <Input
-                id="notes"
-                placeholder="معلومات إضافية عن الطعم"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-            />
+            <Input id="notes" placeholder="معلومات إضافية عن الطعم" value={notes} onChange={(e) => setNotes(e.target.value)}/>
+          </div>
+          <div className="pt-4">
           </div>
         </div>
 
@@ -274,7 +268,7 @@ const NewInjectionModal = ({allSheep}) => {
           <Button 
             type="submit" 
             onClick={handleSubmitAddInject}
-            disabled={!selectedInjection || selectedSheep.length === 0 || !injectNumber }
+            disabled={!selectedInjection || selectedSheep.length === 0 || (selectedInjectionObj?.reputation === '6m' && !injectNumber) }
           >
             <Syringe className="mr-1" size={16} />
               اضافة
@@ -307,7 +301,7 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
       setSelectedSheep([...selectedSheep, sheepId]);
     }
   };
-  const healthySheep = allSheep.filter(sheep => !sheep.isPatient)
+  const healthySheep = allSheep.filter(sheep => !sheep.isPatient && sheep.status === '')
   const filteredSheepMultiSelector = healthySheep.filter((sheep) =>
       sheep.sheepNumber.toString().includes(searchTerm.trim())
   );
@@ -445,7 +439,7 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
               </div>
 
               <div className="text-sm text-muted-foreground mt-1">
-                {selectedSheep.length} sheep selected
+                {selectedSheep.length} الأغنام المحددة
               </div>
             </div>
           </div >
@@ -585,7 +579,7 @@ const Medical = () => {
   const [loading, setLoading] = useState(true);
   const [allDrugs,setAllDrugs] = useState([])
   const [allSheep,setAllSheep] = useState([]);
-
+  const filteredDrug = allDrugs.filter(drug => drug.section === 'sheep' && drug.type === "Medicine")
 
   useEffect(() => {
     const fetchSheep = async () => {
@@ -606,18 +600,11 @@ const Medical = () => {
     };
     fetchSheep();
   }, []);
-
-
-  console.log("setUpcomingInjections" , upcomingInjections)
-  console.log("setGivenInjections" , givenInjections);
-  console.log("sickSheep" , sickSheep);
-
-
   useEffect(() => {
     if(activeTab === 'sicks') {
       const fetchDrug = async () => {
         try {
-          const response = await fetch('http://localhost:3030/api/supplement/drug');
+          const response = await fetch('http://localhost:3030/api/stock');
           const result = await response.json();
 
           if (!response.ok) {
@@ -660,7 +647,7 @@ const Medical = () => {
         try {
           const res = await fetch('http://localhost:3030/api/tasks/injections-tasks');
           const data = await res.json();
-          setUpcomingInjections(data); // Save to state
+          setUpcomingInjections(data);
         } catch (err) {
           console.error('Error loading upcoming injections:', err);
         } finally {
@@ -675,6 +662,36 @@ const Medical = () => {
   if (loading)
     return <div className="p-6 text-center">جارٍ تحميل البيانات...</div>;
 
+  const markTaskAsCompleted = async (taskId) => {
+    try {
+      const res = await fetch(`http://localhost:3030/api/tasks/${taskId}/complete`, {
+        method: 'PUT',
+      });
+
+      if (res.ok) {
+
+        toast({
+          title: "تمت المهمة ✅",
+          description: "تم تحديث حالة المهمة إلى مكتملة بنجاح.",
+          duration: 3000,
+        });
+      } else {
+        toast({
+          title: "حدث خطأ",
+          description: "فشل في تحديث حالة المهمة.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "خطأ في الاتصال",
+        description: "تعذر الاتصال بالخادم.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  console.log("givenInjections is : " , givenInjections);
 
   return (
     <div className="flex-1 space-y-6 p-6 animate-fade-in">
@@ -683,7 +700,7 @@ const Medical = () => {
         <div className="flex items-center gap-2">
           {
             activeTab === 'injections' ?
-            <NewInjectionModal allSheep={allSheep} /> : <NewTreatmentModal allSheep={allSheep} allDrugs={allDrugs} />
+            <NewInjectionModal allSheep={allSheep} /> : <NewTreatmentModal allSheep={allSheep} allDrugs={filteredDrug} />
           }
 
         </div>
@@ -726,6 +743,7 @@ const Medical = () => {
                         <TableHead style={{textAlign:"start"}}>الطعم</TableHead>
                         <TableHead style={{textAlign:"start"}}>الملاحظات</TableHead>
                         <TableHead style={{textAlign:"start"}}>قائمة الاغنام</TableHead>
+                        <TableHead style={{textAlign:"start"}}>الحالة</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -741,7 +759,15 @@ const Medical = () => {
                                 title={event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}>
                               {event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}
                             </TableCell>
-
+                            <TableCell>
+                              <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => markTaskAsCompleted(event._id)}
+                              >
+                                ✅ تم
+                              </Button>
+                            </TableCell>
                           </TableRow>
                       ))}
                     </TableBody>
@@ -749,7 +775,7 @@ const Medical = () => {
               ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                    <p>No medical history available for this sheep.</p>
+                    <p>لا يوجد تسجيلات طبية ماحة لهذه النعجة.</p>
                   </div>
               )}
             </CardContent>
@@ -790,8 +816,8 @@ const Medical = () => {
                             <TableCell>{event.notes}</TableCell>
                             <TableCell
                                 style={{ minWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                                title={event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}>
-                                {event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}
+                                title={event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}>
+                                {event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}
                             </TableCell>
                           </TableRow>
                       ))}
@@ -800,7 +826,7 @@ const Medical = () => {
               ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                    <p>No medical history available for this sheep.</p>
+                    <p>لا يوجد تسجيلات طبية ماحة لهذه النعجة.</p>
                   </div>
               )}
             </CardContent>
@@ -811,9 +837,12 @@ const Medical = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {sickSheep
                     .filter(sheep => sheep?.sheepNumber?.toString().includes(searchQuery))
-                    .map((treatment) => (
-                        <TreatmentCard key={treatment._id} treatment={treatment} allDrugs={allDrugs} />
-                    ))}
+                    .map((treatment) => {
+                      console.log("treatment is :", treatment)
+                      return (
+                          <TreatmentCard key={treatment._id} treatment={treatment} allDrugs={filteredDrug} />
+                      )
+                    })}
               </div>
           ) : (
             <div className="py-12 text-center">

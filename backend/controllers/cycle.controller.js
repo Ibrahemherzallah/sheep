@@ -1,23 +1,22 @@
 import ReportModel from "../models/report.model.js";
 import Cycle from '../models/cycle.model.js';
 import CycleInjection from '../models/cycleInjection.model.js';
-import InjectionType from '../models/injectionType.model.js';
 import Task from '../models/task.model.js';
+import StockModel from "../models/stock.model.js";
 
 
 
 export const createReport = async (req, res) => {
     try {
         const { cycleId, startDate, endDate, numOfFeed, numOfMilk, vitamins } = req.body;
-
-
+        console.log("vitamins is " , vitamins);
         const newReport = new ReportModel({
             cycleId,
             startDate,
             endDate,
             numOfFeed,
             numOfMilk,
-            vitamins, // already validated on frontend
+            vitamins,
         });
 
         const isCycle = await Cycle.findByIdAndUpdate(
@@ -30,14 +29,34 @@ export const createReport = async (req, res) => {
             return res.status(400).json({ message: 'Cycle not found' });
         }
 
+        // ✅ Update Feed stock
+        if (numOfFeed && numOfFeed > 0) {
+            await StockModel.findOneAndUpdate(
+                { type: 'Feed', section: 'cycle' },
+                { $inc: { quantity: -numOfFeed } }
+            );
+        }
+        console.log("The numOfFeed is : ", numOfFeed);
+        // ✅ Update Vitamins stock
+        if (vitamins && vitamins.length > 0) {
+            console.log("The vitamins is : ", vitamins);
+            for (const vitamen of vitamins) {
+                const { vitamin, amount } = vitamen;
+                await StockModel.findOneAndUpdate(
+                    { _id: vitamin, type: 'Vitamins', section: 'cycle' },
+                    { $inc: { quantity: -amount } }
+                );
+            }
+        }
+
         await newReport.save();
 
         res.status(201).json({
-            message: 'Report created and linked to cycle',
+            message: 'Report created, linked to cycle, and stock updated',
             data: newReport,
         });
     } catch (err) {
-        console.error(err);
+        console.error('❌ Error creating report:', err);
         res.status(500).json({ error: 'Failed to create report' });
     }
 };
@@ -100,7 +119,7 @@ export const addInjectionToCycle = async (req, res) => {
         });
 
         // Fetch the injection type
-        const injectionType = await InjectionType.findById(injectionTypeId);
+        const injectionType = await StockModel.findById(injectionTypeId);
 
         // Create a task if reputation is '6m' and dose is 1
         if (injectionType?.reputation === '6m' && numOfInject === 1) {
@@ -240,7 +259,7 @@ export const getCycleById = async (req, res) => {
                 path: 'injectionCases',
                 populate: {
                     path: 'injectionType',
-                    model: 'InjectionType'
+                    model: 'StockModel'
                 }
             })
             .populate('reports');
@@ -263,7 +282,7 @@ export const updateCycle = async (req, res) => {
         res.status(200).json({ message: "Cycle updated", data: updatedCycle });
     } catch (error) {
         console.error("Update Cycle Error:", error);
-        res.status(500).json({ error: "Failed to update cycle" });
+        res.status(500).json({ error: "فشل تعديل الدورة" });
     }
 };
 

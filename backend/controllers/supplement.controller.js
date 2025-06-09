@@ -1,6 +1,6 @@
 // Create Vitamin
 import InjectionType from "../models/injectionType.model.js";
-import DrugType from "../models/drugType.model.js";
+import StockModel from "../models/stock.model.js";
 import Vitamins from "../models/vitamis.model.js";
 
 export const createVitamin = async (req, res) => {
@@ -39,7 +39,7 @@ export const updateVitamin = async (req, res) => {
         if (!updated) return res.status(404).json({ error: 'Vitamin not found' });
         res.json(updated);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to update vitamin' });
+        res.status(500).json({ error: 'فشل التعديل الفيتامين' });
     }
 };
 
@@ -59,12 +59,23 @@ export const deleteVitamin = async (req, res) => {
 
 export const createDrugType = async (req, res) => {
     try {
-        const existing = await DrugType.findOne({ name });
+        const { name, patientTakeFor, notes, quantity, unit, price } = req.body;
+
+        const existing = await StockModel.findOne({ name, type: 'Medicine', section: 'sheep' });
         if (existing) {
             return res.status(400).json({ error: "هذا الدواء موجود" });
         }
 
-        const drugType = new DrugType({ name, patientTakeFor, notes });
+        const drugType = new StockModel({ 
+            name, 
+            type: 'Medicine', 
+            section: 'sheep',
+            quantity: quantity || 0,
+            unit: unit || 'قطعة',
+            price: price || 0,
+            reputation: patientTakeFor,
+            notes 
+        });
         await drugType.save();
 
         res.status(201).json({ message: "Drug type created", data: drugType });
@@ -76,7 +87,7 @@ export const createDrugType = async (req, res) => {
 
 export const getAllDrugTypes = async (req, res) => {
     try {
-        const drugTypes = await DrugType.find();
+        const drugTypes = await StockModel.find({ type: 'Medicine', section: 'sheep' });
         res.status(200).json(drugTypes);
     } catch (error) {
         console.error(error);
@@ -87,7 +98,7 @@ export const getAllDrugTypes = async (req, res) => {
 export const getDrugTypeById = async (req, res) => {
     try {
         const { id } = req.params;
-        const drugType = await DrugType.findById(id);
+        const drugType = await StockModel.findOne({ _id: id, type: 'Medicine', section: 'sheep' });
 
         if (!drugType) {
             return res.status(404).json({ error: "Drug type not found" });
@@ -103,11 +114,18 @@ export const getDrugTypeById = async (req, res) => {
 export const updateDrugType = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, patientTakeFor, notes } = req.body;
+        const { name, patientTakeFor, notes, quantity, unit, price } = req.body;
 
-        const updated = await DrugType.findByIdAndUpdate(
-            id,
-            { name, patientTakeFor, notes },
+        const updated = await StockModel.findOneAndUpdate(
+            { _id: id, type: 'Medicine', section: 'sheep' },
+            { 
+                name, 
+                reputation: patientTakeFor, 
+                notes,
+                quantity: quantity || 0,
+                unit: unit || 'قطعة',
+                price: price || 0
+            },
             { new: true }
         );
 
@@ -118,7 +136,7 @@ export const updateDrugType = async (req, res) => {
         res.status(200).json({ message: "Drug type updated", data: updated });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Failed to update drug type" });
+        res.status(500).json({ error: "فشل تعديل نوع الدواء" });
     }
 };
 
@@ -127,7 +145,7 @@ export const deleteDrugType = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const deleted = await DrugType.findByIdAndDelete(id);
+        const deleted = await StockModel.findOneAndDelete({ _id: id, type: 'Medicine', section: 'sheep' });
         if (!deleted) {
             return res.status(404).json({ error: "Drug type not found" });
         }
@@ -179,7 +197,7 @@ export const updateInjection = async (req, res) => {
         if (!updated) return res.status(404).json({ error: 'Injection not found' });
         res.json(updated);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to update injection' });
+        res.status(500).json({ error: 'فشل تعديل الطعومات' });
     }
 };
 

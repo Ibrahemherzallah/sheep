@@ -13,7 +13,7 @@ const patientSchema = new mongoose.Schema({
     drugs: [{
         drug: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'DrugType',
+            ref: 'StockModel',
             required: true
         },
         order: {

@@ -87,6 +87,8 @@ const StockManagement = () => {
         body: JSON.stringify({
           type: newItem.itemType,
           name: newItem.name,
+          price: newItem.price || 0,
+          reputation: newItem.reputation || '',
           quantity: newItem.quantity,
           section: stockType,
           unit: newItem.unit,
@@ -192,6 +194,7 @@ const StockManagement = () => {
   }, []);
   console.log("The cycleStockData : ",  cycleStockData);
 
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -248,7 +251,6 @@ const StockManagement = () => {
         onAdd={handleAddItem}
         stockType={stockType}
         onAddQuantity={handleAddQuantity}
-        stockType={stockType}
       />
     </div>
   );

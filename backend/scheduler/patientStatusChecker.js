@@ -43,3 +43,27 @@ cron.schedule('0 1 * * *', async () => {
         console.error('❌ Error during task cleanup:', error);
     }
 });
+
+// 🐄 Milk task creation — runs daily at 5 AM
+cron.schedule('0 5 * * *', async () => {
+    console.log('📝 Creating daily milk task...');
+
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const newTask = new Task({
+            title: 'تسجيل كمية الحليب',
+            description: 'يرجى تسجيل كمية الحليب لهذا اليوم',
+            dueDate: today,
+            type: 'milk',
+            completed: false
+        });
+
+        await newTask.save();
+
+        console.log('✅ Daily milk task created successfully');
+    } catch (error) {
+        console.error('❌ Error while creating milk task:', error);
+    }
+});

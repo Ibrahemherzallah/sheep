@@ -21,7 +21,6 @@ export const getDashboardTasks = async (req, res) => {
     res.json({ currentTasks, upcomingTasks });
 };
 
-
 export const getInjectionTasks = async (req, res) => {
     try {
         const today = new Date();
@@ -39,7 +38,6 @@ export const getInjectionTasks = async (req, res) => {
         res.status(500).json({ error: 'فشل في جلب المهام' });
     }
 }
-
 
 export const getNextInjectionTaskForSheep = async (req, res) => {
     try {
@@ -65,7 +63,6 @@ export const getNextInjectionTaskForSheep = async (req, res) => {
     }
 }
 
-
 export const getUpcomingInjectionTasksForCycle = async (req, res) => {
     try {
         const { id } = req.params;
@@ -85,5 +82,23 @@ export const getUpcomingInjectionTasksForCycle = async (req, res) => {
     } catch (error) {
         console.error('Error fetching injection tasks for cycle:', error);
         res.status(500).json({ error: 'Failed to fetch tasks.' });
+    }
+};
+
+export const markTaskComplete = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updated = await Task.findByIdAndUpdate(
+            id,
+            { completed: true },
+            { new: true }
+        );
+        if (!updated) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
+        res.status(200).json(updated);
+    } catch (err) {
+        console.error("Error marking task complete:", err);
+        res.status(500).json({ message: 'Server error' });
     }
 };

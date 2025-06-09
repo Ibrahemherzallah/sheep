@@ -1,63 +1,11 @@
 
 import {useEffect, useState} from 'react';
 import { useParams, Link } from 'react-router-dom';
-import {
-  ArrowLeft,
-  Baby,
-  Calendar,
-  Edit,
-  FileText,
-  Heart,
-  History,
-  LineChart, Plus,
-  Syringe,
-  Tag, Users
-} from 'lucide-react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle, Checkbox,
-  Dialog,
-  DialogContent,
-  DialogDescription, DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel, FormMessage, Input,
-  Separator,
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger, toast,
-} from '@/components/ui';
+import {ArrowLeft, Baby, Calendar, Edit, FileText, Heart, History, LineChart, Plus, Syringe, Tag, Users} from 'lucide-react';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Separator, Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
 import {useForm} from "react-hook-form";
 
-// Mock data - in a real app, this would come from an API
 
-const medicalHistory = [
-  { id: 'm1', sheepId: '1001', type: 'routine-injection', date: '2024-01-15', description: 'Semi-annual routine injection', notes: 'No adverse reactions' },
-  { id: 'm2', sheepId: '1001', type: 'vitamin', date: '2024-02-20', vitaminId: 'v1', vitaminName: 'Vitamin B Complex', notes: 'Administered during weekly check' },
-  { id: 'm3', sheepId: '1001', type: 'disease', date: '2024-03-05', diseaseId: 'd1', diseaseName: 'Mild fever', notes: 'Observed lethargy, treated immediately' },
-  { id: 'm4', sheepId: '1001', type: 'medication', date: '2024-03-05', medicineId: 'med1', medicineName: 'Antibiotics', notes: 'For fever treatment' },
-];
-
-const birthRecords = [
-  { id: 'b1', motherId: '1001', date: '2023-09-15', childrenCount: 2, maleCount: 1, femaleCount: 1, childIds: ['1010', '1011'], notes: 'Normal delivery, no complications' },
-  { id: 'b2', motherId: '1004', date: '2023-08-20', childrenCount: 3, maleCount: 1, femaleCount: 2, childIds: ['1012', '1013', '1014'], notes: 'Difficult birth, required assistance' },
-];
 
 const SheepDetails = () => {
   const [editSheep, setEditSheep] = useState(false);
@@ -71,13 +19,7 @@ const SheepDetails = () => {
   const [injectionTypes,setInjectionTypes] = useState([]);
   const [sheepInjections,setSheepInjections] = useState([]);
   const [nextTask,setNextTask] = useState('');
-  // Find the sheep with the matching ID
-  // Find medical events for this sheep
-
-  const sheepMedicalHistory = medicalHistory.filter(record => record.sheepId === id);
   const sheep = allSheep.find(s => s._id === id);
-  const sheepBirthRecords = sheep?.sex === 'female' ? birthRecords.filter(record => record.motherId === id) : [];
-  // Find birth records for this sheep (if female)
   useEffect(() => {
     const fetchSheep = async () => {
       try {
@@ -91,20 +33,16 @@ const SheepDetails = () => {
         setLoading(false);
       }
     };
-
     fetchSheep();
   }, [id]);
-
   useEffect(() => {
     if (activeTab === 'injection'){
-
       const fetchData = async () => {
         const res = await fetch(`http://localhost:3030/api/sheep/${id}/injection-history`);
         const { injectionTypes, injections } = await res.json();
         setInjectionTypes(injectionTypes);
         setSheepInjections(injections);
       };
-
       const fetchNextInjectionTask = async () => {
         try {
           const res = await fetch(`http://localhost:3030/api/tasks/next-injection/${id}`);
@@ -115,7 +53,6 @@ const SheepDetails = () => {
           console.error('Error loading next task:', err);
         }
       };
-
       fetchData();
       fetchNextInjectionTask();
 
@@ -132,6 +69,7 @@ const SheepDetails = () => {
         return <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">سليمة</span>;
     }
   };
+
   interface MilkFormData { milkProduceDate: string; milkStopDate: string; milkAmount: number; notes: string }
   const milkForm = useForm<MilkFormData>({
     defaultValues: {milkProduceDate: '' ,milkStopDate: '' , milkAmount: 0 , notes: ''}
@@ -206,7 +144,7 @@ const SheepDetails = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update');
+        throw new Error('فشل التعديل');
       }
 
       const updatedSheep = await response.json();
@@ -231,7 +169,7 @@ const SheepDetails = () => {
   if (!sheep) {
     return (
         <div className="p-6 text-center">
-          <h2 className="text-xl font-semibold mb-4">Sheep Not Found</h2>
+          <h2 className="text-xl font-semibold mb-4">النعجة غير موجودة</h2>
           <p>النعجة ذات الرقم {id} غير موجودة.</p>
           <Button asChild className="mt-4">
             <Link to="/sheep">العودة</Link>
@@ -241,6 +179,7 @@ const SheepDetails = () => {
   }
 
 
+
   const sortedPregnancies = [...(sheep.pregnantCases || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const latestPregnancy = sortedPregnancies[0] || null;
   const previousPregnancy = sortedPregnancies[1] || null;
@@ -248,11 +187,11 @@ const SheepDetails = () => {
   const expectedBirthDate = latestPregnancy ? new Date(latestPregnancy.expectedBornDate).toLocaleDateString() : 'N/A';
   const daysLeft = latestPregnancy ? Math.ceil((new Date(latestPregnancy.expectedBornDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   const slideBarWidth = 100 - daysLeft / 1.5;
-  console.log("newwww latestPregnancy is : " , latestPregnancy)
-  console.log("newwww daysLeft is : " , daysLeft)
+  console.log("newwww injectionTypes is : " , injectionTypes)
+  console.log("newwww sheepInjections is : " , sheepInjections)
 
-  console.log("The nextTask si : " , nextTask);
-console.log("sheep.status : " , sheep.medicalStatus);
+
+
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -266,10 +205,15 @@ console.log("sheep.status : " , sheep.medicalStatus);
           <h1 className="text-2xl font-bold tracking-tight"> معلومات النعجة {sheep.sheepNumber}</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setEditSheep(true)} variant="outline" className="gap-1">
-            <Baby size={18} />
-            <span>تعديل معلومات النعجة</span>
-          </Button>
+          {
+            !(sheep.status ===  "مباعة"|| sheep.status === 'نافقة') && !(sheep.sellPrice > 0) && (
+                  <Button onClick={() => setEditSheep(true)} variant="outline" className="gap-1">
+                    <Baby size={18} />
+                    <span>تعديل معلومات النعجة</span>
+                  </Button>
+              )
+          }
+
         </div>
       </div>
 
@@ -312,7 +256,7 @@ console.log("sheep.status : " , sheep.medicalStatus);
                     <p className="text-sm font-medium text-muted-foreground">الملاحظات</p>
                     <p className="flex items-center gap-1.5">
                       <Calendar size={14} className="text-muted-foreground" />
-                      <span>{sheep.notes}</span>
+                      <p>{sheep.notes || 'لا يوجد ملاحظات لهذه النعجة .'}</p>
                     </p>
                   </div>
                 </div>
@@ -346,104 +290,87 @@ console.log("sheep.status : " , sheep.medicalStatus);
                 </Card>
             )}
 
-            { latestPregnancy  && (
 
-              <Card dir={'rtl'}>
-                <div className="flex items-center justify-between">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-medium">إنتاج الحليب</CardTitle>
-                  </CardHeader>
-                  {
-                      latestPregnancy.bornDate && latestPregnancy.milkAmount === 0 && (
-                          <Button style={{margin: '1rem'}} onClick={() => setMilkAmountModal(true)}>
-                            إدخال انتاج الحليب
-                          </Button>
-                      )
-                  }
-                </div>
-                {
-                  sheep.isPregnant ? (
-                          previousPregnancy ? <CardContent className="pt-4">
-                                    <div className="flex justify-between">
-                                      <div>
-                                        <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعدد اخر عملية ولادة</p>
-                                        <div className="flex items-end">
-                                          <span className="text-2xl font-bold">{ previousPregnancy?.milkAmount }</span>
-                                          <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
-                                        </div>
-                                      </div>
-                                      <div>
-                                      <p>تاريخ البداية</p>
-                                        <p className="text-xs text-muted-foreground">
-                                          {
-                                            previousPregnancy?.startMilkDate ? (
+            {latestPregnancy ? (
+                <Card dir="rtl">
+                  <div className="flex items-center justify-between">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg font-medium">إنتاج الحليب</CardTitle>
+                    </CardHeader>
+                    {latestPregnancy.bornDate && latestPregnancy.milkAmount === 0 && (
+                        <Button style={{ margin: '1rem' }} onClick={() => setMilkAmountModal(true)}>
+                          إدخال انتاج الحليب
+                        </Button>
+                    )}
+                  </div>
 
-                                                      latestPregnancy?.startMilkDate
-                                                        ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0] : ''
-
-                                            ):('غير متوفر')
-                                          }
-                                        </p>
-                                      <p>تاريخ التنشيف</p>
-                                        <p className="text-xs text-muted-foreground">
-                                          {
-                                            previousPregnancy?.endMilkDate ? (
-                                                latestPregnancy?.startMilkDate
-                                                    ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0] : ''
-
-                                            ):('غير متوفر')
-                                          }
-                                        </p>
-                                    </div>
-                                    </div>
-                                  </CardContent>
-                                   : <CardContent className="pt-4">
-                                      <div>
-                                        <p className="text-sm font-medium text-muted-foreground">لا يوجد تسجيلات حليب سابقة</p>
-                                      </div>
-                                    </CardContent>
-
-                  ) :
-                      latestPregnancy.milkAmount === 0 ?
-                          (
-                                  <CardContent className="pt-4">
-                                    <div className="flex justify-between">
-                                      <div>
-                                        <p className="text-sm font-medium text-muted-foreground">قم بإدخال انتاج النعجة للحليب لاخر ولادة</p>
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                          ) :
-                            (
-                                <CardContent className="pt-4">
-                                  <div className="flex justify-between">
-                                    <div>
-                                      <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعدد اخر عملية ولادة</p>
-                                      <div className="flex items-end">
-                                        <span className="text-2xl font-bold">{ latestPregnancy?.milkAmount }</span>
-                                        <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <p>تاريخ البداية</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {latestPregnancy?.endMilkDate
-                                            ? new Date(latestPregnancy?.startMilkDate).toISOString().split('T')[0]
-                                            : 'غير متوفر'}
-                                      </p>
-                                      <p>تاريخ التنشيف</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {latestPregnancy?.endMilkDate
-                                            ? new Date(latestPregnancy?.endMilkDate).toISOString().split('T')[0]
-                                            : 'غير متوفر'}
-                                      </p>
+                  {latestPregnancy.bornDate ? (
+                      latestPregnancy.milkAmount !== 0 ? (
+                          <CardContent className="pt-4">
+                            <div className="flex justify-between">
+                              <div>
+                                <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعد اخر عملية ولادة</p>
+                                <div className="flex items-end">
+                                  <span className="text-2xl font-bold">{latestPregnancy?.milkAmount}</span>
+                                  <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
+                                </div>
+                              </div>
+                              <div>
+                                <p>تاريخ البداية</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {latestPregnancy?.startMilkDate
+                                      ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0]
+                                      : 'غير متوفر'}
+                                </p>
+                                <p>تاريخ التنشيف</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {latestPregnancy?.endMilkDate
+                                      ? new Date(latestPregnancy.endMilkDate).toISOString().split('T')[0]
+                                      : 'غير متوفر'}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                      ) : null
+                  ) : (
+                      (
+                          previousPregnancy ? (
+                              <CardContent className="pt-4">
+                                <div className="flex justify-between">
+                                  <div>
+                                    <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعد اخر عملية ولادة</p>
+                                    <div className="flex items-end">
+                                      <span className="text-2xl font-bold">{previousPregnancy?.milkAmount}</span>
+                                      <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
                                     </div>
                                   </div>
-                                </CardContent>
-                            )
-                }
-              </Card>
+                                  <div>
+                                    <p>تاريخ البداية</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {previousPregnancy?.startMilkDate
+                                          ? new Date(previousPregnancy.startMilkDate).toISOString().split('T')[0]
+                                          : 'غير متوفر'}
+                                    </p>
+                                    <p>تاريخ التنشيف</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {previousPregnancy?.endMilkDate
+                                          ? new Date(previousPregnancy.endMilkDate).toISOString().split('T')[0]
+                                          : 'غير متوفر'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+
+                          ) : <CardContent className="pt-4">لا يوجد تسجيلات حليب سابقة</CardContent>
+                      )
+                  )}
+                </Card>
+            ) : (
+                <CardContent className="pt-4">
+                  <p className="text-sm font-medium text-muted-foreground">لا يوجد تسجيلات حليب سابقة</p>
+                </CardContent>
             )}
+
 
             <Card className="md:col-span-2" dir={'rtl'}>
               <CardHeader className="pb-2">
@@ -456,9 +383,14 @@ console.log("sheep.status : " , sheep.medicalStatus);
                 <p>{sheep.notes || 'لا يوجد ملاحظات لهذه النعجة .'}</p>
               </CardContent>
             </Card>
-            <Button asChild onClick={() => setDisposalModal(true)} style={{cursor:'pointer', width:'25%'}}>
-              <span>تصريف</span>
-            </Button>
+            {
+              !(sheep.status === "مباعة"|| sheep.status === "نافقة") && !(sheep.sellPrice > 0) && (
+                    <Button asChild onClick={() => setDisposalModal(true)} style={{cursor:'pointer', width:'25%'}}>
+                      <span>تصريف</span>
+                    </Button>
+                )
+            }
+
           </div>
         </TabsContent>
         <TabsContent value="medical" className="space-y-4">
@@ -507,7 +439,7 @@ console.log("sheep.status : " , sheep.medicalStatus);
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                  <p>No medical history available for this sheep.</p>
+                  <p>لا يوجد تسجيلات طبية ماحة لهذه النعجة.</p>
                 </div>
               )}
             </CardContent>
@@ -553,19 +485,20 @@ console.log("sheep.status : " , sheep.medicalStatus);
                     </TableHeader>
                     <TableBody>
                       {injectionTypes.map((type) => {
-                        const givenInjection = sheepInjections.find(
+                        const givenInjection = [...sheepInjections].reverse().find(
                             inj => inj.injectionType?._id === type._id
                         );
+                        console.log("givenInjection is " ,givenInjection)
 
                         return (
                             <TableRow key={type._id}>
                               <TableCell>{type.name}</TableCell>
                               <TableCell>
                                 {givenInjection?.injectDate
-                                    ? new Date(givenInjection.injectDate).toLocaleDateString('en-CA')
+                                    ? new Date(givenInjection?.injectDate).toLocaleDateString('en-CA')
                                     : 'لم يتم إعطاؤه'}
                               </TableCell>
-                              <TableCell>{givenInjection?.numOfInject === 1 ? 'جرعة ولى' :  givenInjection?.numOfInject === 2 ? "جرعة ثانية" : '-'}</TableCell>
+                              <TableCell>{givenInjection?.numOfInject === 1 ? 'جرعة أولى' :  givenInjection?.numOfInject === 2 ? "جرعة ثانية" : '-'}</TableCell>
                               <TableCell>{givenInjection?.notes || '—'}</TableCell>
                             </TableRow>
                         );
@@ -575,7 +508,7 @@ console.log("sheep.status : " , sheep.medicalStatus);
               ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                    <p>No medical history available for this sheep.</p>
+                    <p>لا يوجد تسجيلات طبية ماحة لهذه النعجة.</p>
                   </div>
               )}
             </CardContent>
@@ -593,7 +526,6 @@ console.log("sheep.status : " , sheep.medicalStatus);
                         خلال {Math.ceil((new Date(nextTask.dueDate) - new Date()) / (1000 * 60 * 60 * 24))} يوم
                       </p>
                     </div>
-                    <Button variant="outline" size="sm">الإعطاء</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -604,7 +536,7 @@ console.log("sheep.status : " , sheep.medicalStatus);
           {sheep.sex === 'male' ? (
             <Card>
               <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">Birth records are only available for female sheep.</p>
+                <p className="text-muted-foreground">تسجيلات الولادة متاحة فقط للأغنام الإناث.</p>
               </CardContent>
             </Card>
           ) : (
@@ -650,7 +582,7 @@ console.log("sheep.status : " , sheep.medicalStatus);
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <Baby className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                      <p>No birth records available for this sheep.</p>
+                      <p>لا يوجد تسجيلات ولادة متاحة لهذه النعجة.</p>
                     </div>
                   )}
                 </CardContent>
