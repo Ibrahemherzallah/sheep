@@ -14,17 +14,19 @@ import injectionsRoutes from './routes/injection.routes.js';
 import milkRoutes from './routes/milk.routes.js';
 import stockRoutes from './routes/stock.routes.js';
 import protectedRoutes from './routes/protected.routes.js';
-
+import path from 'path';
 import './scheduler/patientStatusChecker.js';
-
+import { fileURLToPath } from 'url';
 const app = express();
 const PORT = process.env.PORT || 3030;
-
-app.use(cors());
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(cors({
+    origin: ['https://thesheep.top'],
+    credentials: true
+}));
 dotenv.config();
-
 app.use(express.json());
-
 app.use('/api/auth',authRoutes)
 app.use('/api/protected', protectedRoutes);
 app.use('/api/dashboard',dashboardRoutes)
@@ -37,8 +39,19 @@ app.use('/api/cycle', cycleRoutes);
 app.use('/api/injections', injectionsRoutes);
 app.use('/api/milk', milkRoutes);
 app.use('/api/stock', stockRoutes);
-
-app.listen(PORT , ()=> {
-    connectMongoDB()
-    console.log(`Server is running on http://localhost:${PORT}`);
+const staticPath = path.join(__dirname, 'static');
+app.use(express.static(staticPath));
+app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        return next(); // Skip this handler for API routes
+    }
+    res.sendFile(path.join(staticPath, 'index.html'));
 });
+try {
+    app.listen(PORT, () => {
+        connectMongoDB();
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
+} catch (err) {
+    console.error('Error starting server:', err);
+}

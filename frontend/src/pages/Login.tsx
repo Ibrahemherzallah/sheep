@@ -44,7 +44,7 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      const response = await fetch('http://localhost:3030/api/auth/login', {
+      const response = await fetch('https://thesheep.top/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

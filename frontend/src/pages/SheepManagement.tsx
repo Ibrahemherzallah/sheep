@@ -224,7 +224,7 @@ const SheepManagement = () => {
     };
 
     try {
-      const response = await fetch('http://localhost:3030/api/pregnancies/update-after-birth', {
+      const response = await fetch('https://thesheep.top/api/pregnancies/update-after-birth', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -293,7 +293,7 @@ const SheepManagement = () => {
     console.log("📤 Request Data:", requestData);
 
     try {
-      const response = await fetch('http://localhost:3030/api/pregnancies/bulk', {
+      const response = await fetch('https://thesheep.top/api/pregnancies/bulk', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -354,7 +354,7 @@ const SheepManagement = () => {
 
 
     try {
-      const response = await fetch('http://localhost:3030/api/sheep', {
+      const response = await fetch('https://thesheep.top/api/sheep', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -418,7 +418,7 @@ const SheepManagement = () => {
   useEffect(() => {
     const fetchSheep = async () => {
       try {
-        const response = await fetch('http://localhost:3030/api/sheep');
+        const response = await fetch('https://thesheep.top/api/sheep');
         const result = await response.json();
 
         if (!response.ok) {
@@ -443,7 +443,7 @@ const SheepManagement = () => {
     };
     const fetchDrug = async () => {
       try {
-        const response = await fetch('http://localhost:3030/api/stock');
+        const response = await fetch('https://thesheep.top/api/stock');
         const result = await response.json();
 
         if (!response.ok) {

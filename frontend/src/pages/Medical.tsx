@@ -112,7 +112,7 @@ const NewInjectionModal = ({allSheep}) => {
   useEffect(() => {
     const fetchInjections = async () => {
       try {
-        const response = await fetch('http://localhost:3030/api/stock');
+        const response = await fetch('https://thesheep.top/api/stock');
         const result = await response.json();
 
         if (!response.ok) {
@@ -141,7 +141,7 @@ const NewInjectionModal = ({allSheep}) => {
         notes,
       };
       console.log("payload is : ", payload)
-      const response = await fetch('http://localhost:3030/api/injections', {
+      const response = await fetch('https://thesheep.top/api/injections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -319,7 +319,7 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
     };
 
     try {
-      const res = await fetch("http://localhost:3030/api/patient", {
+      const res = await fetch("https://thesheep.top/api/patient", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -483,7 +483,7 @@ const ChangeMedicine = ({id,allDrugs}) => {
     if (!newMedicine || !medicineNumber) return;
 
     try {
-      const response = await fetch(`http://localhost:3030/api/patient/add-drug/${id}`, {
+      const response = await fetch(`https://thesheep.top/api/patient/add-drug/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -584,7 +584,7 @@ const Medical = () => {
   useEffect(() => {
     const fetchSheep = async () => {
       try {
-        const response = await fetch('http://localhost:3030/api/sheep');
+        const response = await fetch('https://thesheep.top/api/sheep');
         const result = await response.json();
 
         if (!response.ok) {
@@ -604,7 +604,7 @@ const Medical = () => {
     if(activeTab === 'sicks') {
       const fetchDrug = async () => {
         try {
-          const response = await fetch('http://localhost:3030/api/stock');
+          const response = await fetch('https://thesheep.top/api/stock');
           const result = await response.json();
 
           if (!response.ok) {
@@ -621,7 +621,7 @@ const Medical = () => {
       };
       const fetchLatestPatients = async () => {
         try {
-          const res = await fetch('http://localhost:3030/api/sheep/latest-patient-cases');
+          const res = await fetch('https://thesheep.top/api/sheep/latest-patient-cases');
           const data = await res.json();
           setSickSheep(data);
         } catch (err) {
@@ -636,7 +636,7 @@ const Medical = () => {
     else if(activeTab === 'injections') {
       const fetchGivenInjections = async () => {
         try {
-          const res = await fetch('http://localhost:3030/api/injections');
+          const res = await fetch('https://thesheep.top/api/injections');
           const data = await res.json();
           setGivenInjections(data); // Save to state
         } catch (err) {
@@ -645,7 +645,7 @@ const Medical = () => {
       };
       const fetchCommingInjections = async () => {
         try {
-          const res = await fetch('http://localhost:3030/api/tasks/injections-tasks');
+          const res = await fetch('https://thesheep.top/api/tasks/injections-tasks');
           const data = await res.json();
           setUpcomingInjections(data);
         } catch (err) {
@@ -664,7 +664,7 @@ const Medical = () => {
 
   const markTaskAsCompleted = async (taskId) => {
     try {
-      const res = await fetch(`http://localhost:3030/api/tasks/${taskId}/complete`, {
+      const res = await fetch(`https://thesheep.top/api/tasks/${taskId}/complete`, {
         method: 'PUT',
       });
 

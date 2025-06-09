@@ -23,7 +23,7 @@ const SheepDetails = () => {
   useEffect(() => {
     const fetchSheep = async () => {
       try {
-        const response = await fetch('http://localhost:3030/api/sheep');
+        const response = await fetch('https://thesheep.top/api/sheep');
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || 'فشل في جلب البيانات');
         setAllSheep(result);
@@ -38,14 +38,14 @@ const SheepDetails = () => {
   useEffect(() => {
     if (activeTab === 'injection'){
       const fetchData = async () => {
-        const res = await fetch(`http://localhost:3030/api/sheep/${id}/injection-history`);
+        const res = await fetch(`https://thesheep.top/api/sheep/${id}/injection-history`);
         const { injectionTypes, injections } = await res.json();
         setInjectionTypes(injectionTypes);
         setSheepInjections(injections);
       };
       const fetchNextInjectionTask = async () => {
         try {
-          const res = await fetch(`http://localhost:3030/api/tasks/next-injection/${id}`);
+          const res = await fetch(`https://thesheep.top/api/tasks/next-injection/${id}`);
           if (!res.ok) return;
           const data = await res.json();
           setNextTask(data);
@@ -77,7 +77,7 @@ const SheepDetails = () => {
 
   const handleSubmitMilkAmount = async (data: MilkFormData) => {
     try {
-      const response = await fetch("http://localhost:3030/api/pregnancies/update-milk", {
+      const response = await fetch("https://thesheep.top/api/pregnancies/update-milk", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, sheepId: sheep._id })
@@ -104,19 +104,19 @@ const SheepDetails = () => {
 
     try {
       if (tab === "death") {
-        await fetch(`http://localhost:3030/api/sheep/${id}/status`, {
+        await fetch(`https://thesheep.top/api/sheep/${id}/status`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: "نافقة" }),
         });
       } else if (tab === "sell") {
-        await fetch(`http://localhost:3030/api/sheep/${id}/status`, {
+        await fetch(`https://thesheep.top/api/sheep/${id}/status`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: "مباعة", sellPrice }),
         });
       } else if (tab === "delete") {
-        await fetch(`http://localhost:3030/api/sheep/${id}`, {
+        await fetch(`https://thesheep.top/api/sheep/${id}`, {
           method: "DELETE",
         });
       }
@@ -135,7 +135,7 @@ const SheepDetails = () => {
   interface EditSheepData { sheepNumber: number; notes: string;}
   const handleSubmitEdit = async (data: EditSheepData) => {
     try {
-      const response = await fetch(`http://localhost:3030/api/sheep/${sheep._id}`, {
+      const response = await fetch(`https://thesheep.top/api/sheep/${sheep._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
