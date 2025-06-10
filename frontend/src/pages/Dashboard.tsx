@@ -1,8 +1,7 @@
 import {useEffect, useState} from 'react';
-import {Activity, Baby, Calendar, Ear, Info, Pill, Syringe, Truck} from 'lucide-react';
+import {Activity, Baby, Calendar, Ear, Info, Pill,Milk, Syringe, Truck} from 'lucide-react';
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
 import { Link } from 'react-router-dom';
-import Milk from "@/pages/Milk.tsx";
 import * as React from "react";
 
 
