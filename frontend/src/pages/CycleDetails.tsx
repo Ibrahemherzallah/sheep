@@ -324,11 +324,11 @@ const CycleDetails = () => {
           injectionTypesRes,
           nextTaskRes
         ] = await Promise.all([
-          fetch(`http://https://thesheep.top/api/cycle/${id}`),
-          fetch(`http://https://thesheep.top/api/stock`),
-          fetch(`http://https://thesheep.top/api/stock/category/Injection`),
-          fetch(`http://https://thesheep.top/api/sheep/${id}/injection-history`),
-          fetch(`http://https://thesheep.top/api/tasks/next-injection-cycle/${id}`)
+          fetch(`https://thesheep.top/api/cycle/${id}`),
+          fetch(`https://thesheep.top/api/stock`),
+          fetch(`https://thesheep.top/api/stock/category/Injection`),
+          fetch(`https://thesheep.top/api/sheep/${id}/injection-history`),
+          fetch(`https://thesheep.top/api/tasks/next-injection-cycle/${id}`)
         ]);
 
         const cycleData = await cycleRes.json();
