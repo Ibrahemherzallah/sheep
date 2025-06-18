@@ -16,70 +16,6 @@ import {Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, Dialog
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// Mock data for cycles
-const mockCycles: Cycle[] = [
-  {
-    id: "c1",
-    name: "دورة شتاء 2025",
-    startDate: new Date(2025, 2, 15),
-    endDate: undefined,
-    sheepIds: ["s1", "s2", "s3", "s4", "s5"],
-    initialMaleCount: 3,
-    initialFemaleCount: 2,
-    status: "نشطة",
-    notes: "أول دورة تنشط في هذا الموسم"
-  },
-  {
-    id: "c2",
-    name: "دورة شتاء 2025",
-    startDate: new Date(2024, 10, 10),
-    endDate: new Date(2025, 3, 15),
-    sheepIds: ["s6", "s7", "s8", "s9", "s10", "s11"],
-    initialMaleCount: 4,
-    initialFemaleCount: 2,
-    status: "منتهية",
-    notes: "أول دورة تنشط في هذا الموسم"
-  },
-  {
-    id: "c3",
-    name: "دورة شتاء 2025",
-    startDate: new Date(2024, 5, 20),
-    endDate: new Date(2024, 9, 30),
-    sheepIds: ["s12", "s13", "s14", "s15"],
-    initialMaleCount: 2,
-    initialFemaleCount: 2,
-    status: "منتهية",
-    notes: "أول دورة تنشط في هذا الموسم"
-  }
-];
-
-// Mock data for medicines and injections
-const mockMedicines = [
-  { id: "m1", name: "Penicillin", description: "Antibiotic for bacterial infections" },
-  { id: "m2", name: "Ivermectin", description: "Anti-parasitic medication" },
-  { id: "m3", name: "Tetracycline", description: "Broad-spectrum antibiotic" },
-  { id: "m4", name: "Flunixin", description: "Anti-inflammatory medication" }
-];
-
-const mockInjections = [
-  { id: "i1", name: "Clostridial Vaccine", description: "Protects against clostridial diseases" },
-  { id: "i2", name: "Foot Rot Vaccine", description: "Protects against foot rot" },
-  { id: "i3", name: "Q Fever Vaccine", description: "Protects against Q fever" },
-  { id: "i4", name: "Anthrax Vaccine", description: "Protects against anthrax" }
-];
-
-
-interface CycleFormData {
-  cycleName: string ;
-  cycleNumber: number ;
-  maleNum: number ;
-  femaleNum: number ;
-  startDate: string ;
-  notes: string
-}
-
-
-
 
 const CycleManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -175,32 +111,6 @@ const CycleManagement = () => {
     }
   };
   // Handle adding a medicine or injection to a cycle
-  const handleAddMedication = () => {
-
-    if (!selectedCycle) {
-      toast.error("Please select a cycle");
-      return;
-    }
-
-    if (medicineTab === 'medicines' && !selectedMedicine) {
-      toast.error("Please select a medicine");
-      return;
-    }
-
-    if (medicineTab === 'injections' && !selectedInjection) {
-      toast.error("Please select an injection");
-      return;
-    }
-
-    // In a real app, this would save to a database
-    toast.success(`${medicineTab === 'medicines' ? 'Medicine' : 'Injection'} added to cycle successfully`);
-    
-    // Reset form
-    setSelectedMedicine('');
-    setSelectedInjection('');
-    setDosage('');
-    setNotes('');
-  };
 
 
   useEffect(() => {
@@ -267,7 +177,7 @@ const CycleManagement = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         <div className="col-span-1 md:col-span-3">
-          <Card >
+          <Card>
             <CardHeader className="pb-5" dir={'rtl'}>
               <CardTitle>الدورات</CardTitle>
             </CardHeader>
@@ -295,7 +205,6 @@ const CycleManagement = () => {
                       <TableRow key={cycle._id}>
                         <TableCell className="font-medium" style={{textAlign:'end'}}>{cycle.name}</TableCell>
                         <TableCell>
-
                           <div className="flex items-center gap-2 justify-end" >
                             <Calendar size={16} className="text-muted-foreground " />
                             {formatDate(cycle.startDate)}
@@ -341,7 +250,6 @@ const CycleManagement = () => {
             </CardContent>
           </Card>
         </div>
-
       </div>
       <Dialog open={addCycleDialog} onOpenChange={setAddCycleDialog}>
         <DialogContent className="sm:max-w-[600px]" >

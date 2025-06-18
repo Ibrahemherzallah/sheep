@@ -29,21 +29,42 @@ export const createReport = async (req, res) => {
             return res.status(400).json({ message: 'Cycle not found' });
         }
 
-        // ✅ Update Feed stock
+        // ✅ Update Feed stock safely
         if (numOfFeed && numOfFeed > 0) {
-            await StockModel.findOneAndUpdate(
-                { type: 'Feed', section: 'cycle' },
+            const feedStock = await StockModel.findOne({ type: 'Feed', section: 'cycle' });
+
+            if (!feedStock || feedStock.quantity < numOfFeed) {
+                return res.status(400).json({
+                    message: 'مخزون علف غير كافي',
+                });
+            }
+
+            // Safe to decrement
+            await StockModel.updateOne(
+                { _id: feedStock._id },
                 { $inc: { quantity: -numOfFeed } }
             );
         }
-        console.log("The numOfFeed is : ", numOfFeed);
-        // ✅ Update Vitamins stock
+
+// ✅ Update Vitamins stock safely
         if (vitamins && vitamins.length > 0) {
-            console.log("The vitamins is : ", vitamins);
             for (const vitamen of vitamins) {
                 const { vitamin, amount } = vitamen;
-                await StockModel.findOneAndUpdate(
-                    { _id: vitamin, type: 'Vitamins', section: 'cycle' },
+
+                const vitaminStock = await StockModel.findOne({
+                    _id: vitamin,
+                    type: 'Vitamins',
+                    section: 'cycle',
+                });
+
+                if (!vitaminStock || vitaminStock.quantity < amount) {
+                    return res.status(400).json({
+                        message: `مخزون فيتامين غير كافي${vitamin}`,
+                    });
+                }
+
+                await StockModel.updateOne(
+                    { _id: vitaminStock._id },
                     { $inc: { quantity: -amount } }
                 );
             }
@@ -60,6 +81,8 @@ export const createReport = async (req, res) => {
         res.status(500).json({ error: 'Failed to create report' });
     }
 };
+
+
 
 export const getReportsByCycleId = async (req, res) => {
     try {

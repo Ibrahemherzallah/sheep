@@ -99,11 +99,6 @@ export default function Milk() {
     };
     fetchMilk();
   }, []);
-  console.log("The milk is : " , milkData);
-  console.log("The collectTotalProduction is : " , collectTotalProduction);
-  console.log("The collectTotalProduction is : " , collectTotalPrice);
-  console.log("The collectTotalProduction is : " , collectTotalSold);
-  console.log("The collectTotalProduction is : " , collectTotalPriceAvg);
 
   return (
     <div className="container py-10">

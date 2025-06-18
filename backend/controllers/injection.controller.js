@@ -43,7 +43,7 @@ export const createInjection = async (req, res) => {
 
                 const tasks = [
                     {
-                        title: ` جرعة ثانية من دواء ${injectionName}`,
+                        title: ` جرعة ثانية من طعم ${injectionName}`,
                         dueDate: reinject15DaysLater,
                         sheepIds: sheepId,
                         type: 'injection',

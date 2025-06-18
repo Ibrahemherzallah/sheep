@@ -150,7 +150,7 @@ const SheepManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const filteredDrug = allDrugs.filter(drug => drug.section === 'sheep' && drug.type === "Medicine")
+  const filteredDrug = allDrugs.filter(drug => drug?.section === 'sheep' && drug?.type === "Medicine")
   // Forms
   const form = useForm<BirthFormData>({
     defaultValues: {
@@ -467,9 +467,10 @@ const SheepManagement = () => {
   }
   return (
     <div className="flex-1 space-y-6 p-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">إدارة الأغنام</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Button onClick={() => setPregnantDialogOpen(true)} variant="outline" className="gap-1">
             <GiSheep className="mr-1" />
             <span>إضافة حمل</span>
@@ -479,12 +480,12 @@ const SheepManagement = () => {
             <span>إضافة ولادة</span>
           </Button>
           <Button onClick={() => setAddSheepDialog(true)}>
-              <Plus size={18} />
-                <span>إضافة أغنام</span>
+            <Plus size={18} />
+            <span>إضافة أغنام</span>
           </Button>
         </div>
       </div>
-      
+
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
           <TabsList>
@@ -626,7 +627,7 @@ const SheepManagement = () => {
                     ))}
 
                     {pregnantSheep.length === 0 && (
-                        <p className="text-sm text-muted-foreground col-span-full">No sheep found with that number.</p>
+                        <p className="text-sm text-muted-foreground col-span-full">لا يوجد أغنام بهذا الرقم.</p>
                     )}
                   </div>
                 </div>

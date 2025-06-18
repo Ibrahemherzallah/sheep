@@ -1,4 +1,3 @@
-
 import {useEffect, useState} from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {ArrowLeft, Baby, Calendar, Edit, FileText, Heart, History, LineChart, Plus, Syringe, Tag, Users} from 'lucide-react';
@@ -187,8 +186,7 @@ const SheepDetails = () => {
   const expectedBirthDate = latestPregnancy ? new Date(latestPregnancy.expectedBornDate).toLocaleDateString() : 'N/A';
   const daysLeft = latestPregnancy ? Math.ceil((new Date(latestPregnancy.expectedBornDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   const slideBarWidth = 100 - daysLeft / 1.5;
-  console.log("newwww injectionTypes is : " , injectionTypes)
-  console.log("newwww sheepInjections is : " , sheepInjections)
+
 
 
 
@@ -383,13 +381,10 @@ const SheepDetails = () => {
                 <p>{sheep.notes || 'لا يوجد ملاحظات لهذه النعجة .'}</p>
               </CardContent>
             </Card>
-            {
-              !(sheep.status === "مباعة"|| sheep.status === "نافقة") && !(sheep.sellPrice > 0) && (
                     <Button asChild onClick={() => setDisposalModal(true)} style={{cursor:'pointer', width:'25%'}}>
                       <span>تصريف</span>
                     </Button>
-                )
-            }
+
 
           </div>
         </TabsContent>
@@ -668,7 +663,6 @@ const SheepDetails = () => {
           </Form>
         </DialogContent>
       </Dialog>
-
       {/* Disposal Sheep Modal */}
       <Dialog open={disposalModal} onOpenChange={setDisposalModal}>
         <DialogContent className="sm:max-w-[600px]" >
@@ -683,27 +677,43 @@ const SheepDetails = () => {
             <form onSubmit={disposalForm.handleSubmit(handleSubmitDisposal)} className="space-y-4">
               <Tabs value={tab} onValueChange={setTab} className="w-full">
                 <TabsList className="grid grid-cols-3">
-                  <TabsTrigger value="sell">بيع</TabsTrigger>
-                  <TabsTrigger value="death">موت</TabsTrigger>
+                  {
+                      !(sheep.status === "مباعة"|| sheep.status === "نافقة") && !(sheep.sellPrice > 0) && (
+                          <>
+                            <TabsTrigger value="sell">بيع</TabsTrigger>
+                            <TabsTrigger value="death">موت</TabsTrigger>
+                          </>
+
+                    )
+                  }
+
                   <TabsTrigger value="delete">حذف</TabsTrigger>
+
+
                 </TabsList>
                 <div className="py-4 space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                  <TabsContent value="death">
-                    <p className="text-red-600 font-semibold pb-5 pt-3" dir={'rtl'}>هل أنت متأكد أنك تريد تسجيل النعجة كمُتوفاة؟</p>
-                  </TabsContent>
+                  {
+                    !(sheep.status === "مباعة"|| sheep.status === "نافقة") && !(sheep.sellPrice > 0) && (
+                        <>
+                          <TabsContent value="death">
+                            <p className="text-red-600 font-semibold pb-5 pt-3" dir={'rtl'}>هل أنت متأكد أنك تريد تسجيل النعجة كمُتوفاة؟</p>
+                          </TabsContent>
+                          <TabsContent value="sell" dir={'rtl'} className={'pb-5 pt-3'}>
+                            <FormField control={disposalForm.control} name="sellPrice" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>سعر البيع</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                            )}/>
+                          </TabsContent>
+                        </>
+                    )
+                  }
                   <TabsContent value="delete">
                     <p className="text-red-600 font-semibold pb-5 pt-3" dir={'rtl'}>هل أنت متأكد أنك تريد حذف هذه النعجة؟ هذا الإجراء لا يمكن التراجع عنه.</p>
-                  </TabsContent>
-                  <TabsContent value="sell" dir={'rtl'} className={'pb-5 pt-3'}>
-                    <FormField control={disposalForm.control} name="sellPrice" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>سعر البيع</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                    )}/>
                   </TabsContent>
                 </div>
               </Tabs>
@@ -721,7 +731,6 @@ const SheepDetails = () => {
           </Form>
         </DialogContent>
       </Dialog>
-
       {/* Enter the milk production */}
       <Dialog open={milkAmountModal} onOpenChange={setMilkAmountModal} >
         <DialogContent className="sm:max-w-[600px]" dir={'rtl'}>

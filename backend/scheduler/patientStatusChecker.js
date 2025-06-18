@@ -36,9 +36,13 @@ cron.schedule('0 1 * * *', async () => {
 
     try {
         const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
-        const result = await Task.deleteMany({ dueDate: { $lte: tenDaysAgo } });
 
-        console.log(`🗑️ ${result.deletedCount} old tasks deleted.`);
+        const result = await Task.deleteMany({
+            dueDate: { $lte: tenDaysAgo },
+            completed: true, // Only delete if completed
+        });
+
+        console.log(`🗑️ ${result.deletedCount} completed tasks older than 10 days deleted.`);
     } catch (error) {
         console.error('❌ Error during task cleanup:', error);
     }
