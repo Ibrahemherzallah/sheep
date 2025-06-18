@@ -7,6 +7,7 @@ import StockTable from '@/components/stock/StockTable';
 import AddStockItemDialog from '@/components/stock/AddStockItemDialog';
 import { StockCategory } from '@/types';
 import {toast} from "@/hooks/use-toast.ts";
+import * as React from "react";
 
 // Mock data for stock items
 const sheepStockData: StockCategory[] = [
@@ -192,12 +193,10 @@ const StockManagement = () => {
     };
     fetchStockItems();
   }, []);
-  console.log("The cycleStockData : ",  cycleStockData);
-
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold">إدارة المخزون</h1>
           <p className="text-muted-foreground mt-1">

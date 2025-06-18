@@ -22,7 +22,7 @@ export const AppHeader = ({
     toast({ title: "Logged out successfully" });
     navigate("/login");
   };
-
+  console.log("the  isSidebarOpen : " , isSidebarOpen);
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm py-1 px-4 flex justify-between items-center">
       <div className="flex items-center">
@@ -30,7 +30,6 @@ export const AppHeader = ({
           {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </Button>
         <Link to="/" className="flex items-center">
-          <img src="/logo.svg" alt="Sheep Management System" className="h-8 w-8 mr-2" onError={(e) => {e.currentTarget.style.display = 'none';}}/>
           <span className="font-semibold text-farm-green-700 text-lg hidden sm:inline-block">
             FlockWatch
           </span>

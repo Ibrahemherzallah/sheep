@@ -691,182 +691,173 @@ const Medical = () => {
     }
   };
 
-  console.log("givenInjections is : " , givenInjections);
 
   return (
-    <div className="flex-1 space-y-6 p-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">الإدارة الطبية</h1>
-        <div className="flex items-center gap-2">
-          {
-            activeTab === 'injections' ?
-            <NewInjectionModal allSheep={allSheep} /> : <NewTreatmentModal allSheep={allSheep} allDrugs={filteredDrug} />
-          }
-
+      <div className="p-6 space-y-6 animate-fade-in">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">الإدارة الطبية</h1>
+          <div className="flex items-center gap-2">
+            {activeTab === 'injections'
+                ? <NewInjectionModal allSheep={allSheep} />
+                : <NewTreatmentModal allSheep={allSheep} allDrugs={filteredDrug} />}
+          </div>
         </div>
-      </div>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="injections">الطعومات</TabsTrigger>
-          <TabsTrigger value="sicks">الأمراض</TabsTrigger>
-        </TabsList>
 
-        {
-          activeTab === 'sicks' &&
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div className="relative flex-grow max-w-md">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search by sheep ID..." className="pl-8" value={searchQuery}
-                       onChange={(e) => setSearchQuery(e.target.value)}/>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="injections">الطعومات</TabsTrigger>
+            <TabsTrigger value="sicks">الأمراض</TabsTrigger>
+          </TabsList>
+          {
+              activeTab === 'sicks' &&
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="relative flex-grow max-w-md">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Search by sheep ID..." className="pl-8" value={searchQuery}
+                         onChange={(e) => setSearchQuery(e.target.value)}/>
+                </div>
+
               </div>
-
-            </div>
-        }
-
-        
-        <TabsContent value="injections">
-
-          <Card dir={'rtl'}>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2">
-                <span>الطعومات القادمة</span>
-              </CardTitle>
-              <CardDescription style={{fontWeight:'bold'}}>سجل الطعومات القادمة للطعومات التي يجب اعطاؤها</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {upcomingInjections.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead style={{textAlign:"start"}}>التاريخ</TableHead>
-                        <TableHead style={{textAlign:"start"}}>الطعم</TableHead>
-                        <TableHead style={{textAlign:"start"}}>الملاحظات</TableHead>
-                        <TableHead style={{textAlign:"start"}}>قائمة الاغنام</TableHead>
-                        <TableHead style={{textAlign:"start"}}>الحالة</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {upcomingInjections.map((event) => (
-                          <TableRow key={event._id}>
-                            <TableCell>
-                              {event.dueDate ? new Date(event.dueDate).toLocaleDateString('en-CA') : "غير متوفر"}
-                            </TableCell>
-                            <TableCell>{event.title}</TableCell>
-                            <TableCell>{event.notes || 'لا يوجد ملاحظات'}</TableCell>
-                            <TableCell
-                                style={{ minWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                                title={event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}>
-                              {event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => markTaskAsCompleted(event._id)}
-                              >
-                                ✅ تم
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-              ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                    <p>لا يوجد تسجيلات طبية ماحة لهذه النعجة.</p>
-                  </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <br />
-          <Card dir={'rtl'}>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2">
-                <span>تاريخ الطعومات</span>
-              </CardTitle>
-              <CardDescription style={{fontWeight:'bold'}}>سجل الطعومات الكامل للطعومات التي تم اعطاؤها</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {givenInjections.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead style={{textAlign:"start"}}>التاريخ</TableHead>
-                        <TableHead style={{textAlign:"start"}}>نوع الطعم</TableHead>
-                        <TableHead style={{textAlign:"start"}}>الجرعة</TableHead>
-                        <TableHead style={{textAlign:"start"}}>الملاحظات</TableHead>
-                        <TableHead style={{textAlign:"start"}}>قائمة الاغنام</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {givenInjections?.map((event) => (
-                          <TableRow key={event._id}>
-                            <TableCell>
-                              {event.injectDate ? new Date(event.injectDate).toLocaleDateString('en-CA') : "غير متوفر"}
-                            </TableCell>
-                            <TableCell>
-                              {event?.injectionType?.name}
-                            </TableCell>
-                            <TableCell>
-                              {event.numOfInject === 1 ? 'جرعة اولى' : "جرعة ثانية"}
-                            </TableCell>
-                            <TableCell>{event.notes}</TableCell>
-                            <TableCell
-                                style={{ minWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                                title={event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}>
+          }
+          <TabsContent value="injections">
+            <Card dir={'rtl'}>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Heart size={18} />
+                  <span>الطعومات القادمة</span>
+                </CardTitle>
+                <CardDescription style={{fontWeight:'bold'}}>سجل الطعومات القادمة للطعومات التي يجب اعطاؤها</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {upcomingInjections.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead style={{textAlign:"start"}}>التاريخ</TableHead>
+                          <TableHead style={{textAlign:"start"}}>الطعم</TableHead>
+                          <TableHead style={{textAlign:"start"}}>الملاحظات</TableHead>
+                          <TableHead style={{textAlign:"start"}}>قائمة الاغنام</TableHead>
+                          <TableHead style={{textAlign:"start"}}>الحالة</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {upcomingInjections.map((event) => (
+                            <TableRow key={event._id}>
+                              <TableCell className={`p-1`}>
+                                {event.dueDate ? new Date(event.dueDate).toLocaleDateString('en-CA') : "غير متوفر"}
+                              </TableCell>
+                              <TableCell className={`p-1`}>{event.title}</TableCell>
+                              <TableCell className={`p-1`}>{event.notes || 'لا يوجد ملاحظات'}</TableCell>
+                              <TableCell className={`p-1`}
+                                         // style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                         title={event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}>
+                                {event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}
+                              </TableCell>
+                              <TableCell className={`px-1`}>
+                                <Button size="sm" variant="outline"
+                                        onClick={() => markTaskAsCompleted(event._id)}>
+                                  ✅ تم
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
+                      <p>لا يوجد تسجيلات طبية ماحة لهذه النعجة.</p>
+                    </div>
+                )}
+              </CardContent>
+            </Card>
+            <br />
+            <Card dir={'rtl'}>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <span>تاريخ الطعومات</span>
+                </CardTitle>
+                <CardDescription style={{fontWeight:'bold'}}>سجل الطعومات الكامل للطعومات التي تم اعطاؤها</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {givenInjections.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead style={{textAlign:"start"}}>التاريخ</TableHead>
+                          <TableHead style={{textAlign:"start"}}>نوع الطعم</TableHead>
+                          <TableHead style={{textAlign:"start"}}>الجرعة</TableHead>
+                          <TableHead style={{textAlign:"start"}}>الملاحظات</TableHead>
+                          <TableHead style={{textAlign:"start"}}>قائمة الاغنام</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {givenInjections?.map((event) => (
+                            <TableRow key={event._id}>
+                              <TableCell>
+                                {event.injectDate ? new Date(event.injectDate).toLocaleDateString('en-CA') : "غير متوفر"}
+                              </TableCell>
+                              <TableCell>
+                                {event?.injectionType?.name}
+                              </TableCell>
+                              <TableCell>
+                                {event.numOfInject === 1 ? 'جرعة اولى' : "جرعة ثانية"}
+                              </TableCell>
+                              <TableCell>{event.notes}</TableCell>
+                              <TableCell
+                                  style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                  title={event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}>
                                 {event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}
-                            </TableCell>
-                          </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-              ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                    <p>لا يوجد تسجيلات طبية ماحة لهذه النعجة.</p>
-                  </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="sicks">
-          {sickSheep.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sickSheep
-                    .filter(sheep => sheep?.sheepNumber?.toString().includes(searchQuery))
-                    .map((treatment) => {
-                      console.log("treatment is :", treatment)
-                      return (
-                          <TreatmentCard key={treatment._id} treatment={treatment} allDrugs={filteredDrug} />
-                      )
-                    })}
-              </div>
-          ) : (
-            <div className="py-12 text-center">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
-                <Search className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold">No treatments found</h3>
-              <p className="text-muted-foreground mt-2">
-                No treatments match your current search or filter criteria.
-              </p>
-              <Button variant="outline" className="mt-4"
-                onClick={() => {
-                  setSearchQuery('');
-                  setFilterStatus('all');
-                }}
-              >
-                Reset filters
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+                              </TableCell>
+                            </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <History className="mx-auto h-12 w-12 opacity-20 mb-2" />
+                      <p>لا يوجد تسجيلات طبية ماحة لهذه النعجة.</p>
+                    </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-    </div>
+          <TabsContent value="sicks">
+            {sickSheep.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {sickSheep
+                      .filter(sheep => sheep?.sheepNumber?.toString().includes(searchQuery))
+                      .map((treatment) => {
+                        console.log("treatment is :", treatment)
+                        return (
+                            <TreatmentCard key={treatment._id} treatment={treatment} allDrugs={filteredDrug} />
+                        )
+                      })}
+                </div>
+            ) : (
+                <div className="py-12 text-center">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
+                    <Search className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold">No treatments found</h3>
+                  <p className="text-muted-foreground mt-2">
+                    No treatments match your current search or filter criteria.
+                  </p>
+                  <Button variant="outline" className="mt-4"
+                          onClick={() => {
+                            setSearchQuery('');
+                            setFilterStatus('all');
+                          }}
+                  >
+                    Reset filters
+                  </Button>
+                </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+      </div>
   );
 };
 

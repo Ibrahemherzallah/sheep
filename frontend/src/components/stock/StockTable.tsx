@@ -38,21 +38,21 @@ const StockTable = ({ items }: StockTableProps) => {
             items?.map((item) => (
               <TableRow key={item?.id}>
                 <TableCell className="font-medium">{item?.name}</TableCell>
-                <TableCell>{item?.quantity}</TableCell>
-                <TableCell>{item?.unit}</TableCell>
+                <TableCell className={`px-1`}>{item?.quantity}</TableCell>
+                <TableCell className={`px-1`}>{item?.unit}</TableCell>
                 {
                   item.price > 0 ? <TableCell>{item?.price}</TableCell> : null
                 }
                 {
                     !(item.reputation === '') ? <TableCell>{item?.reputation}</TableCell> : null
                 }
-                <TableCell>
+                <TableCell className={`px-1`}>
                   {formatDistanceToNow(new Date(item.updatedAt), {
                     addSuffix: true,
                     locale: ar,
                   })}
                 </TableCell>
-                <TableCell>{item?.notes || "—"}</TableCell>
+                <TableCell className={`px-1`}>{item?.notes || "—"}</TableCell>
               </TableRow>
             ))
           )}

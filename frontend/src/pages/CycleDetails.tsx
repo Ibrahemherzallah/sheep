@@ -12,18 +12,6 @@ import {Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, Dialog
 import {Combobox} from "@/components/ui/combobox.tsx";
 import * as React from "react";
 
-// Mock data for a specific cycle
-const mockCycle: Cycle = {
-  id: "c1",
-  name: "دورة شتاء 2025",
-  startDate: new Date(2025, 2, 15),
-  endDate: undefined,
-  sheepIds: ["s1", "s2", "s3", "s4", "s5"],
-  initialMaleCount: 3,
-  initialFemaleCount: 2,
-  status: "active",
-  notes: "تُركز هذه الدورة على برنامج تربية الحملان الربيعي. تتكون المجموعة من حملان صغيرة تُربى لإنتاج الحليب ولحوم الماشية. تُعدّ المراقبة الأسبوعية للأعلاف والحليب والعلاجات الطبية ضرورية لتحقيق نمو مثالي.",
-};
 
 const cycleInjections = [
   { injectName: 'تسمم غذائي' , doseNum: 1, givenDate: new Date()},
@@ -113,13 +101,13 @@ const CycleDetails = () => {
   const [allReports, setAllReports] = useState([]);
   const [loading,setLoading] = useState(true);
   const filteredVitamins = allVitamins?.filter(vitamin => vitamin.type === "Vitamins" && vitamin.section === "cycle")
+
+  console.log("Tha filteredVitamins  is : " , filteredVitamins);
   // Format date to a readable string
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-GB'); // e.g., 26/05/2025
   };
-
-
 
   const form = useForm<AddInject>({
     defaultValues: {
@@ -179,19 +167,24 @@ const CycleDetails = () => {
     }
   };
   const handleSubmitReport = async (data: AddReport) => {
-    console.log("data : ",data);
+    console.log("nnnnnnnnnnnnnnnnnnnn data : ", data);
+
     try {
       const vitaminEntries =
           typeof data.vitaminAmounts === "object" && data.vitaminAmounts !== null
               ? Object.entries(data.vitaminAmounts)
               : [];
 
-      const formattedVitamins = vitaminEntries.map(([vitamin, amount]) => ({
-        vitamin,
-        amount: Number(amount),
-      }));
-      console.log("formattedVitamins : ", formattedVitamins)
-      // Send the POST request to the backend API
+      // ✅ Only include vitamins that are actually selected
+      const formattedVitamins = vitaminEntries
+          .filter(([vitaminId]) => selectedVitamins.includes(vitaminId))
+          .map(([vitamin, amount]) => ({
+            vitamin,
+            amount: Number(amount),
+          }));
+
+      console.log("nnnnnnnnnnnnnnnnnnnn formattedVitamins : ", formattedVitamins);
+
       const response = await fetch("https://thesheep.top/api/cycle/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -201,19 +194,18 @@ const CycleDetails = () => {
           endDate: data.endDate,
           numOfFeed: data.feedAmount,
           numOfMilk: data.milkAmount,
-          vitamins: formattedVitamins
+          vitamins: formattedVitamins,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'فشل في إرسال التقرير');
+        throw new Error(errorData.message || "فشل في إرسال التقرير");
       }
 
       toast({ title: "تم الإضافة", description: "تمت إضافة التقرير بنجاح" });
       setAddReportDialog(false);
       reportForm.reset();
-
     } catch (error: any) {
       console.error("Failed to submit report:", error);
       toast({ title: "خطأ", description: error.message || "فشل في إرسال التقرير" });
@@ -352,10 +344,8 @@ const CycleDetails = () => {
         setLoading(false);
       }
     };
-
     fetchAllInitialData();
   }, []);
-  console.log("allReports :" , allReports);
   useEffect(() => {
     if (activeTab === 'weekly') {
       const fetchReport = async () => {
@@ -374,18 +364,16 @@ const CycleDetails = () => {
       fetchReport();
     }
   }, [activeTab, id]);
-
   const selectedInjectionObj = allInjections?.find(
       (inj) => inj._id === selectedInjection
   );
-console.log("The selectedInjection  : ", selectedInjection);
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <Button variant="ghost" className="mb-6 pl-0 flex items-center gap-2" onClick={() => navigate('/cycles')}>
         <ArrowLeft size={16} />
        الرجوع إلى الدورات
       </Button>
-
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="flex items-center gap-3">
@@ -421,7 +409,6 @@ console.log("The selectedInjection  : ", selectedInjection);
         }
 
       </div>
-
       <Tabs defaultValue="overview" className="mt-6" onValueChange={setActiveTab}>
         <TabsList className="mb-6">
           <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
@@ -718,7 +705,6 @@ console.log("The selectedInjection  : ", selectedInjection);
 
         </TabsContent>
       </Tabs>
-
       {/*   Add Inject Dialog   */}
       <Dialog open={addInjectDialog} onOpenChange={setAddInjectDialog}>
         <DialogContent className="sm:max-w-[600px]" >
@@ -902,13 +888,9 @@ console.log("The selectedInjection  : ", selectedInjection);
 
                           {/* Vitamin Info & Input */}
                           <div className="flex-1 space-y-1">
-                            <label
-                                htmlFor={`vitamin-${vitamin?._id}`}
-                                className="text-sm font-medium leading-none cursor-pointer"
-                            >
+                            <label htmlFor={`vitamin-${vitamin?._id}`} className="text-sm font-medium leading-none cursor-pointer">
                               {vitamin?.name}
                             </label>
-
                             {isSelected && (
                                 <div className="mt-1">
                                   <label className="text-xs text-muted-foreground">الكمية</label>
@@ -951,7 +933,15 @@ console.log("The selectedInjection  : ", selectedInjection);
                   إضافة التقرير
                 </Button>
 
-                <Button type="button" variant="outline" onClick={() => {setAddReportDialog(false);reportForm.reset()}}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setAddReportDialog(false);
+                      setSelectedVitamins([]);
+                      reportForm.reset();
+                    }}
+                >
                   الغاء
                 </Button>
 
@@ -1097,7 +1087,6 @@ console.log("The selectedInjection  : ", selectedInjection);
           </Form>
         </DialogContent>
       </Dialog>
-
 
     </div>
   );
