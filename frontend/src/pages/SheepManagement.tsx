@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import {is} from "date-fns/locale";
 import * as React from "react";
 import {Combobox} from "@/components/ui/combobox.tsx";
+import {formatDate} from "@/utils/dateUtils.ts";
 
 
 const sheepGender = [
@@ -79,7 +80,7 @@ const SheepCard = ({ sheep }: { sheep: any }) => {
           <div className="flex justify-between">
             <span className="text-muted-foreground">تاريخ الإدخال :</span>
             <span className="font-medium">
-              {new Date(sheep.createdAt).toLocaleDateString('ar-EG')} {/* or 'en-US' */}
+              {formatDate(sheep.createdAt)}
             </span>
           </div>
           {sheep.isPregnant && sheep.pregnantCases.length > 0 && (() => {
@@ -724,7 +725,7 @@ const SheepManagement = () => {
               </div>
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => {setBirthDialogOpen(false);form.reset();setSelectedSheep([]);}}>
+                <Button type="button" variant="outline" onClick={() => {setPregnantDialogOpen(false);form.reset();setSelectedSheep([]);}}>
                   الغاء
                 </Button>
                 <Button type="submit" disabled={selectedSheep.length === 0}>

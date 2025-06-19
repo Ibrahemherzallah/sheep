@@ -6,6 +6,7 @@ import {useForm} from "react-hook-form";
 import {Combobox} from "@/components/ui/combobox.tsx";
 import {any} from "zod";
 import * as React from "react";
+import { formatDate } from "../utils/dateUtils";
 
 const StatusBadge = ({ status }: { status: string }) => {
   const getStatusClass = () => {
@@ -61,13 +62,13 @@ const TreatmentCard = ({ treatment,allDrugs }: { treatment: any;allDrugs: any })
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">تاريخ المرض :</span>
                 <span className="font-medium">
-                  {new Date(treatment?.latestPatient?.patientDate).toLocaleDateString('ar-EG')}
+                  {formatDate(treatment?.latestPatient?.patientDate)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">تاريخ الشفاء المتوقع :</span>
                 <span className="font-medium">
-                {new Date(new Date(treatment?.latestPatient?.drugs?.length > 1 ? treatment?.latestPatient?.updatedAt : treatment?.latestPatient?.patientDate ).getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('ar-EG')}
+                {formatDate(new Date(new Date(treatment?.latestPatient?.drugs?.length > 1 ? treatment?.latestPatient?.updatedAt : treatment?.latestPatient?.patientDate ).getTime() + 5 * 24 * 60 * 60 * 1000))}
               </span>
               </div>
               <div className="pt-2">
@@ -177,7 +178,7 @@ const NewInjectionModal = ({allSheep}) => {
         <DialogHeader style={{textAlign: "end"}}>
           <DialogTitle>إضافة طعم جديد</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-3 py-2" dir={'rtl'}>
           <div className="space-y-1">
             <Label htmlFor="injection-type">نوع الطعم</Label>
@@ -744,7 +745,7 @@ const Medical = () => {
                         {upcomingInjections.map((event) => (
                             <TableRow key={event._id}>
                               <TableCell className={`p-1`}>
-                                {event.dueDate ? new Date(event.dueDate).toLocaleDateString('en-CA') : "غير متوفر"}
+                                {event.dueDate ? formatDate(event.dueDate) : "غير متوفر"}
                               </TableCell>
                               <TableCell className={`p-1`}>{event.title}</TableCell>
                               <TableCell className={`p-1`}>{event.notes || 'لا يوجد ملاحظات'}</TableCell>
@@ -795,7 +796,7 @@ const Medical = () => {
                         {givenInjections?.map((event) => (
                             <TableRow key={event._id}>
                               <TableCell>
-                                {event.injectDate ? new Date(event.injectDate).toLocaleDateString('en-CA') : "غير متوفر"}
+                                {event.injectDate ? formatDate(event.injectDate) : "غير متوفر"}
                               </TableCell>
                               <TableCell>
                                 {event?.injectionType?.name}
