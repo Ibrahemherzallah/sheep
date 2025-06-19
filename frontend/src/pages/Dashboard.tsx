@@ -66,7 +66,7 @@ const Dashboard = () => {
     setIsModalOpen(true);
 
     try {
-      const response = await fetch(`http://localhost:3030/api/sheep/list-by-ids`, {
+      const response = await fetch(`https://thesheep.top/api/sheep/list-by-ids`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: task.sheepIds }),
