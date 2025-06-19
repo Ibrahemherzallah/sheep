@@ -15,6 +15,7 @@ import {useForm} from "react-hook-form";
 import {Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { formatDate } from "../utils/dateUtils";
 
 
 const CycleManagement = () => {
@@ -53,10 +54,6 @@ const CycleManagement = () => {
   });
 
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB'); // e.g., 26/05/2025
-  };
   const handleSubmitSheep = async (data: AddCycleData) => {
     if (useTodayDate) {
       data.startDate = new Date().toISOString().split("T")[0];

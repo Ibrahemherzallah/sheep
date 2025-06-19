@@ -78,6 +78,8 @@ export default function Milk() {
     }
   }
 
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); // 1st day of current month
   const collectTotalProduction = milkData.reduce((accumulator,element) => {
     return accumulator + element?.production;
   }, 0);

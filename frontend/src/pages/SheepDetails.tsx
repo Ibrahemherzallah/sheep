@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import {ArrowLeft, Baby, Calendar, Edit, FileText, Heart, History, LineChart, Plus, Syringe, Tag, Users} from 'lucide-react';
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Separator, Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
 import {useForm} from "react-hook-form";
+import { formatDate } from "../utils/dateUtils";
 
 
 
@@ -10,6 +11,9 @@ const SheepDetails = () => {
   const [editSheep, setEditSheep] = useState(false);
   const [disposalModal, setDisposalModal] = useState(false);
   const [milkAmountModal, setMilkAmountModal] = useState(false)
+  const [changeMilkAmountModal, setChangeMilkAmountModal] = useState(false)
+  const [endMilkDateModal, setEndMilkDateModal] = useState(false)
+
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [allSheep,setAllSheep] = useState([]);
@@ -54,7 +58,6 @@ const SheepDetails = () => {
       };
       fetchData();
       fetchNextInjectionTask();
-
     }
   }, [activeTab]);
 
@@ -69,14 +72,13 @@ const SheepDetails = () => {
     }
   };
 
-  interface MilkFormData { milkProduceDate: string; milkStopDate: string; milkAmount: number; notes: string }
+  interface MilkFormData { milkProduceDate: string;  milkAmount: number; notes: string }
   const milkForm = useForm<MilkFormData>({
-    defaultValues: {milkProduceDate: '' ,milkStopDate: '' , milkAmount: 0 , notes: ''}
+    defaultValues: {milkProduceDate: '' , milkAmount: 0 , notes: ''}
   });
-
   const handleSubmitMilkAmount = async (data: MilkFormData) => {
     try {
-      const response = await fetch("https://thesheep.top/api/pregnancies/update-milk", {
+      const response = await fetch("http://localhost:3030/api/pregnancies/update-milk", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, sheepId: sheep._id })
@@ -94,6 +96,68 @@ const SheepDetails = () => {
       toast({ title: "خطأ", description: error.message });
     }
   };
+
+  //////////////////////////////////
+
+  interface EndMilkFormData { milkEndDate: string;  notes: string }
+  const endMilkForm = useForm<EndMilkFormData>({
+    defaultValues: {milkEndDate: '' ,  notes: ''}
+  });
+  const handleSubmitEndMilkDate = async (data: EndMilkFormData) => {
+    try {
+      const response = await fetch("https://thesheep.top/api/pregnancies/update-end-milk", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, sheepId: sheep._id })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || "فشل في تحديث بيانات تنشيف الحليب");
+
+      toast({ title: "تم تحديث تاريخ التنشيف بنجاح" });
+      setEndMilkDateModal(false); // <-- your second modal
+      endMilkForm.reset();
+    } catch (error: any) {
+      console.error("Error submitting end milk data:", error);
+      toast({ title: "خطأ", description: error.message });
+    }
+  };
+
+  /////////////////////////////////////
+
+  interface ChangeMilkAmountFormData { milkAmount: number; }
+  const milkAmountForm = useForm<ChangeMilkAmountFormData>({
+    defaultValues: { milkAmount: 0 }
+  });
+  const handleSubmitChangeMilkAmount = async (data: ChangeMilkAmountFormData) => {
+    console.log("data is :" , data)
+    try {
+      const response = await fetch("https://thesheep.top/api/pregnancies/update-milk-amount", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sheepId: sheep._id,
+          milkAmount: data.milkAmount,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || "فشل في تحديث كمية الحليب");
+
+      toast({ title: "تم تحديث كمية الحليب بنجاح" });
+      setChangeMilkAmountModal(false);  // close the modal
+      milkAmountForm.reset();           // reset the form
+    } catch (error: any) {
+      console.error("Error updating milk amount:", error);
+      toast({ title: "خطأ", description: error.message });
+    }
+  };
+
+
+
+
   // eslint-disable-next-line react-hooks/rules-of-hooks
 
   interface DisposalFormData { sheepId: string; sellPrice: number; }
@@ -182,8 +246,8 @@ const SheepDetails = () => {
   const sortedPregnancies = [...(sheep.pregnantCases || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const latestPregnancy = sortedPregnancies[0] || null;
   const previousPregnancy = sortedPregnancies[1] || null;
-  const pregnantSince = latestPregnancy ? new Date(latestPregnancy.pregnantDate).toLocaleDateString() : 'N/A';
-  const expectedBirthDate = latestPregnancy ? new Date(latestPregnancy.expectedBornDate).toLocaleDateString() : 'N/A';
+  const pregnantSince = latestPregnancy ? formatDate(latestPregnancy.pregnantDate) : 'N/A';
+  const expectedBirthDate = latestPregnancy ? formatDate(latestPregnancy.expectedBornDate) : 'N/A';
   const daysLeft = latestPregnancy ? Math.ceil((new Date(latestPregnancy.expectedBornDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   const slideBarWidth = 100 - daysLeft / 1.5;
 
@@ -223,7 +287,7 @@ const SheepDetails = () => {
           <TabsTrigger value="injection">الطعومات</TabsTrigger>
           <TabsTrigger value="births">الولادات</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" dir={'rtl'}>
             <Card dir={'rtl'}>
@@ -295,6 +359,19 @@ const SheepDetails = () => {
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg font-medium">إنتاج الحليب</CardTitle>
                     </CardHeader>
+
+                    <div className={`flex flex-nowrap align-middle`}>
+                      {!latestPregnancy.endMilkDate && latestPregnancy.milkAmount !== 0 && (
+                          <Button style={{marginBlock: '1rem',marginLeft: '1rem'}} onClick={() => setEndMilkDateModal(true)}>
+                            تاريخ التنشيف
+                          </Button>
+                      )}
+                      {latestPregnancy.bornDate && latestPregnancy.milkAmount !== 0 && (
+                          <Button style={{ marginBlock: '1rem', marginLeft: '1rem' }} onClick={() => setChangeMilkAmountModal(true)}>
+                            تغيير كمية الحليب
+                          </Button>
+                      )}
+                    </div>
                     {latestPregnancy.bornDate && latestPregnancy.milkAmount === 0 && (
                         <Button style={{ margin: '1rem' }} onClick={() => setMilkAmountModal(true)}>
                           إدخال انتاج الحليب
@@ -305,29 +382,29 @@ const SheepDetails = () => {
                   {latestPregnancy.bornDate ? (
                       latestPregnancy.milkAmount !== 0 ? (
                           <CardContent className="pt-4">
-                            <div className="flex justify-between">
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعد اخر عملية ولادة</p>
-                                <div className="flex items-end">
-                                  <span className="text-2xl font-bold">{latestPregnancy?.milkAmount}</span>
-                                  <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
+                              <div className="flex justify-between">
+                                <div>
+                                  <p className="text-sm font-medium text-muted-foreground">كمية الحليب بعد اخر عملية ولادة</p>
+                                  <div className="flex items-end">
+                                    <span className="text-2xl font-bold">{latestPregnancy?.milkAmount}</span>
+                                    <span className="text-sm text-muted-foreground ml-1 mb-1">لتر/يوم</span>
+                                  </div>
+                                </div>
+                                <div>
+                                  <p>تاريخ البداية</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {latestPregnancy?.startMilkDate
+                                        ? formatDate(latestPregnancy.startMilkDate)
+                                        : 'غير متوفر'}
+                                  </p>
+                                  <p>تاريخ التنشيف</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {latestPregnancy?.endMilkDate
+                                        ? formatDate(latestPregnancy.endMilkDate)
+                                        : 'غير متوفر'}
+                                  </p>
                                 </div>
                               </div>
-                              <div>
-                                <p>تاريخ البداية</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {latestPregnancy?.startMilkDate
-                                      ? new Date(latestPregnancy.startMilkDate).toISOString().split('T')[0]
-                                      : 'غير متوفر'}
-                                </p>
-                                <p>تاريخ التنشيف</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {latestPregnancy?.endMilkDate
-                                      ? new Date(latestPregnancy.endMilkDate).toISOString().split('T')[0]
-                                      : 'غير متوفر'}
-                                </p>
-                              </div>
-                            </div>
                           </CardContent>
                       ) : null
                   ) : (
@@ -346,13 +423,13 @@ const SheepDetails = () => {
                                     <p>تاريخ البداية</p>
                                     <p className="text-xs text-muted-foreground">
                                       {previousPregnancy?.startMilkDate
-                                          ? new Date(previousPregnancy.startMilkDate).toISOString().split('T')[0]
+                                          ? formatDate(previousPregnancy.startMilkDate)
                                           : 'غير متوفر'}
                                     </p>
                                     <p>تاريخ التنشيف</p>
                                     <p className="text-xs text-muted-foreground">
                                       {previousPregnancy?.endMilkDate
-                                          ? new Date(previousPregnancy.endMilkDate).toISOString().split('T')[0]
+                                          ? formatDate(previousPregnancy.endMilkDate)
                                           : 'غير متوفر'}
                                     </p>
                                   </div>
@@ -439,7 +516,7 @@ const SheepDetails = () => {
               )}
             </CardContent>
           </Card>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4" dir={'rtl'}>
             <Card dir={'rtl'}>
               <CardHeader className="pb-2">
@@ -490,7 +567,7 @@ const SheepDetails = () => {
                               <TableCell>{type.name}</TableCell>
                               <TableCell>
                                 {givenInjection?.injectDate
-                                    ? new Date(givenInjection?.injectDate).toLocaleDateString('en-CA')
+                                    ? formatDate(givenInjection?.injectDate)
                                     : 'لم يتم إعطاؤه'}
                               </TableCell>
                               <TableCell>{givenInjection?.numOfInject === 1 ? 'جرعة أولى' :  givenInjection?.numOfInject === 2 ? "جرعة ثانية" : '-'}</TableCell>
@@ -582,7 +659,7 @@ const SheepDetails = () => {
                   )}
                 </CardContent>
               </Card>
-              
+
               {sheep.isPregnant && (
                 <Card className="border-purple-200">
                   <CardHeader className="bg-purple-50">
@@ -612,8 +689,100 @@ const SheepDetails = () => {
         </TabsContent>
 
       </Tabs>
+      {/* changeMilkAmountModal Sheep Modal */}
+      <Dialog open={changeMilkAmountModal} onOpenChange={setChangeMilkAmountModal}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader style={{ textAlign: 'end' }}>
+            <DialogTitle>تعديل كمية الحليب</DialogTitle>
+            <DialogDescription>
+              قم بإدخال الكمية الجديدة من الحليب لهذا الحمل
+            </DialogDescription>
+          </DialogHeader>
 
-      {/* Edit Sheep Modal */}
+          <Form {...milkAmountForm}>
+            <form onSubmit={milkAmountForm.handleSubmit(handleSubmitChangeMilkAmount)} className="space-y-4" dir="rtl">
+              <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
+                <FormField
+                    control={milkAmountForm.control}
+                    name="milkAmount"
+                    render={({ field }) => (
+                        <FormItem style={{ width: '100%' }}>
+                          <FormLabel>كمية الحليب (لتر)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.1" min="0" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                    )}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="submit" disabled={milkAmountForm.watch("milkAmount") <= 0}>
+                  احفظ التعديلات
+                </Button>
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setChangeMilkAmountModal(false);
+                      milkAmountForm.reset();
+                    }}
+                >
+                  الغاء
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      {/* endMilkDateModal Sheep Modal */}
+      <Dialog open={endMilkDateModal} onOpenChange={setEndMilkDateModal}>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign:'end'}}>
+            <DialogTitle>تحديد تاريخ التنشيف</DialogTitle>
+            <DialogDescription>
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...endMilkForm}>
+            <form onSubmit={endMilkForm.handleSubmit(handleSubmitEndMilkDate)} className="space-y-4" dir={'rtl'}>
+              <div className="space-y-4 py-2 max-h-[400px]  overflow-y-auto pr-2">
+                <div className="flex justify-between">
+                  <FormField control={endMilkForm.control} name="milkEndDate" render={({ field }) => (
+                      <FormItem style={{width:'100%'}}>
+                        <FormLabel>تاريخ التنشيف</FormLabel>
+                        <FormControl>
+                          <Input type={"date"} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                </div>
+                <FormField control={endMilkForm.control} name="notes" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ملاحظات</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="أي ملاحظات إضافية .." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={!endMilkForm.watch("milkEndDate")}>
+                  احفظ التعديلات
+                </Button>
+                <Button type="button" variant="outline" onClick={() => {setEditSheep(false);form.reset();}}>
+                  الغاء
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      {/* edit Sheep Modal */}
       <Dialog open={editSheep} onOpenChange={setEditSheep}>
         <DialogContent className="sm:max-w-[600px]" >
           <DialogHeader style={{textAlign:'end'}}>
@@ -748,7 +917,7 @@ const SheepDetails = () => {
               <div className="space-y-4 py-2 max-h-[400px]  overflow-y-auto pr-2">
                 <div className="flex justify-between">
                   <FormField control={milkForm.control}  name="milkProduceDate" render={({ field }) => (
-                      <FormItem style={{width:'40%'}}>
+                      <FormItem style={{width:'100%'}}>
                         <FormLabel>تاريخ الإعطاء</FormLabel>
                         <FormControl>
                           <Input type={"date"} {...field} />
@@ -756,15 +925,7 @@ const SheepDetails = () => {
                         <FormMessage />
                       </FormItem>
                   )}/>
-                  <FormField control={milkForm.control}  name="milkStopDate" render={({ field }) => (
-                      <FormItem style={{width:'40%'}}>
-                        <FormLabel>تاريخ التنشيف</FormLabel>
-                        <FormControl>
-                          <Input type={"date"} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                  )}/>
+
                 </div>
 
                 <FormField control={milkForm.control} name="milkAmount" render={({ field }) => (
@@ -795,7 +956,6 @@ const SheepDetails = () => {
                     onClick={milkForm.handleSubmit(handleSubmitMilkAmount)}
                     disabled={
                         !milkForm.watch("milkProduceDate") ||
-                        !milkForm.watch("milkStopDate") ||
                         !milkForm.watch("milkAmount")
                     }
                 >
@@ -813,5 +973,6 @@ const SheepDetails = () => {
     </div>
   );
 };
+
 
 export default SheepDetails;

@@ -14,7 +14,16 @@ export const createMilkRecord = async (req, res) => {
 // Read all
 export const getAllMilkRecords = async (req, res) => {
     try {
-        const records = await MilkProduction.find().sort({ date: -1 });
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        // Fetch only records in current month
+        const records = await MilkProduction.find({
+            date: {
+                $gte: startOfMonth,
+                $lte: now
+            }
+        }).sort({ date: -1 });
         res.json(records);
     } catch (err) {
         res.status(500).json({ error: 'خطأ في جلب البيانات' });

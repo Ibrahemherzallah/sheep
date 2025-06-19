@@ -3,13 +3,6 @@ import Pregnancy from '../models/pregnancy.model.js';
 import Sheep from '../models/sheep.model.js';
 import Task from "../models/task.model.js";
 
-// Utility function to add days
-const addDays = (date, days) => {
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
-};
-
 export const createPregnancies = async (req, res) => {
     try {
         const { sheepIds, pregnantDate, expectedBornDate, notes } = req.body;
@@ -105,7 +98,7 @@ export const getPregnancyById = async (req, res) => {
 
 export const updateMilkInfo = async (req, res) => {
     try {
-        const { sheepId, milkAmount, milkProduceDate, milkStopDate, notes } = req.body;
+        const { sheepId, milkAmount, milkProduceDate, notes } = req.body;
 
 
         if (!sheepId) {
@@ -120,7 +113,6 @@ export const updateMilkInfo = async (req, res) => {
 
         latestPregnancy.milkAmount = milkAmount;
         latestPregnancy.startMilkDate = milkProduceDate;
-        latestPregnancy.endMilkDate = milkStopDate;
         latestPregnancy.milkNotes = notes;
 
         await latestPregnancy.save();
@@ -132,6 +124,57 @@ export const updateMilkInfo = async (req, res) => {
     }
 };
 
+export const updateEndMilkInfo = async (req, res) => {
+    try {
+        const { sheepId, milkEndDate, notes } = req.body;
+
+        if (!sheepId) {
+            return res.status(400).json({ error: 'sheepId is required' });
+        }
+
+        const latestPregnancy = await Pregnancy.findOne({ sheepId }).sort({ createdAt: -1 });
+
+        if (!latestPregnancy) {
+            return res.status(404).json({ error: 'No pregnancy record found for this sheep' });
+        }
+
+        latestPregnancy.endMilkDate = milkEndDate;
+        latestPregnancy.milkNotes = notes;
+
+        await latestPregnancy.save();
+
+        res.status(200).json({ message: 'End milk info updated successfully', data: latestPregnancy });
+    } catch (error) {
+        console.error('Error updating end milk info:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+export const updateMilkAmountOnly = async (req, res) => {
+    try {
+        const { sheepId, milkAmount } = req.body;
+
+        if (!sheepId) {
+            return res.status(400).json({ error: 'sheepId and valid milkAmount are required' });
+        }
+
+        // Find the latest pregnancy for the sheep
+        const latestPregnancy = await Pregnancy.findOne({ sheepId }).sort({ createdAt: -1 });
+
+        if (!latestPregnancy) {
+            return res.status(404).json({ error: 'لم يتم العثور على سجل حمل لهذا الغنم' });
+        }
+
+        latestPregnancy.milkAmount = milkAmount;
+
+        await latestPregnancy.save();
+
+        res.status(200).json({ message: 'تم تحديث كمية الحليب بنجاح', data: latestPregnancy });
+    } catch (error) {
+        console.error('Error updating milk amount:', error);
+        res.status(500).json({ error: 'خطأ في الخادم' });
+    }
+};
 
 export const updateOnePregnancy = async (req, res) => {
     try {

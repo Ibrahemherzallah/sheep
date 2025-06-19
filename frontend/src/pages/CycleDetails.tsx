@@ -11,6 +11,7 @@ import {toast} from "@/hooks/use-toast.ts";
 import {Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Label, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui";
 import {Combobox} from "@/components/ui/combobox.tsx";
 import * as React from "react";
+import { formatDate } from "../utils/dateUtils";
 
 
 const cycleInjections = [
@@ -103,11 +104,6 @@ const CycleDetails = () => {
   const filteredVitamins = allVitamins?.filter(vitamin => vitamin.type === "Vitamins" && vitamin.section === "cycle")
 
   console.log("Tha filteredVitamins  is : " , filteredVitamins);
-  // Format date to a readable string
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB'); // e.g., 26/05/2025
-  };
 
   const form = useForm<AddInject>({
     defaultValues: {
@@ -167,7 +163,6 @@ const CycleDetails = () => {
     }
   };
   const handleSubmitReport = async (data: AddReport) => {
-    console.log("nnnnnnnnnnnnnnnnnnnn data : ", data);
 
     try {
       const vitaminEntries =
@@ -183,7 +178,6 @@ const CycleDetails = () => {
             amount: Number(amount),
           }));
 
-      console.log("nnnnnnnnnnnnnnnnnnnn formattedVitamins : ", formattedVitamins);
 
       const response = await fetch("https://thesheep.top/api/cycle/report", {
         method: "POST",
@@ -495,7 +489,7 @@ const CycleDetails = () => {
                                       <TableCell>{type.name}</TableCell>
                                       <TableCell>
                                         {givenInjection?.injectDate
-                                            ? new Date(givenInjection.injectDate).toLocaleDateString('en-CA')
+                                            ? formatDate(givenInjection.injectDate)
                                             : 'لم يتم إعطاؤه'}
                                       </TableCell>
                                       <TableCell>
@@ -559,7 +553,7 @@ const CycleDetails = () => {
                                         <TableHead style={{textAlign:"start"}}>العدد</TableHead>
                                         <TableHead style={{textAlign:"start"}}>عدد الكيلوات</TableHead>
                                         <TableHead style={{textAlign:"start"}}>سعر الكيلو</TableHead>
-                                        <TableHead style={{textAlign:"start"}}>تاريخ النهاية</TableHead>
+                                        <TableHead style={{textAlign:"start"}}>الإيرادات</TableHead>
 
 
                                       </TableRow>
@@ -569,8 +563,8 @@ const CycleDetails = () => {
                                         <TableCell>البيع</TableCell>
                                         <TableCell>{cycleData?.numOfSell}</TableCell>
                                         <TableCell>{cycleData?.totalKilos}</TableCell>
-                                        <TableCell>{cycleData?.priceOfKilo}</TableCell>
-                                        <TableCell>{new Date(cycleData?.endDate).toLocaleDateString('en-CA')}</TableCell>
+                                        <TableCell> {cycleData?.priceOfKilo} ₪</TableCell>
+                                        <TableCell> { cycleData?.priceOfKilo * cycleData?.totalKilos } ₪</TableCell>
                                       </TableRow>
 
                                       <TableRow>
@@ -631,7 +625,7 @@ const CycleDetails = () => {
                                 <div className="flex justify-between items-start">
                                   <div>
                                     <CardTitle className="text-lg">
-                                      التقرير {new Date(record.startDate).toLocaleDateString('en-CA', { month: '2-digit', day: '2-digit' })} - {new Date(record.endDate).toLocaleDateString('en-CA', { month: '2-digit', day: '2-digit' })}
+                                      التقرير {formatDate(record.startDate)} - {formatDate(record.endDate)}
                                     </CardTitle>
                                     <CardDescription> التقرير رقم {record.order}</CardDescription>
                                   </div>

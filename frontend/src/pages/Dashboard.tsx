@@ -3,6 +3,7 @@ import {Activity, Baby, Calendar, Ear, Info, Pill,Milk, Syringe, Truck} from 'lu
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
 import { Link } from 'react-router-dom';
 import * as React from "react";
+import {formatDate} from "@/utils/dateUtils.ts";
 
 
 const getEventIcon = (type: string) => {
@@ -197,9 +198,6 @@ const Dashboard = () => {
   if (loading) return <div className={"text-center mt-4"}>جار تحميل البيانات...</div>;
   if (!dashboardData) return <div>حدث شيء خاطئ!</div>;
 
-  console.log("recentTasks is : " , recentTasks);
-  console.log("modalLoading is : " , modalLoading)
-
   return (
     <div className="flex-1 space-y-6 p-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -256,7 +254,7 @@ const Dashboard = () => {
                           <div className="flex-grow">
                             <div className="font-medium">{task.title}</div>
                             <div className="text-sm text-muted-foreground">
-                              {new Date(task.dueDate).toLocaleDateString()}
+                              {formatDate(task.dueDate)}
                             </div>
                           </div>
                           <div className="flex gap-2">
@@ -314,7 +312,7 @@ const Dashboard = () => {
                           <div className="flex-grow">
                             <div className="font-medium">{task.title}</div>
                             <div className="text-sm text-muted-foreground">
-                              {new Date(task.dueDate).toLocaleDateString()}
+                              {formatDate(task.dueDate)}
                             </div>
                           </div>
                           <div className="flex gap-2">
