@@ -51,6 +51,10 @@ interface AddSheepFormData {
   patientDate: string;
   pregnantDuration: number;
   notes: string;
+  // 👇 New fields for age input
+  ageYears: number;
+  ageMonths: number;
+  ageDays: number;
 }
 interface Drug {
   _id: string;
@@ -187,7 +191,10 @@ const SheepManagement = () => {
       pregnantDate: new Date().toISOString().split('T')[0],
       expectedBornDate: new Date().toISOString().split('T')[0],
       patientDate: new Date().toISOString().split('T')[0],
-      notes: ''
+      notes: '',
+      ageYears: 0,
+      ageMonths: 0,
+      ageDays: 0,
     },
   });
   const sheepNumber = addSheepForm.watch("sheepNumber");
@@ -333,6 +340,15 @@ const SheepManagement = () => {
   };
   const handleSubmitSheep = async (data: AddSheepFormData) => {
     const requestData = { ...data };
+
+    // Convert age to birthdate
+    const today = new Date();
+    const birthDate = new Date(today);
+    birthDate.setFullYear(birthDate.getFullYear() - requestData.ageYears);
+    birthDate.setMonth(birthDate.getMonth() - requestData.ageMonths);
+    birthDate.setDate(birthDate.getDate() - requestData.ageDays);
+    requestData.birthDate = birthDate.toISOString(); // 💾 Send to backend
+
     if (requestData.isPregnant && requestData.pregnantDuration) {
       const today = new Date();
 
@@ -786,7 +802,32 @@ const SheepManagement = () => {
                     )} />
                   </div>
                 </div>
-
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                  <FormField control={addSheepForm.control} name="ageYears" render={({ field }) => (
+                      <FormItem style={{ width: '30%' }}>
+                        <FormLabel>العمر (بالسنوات)</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} {...field} />
+                        </FormControl>
+                      </FormItem>
+                  )} />
+                  <FormField control={addSheepForm.control} name="ageMonths" render={({ field }) => (
+                      <FormItem style={{ width: '30%' }}>
+                        <FormLabel>الشهور</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} max={11} {...field} />
+                        </FormControl>
+                      </FormItem>
+                  )} />
+                  <FormField control={addSheepForm.control} name="ageDays" render={({ field }) => (
+                      <FormItem style={{ width: '30%' }}>
+                        <FormLabel>الأيام</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} max={30} {...field} />
+                        </FormControl>
+                      </FormItem>
+                  )} />
+                </div>
                 <div className="space-y-1" >
                   <FormField control={addSheepForm.control} name="source" render={({ field }) => (
                       <FormItem>

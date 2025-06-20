@@ -4,6 +4,7 @@ import {ArrowLeft, Baby, Calendar, Edit, FileText, Heart, History, LineChart, Pl
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Separator, Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
 import {useForm} from "react-hook-form";
 import { formatDate } from "../utils/dateUtils";
+import * as React from "react";
 
 
 
@@ -195,26 +196,30 @@ const SheepDetails = () => {
     defaultValues: {sheepId: '' , sellPrice: 0}
   });
 
-  interface EditSheepData { sheepNumber: number; notes: string;}
+  interface EditSheepData {
+    sheepNumber: number;
+    notes: string;
+    // 👇 New fields for age input
+    ageYears: number;
+    ageMonths: number;
+    ageDays: number;
+  }
   const handleSubmitEdit = async (data: EditSheepData) => {
     try {
       const response = await fetch(`https://thesheep.top/api/sheep/${sheep._id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error('فشل التعديل');
-      }
+      if (!response.ok) throw new Error('فشل التعديل');
 
       const updatedSheep = await response.json();
       toast({
         title: "تم التعديل",
-        description: `تم تعديل النعجة بنجاح (رقم: ${updatedSheep.sheepNumber})`
+        description: `تم تعديل النعجة بنجاح (رقم: ${updatedSheep.sheepNumber})`,
       });
+
       setEditSheep(false);
       form.reset();
     } catch (error) {
@@ -223,7 +228,13 @@ const SheepDetails = () => {
     }
   };
   const form = useForm<EditSheepData>({
-    defaultValues: {notes: sheep?.notes, sheepNumber: sheep?.sheepNumber},
+    defaultValues: {
+      notes: sheep?.notes,
+      sheepNumber: sheep?.sheepNumber,
+      ageYears: 0,
+      ageMonths: 0,
+      ageDays: 0,
+    },
   });
 
   if (loading) {
@@ -252,7 +263,30 @@ const SheepDetails = () => {
   const slideBarWidth = 100 - daysLeft / 1.5;
 
 
+  function calculateAge(birthDateStr: string) {
+    const birthDate = new Date(birthDateStr);
+    const today = new Date();
 
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
+    let days = today.getDate() - birthDate.getDate();
+
+    if (days < 0) {
+      months--;
+      days += 30; // Approximate
+    }
+
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    return { years, months, days };
+  }
+
+// Usage
+  console.log("the {age.years} سنة، {age.months} شهر، {age.days} يوم is : " ,sheep)
+  const age = calculateAge(sheep.birthDate);
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -315,10 +349,10 @@ const SheepDetails = () => {
                     <p>{sheep.source}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">الملاحظات</p>
+                    <p className="text-sm font-medium text-muted-foreground">العمر</p>
                     <p className="flex items-center gap-1.5">
                       <Calendar size={14} className="text-muted-foreground" />
-                      <p>{sheep.notes || 'لا يوجد ملاحظات لهذه النعجة .'}</p>
+                      <p>{age.years} سنة، {age.months} شهر، {age.days} يوم</p>
                     </p>
                   </div>
                 </div>
@@ -806,7 +840,31 @@ const SheepDetails = () => {
                       )}/>
                   </div>
 
-                  <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                  <FormField control={form.control} name="ageYears" render={({ field }) => (
+                      <FormItem style={{ width: '30%' }}>
+                        <FormLabel>العمر (بالسنوات)</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} {...field} />
+                        </FormControl>
+                      </FormItem>
+                  )} />
+                  <FormField control={form.control} name="ageMonths" render={({ field }) => (
+                      <FormItem style={{ width: '30%' }}>
+                        <FormLabel>الشهور</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} max={11} {...field} />
+                        </FormControl>
+                      </FormItem>
+                  )} />
+                  <FormField control={form.control} name="ageDays" render={({ field }) => (
+                      <FormItem style={{ width: '30%' }}>
+                        <FormLabel>الأيام</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} max={30} {...field} />
+                        </FormControl>
+                      </FormItem>
+                  )} />
                 </div>
                 <FormField control={form.control} name="notes" render={({ field }) => (
                     <FormItem>
@@ -821,7 +879,7 @@ const SheepDetails = () => {
               </div>
 
               <DialogFooter>
-                <Button type="submit" disabled={!form.watch("sheepNumber")}>
+                <Button type="submit">
                   احفظ التعديلات
                 </Button>
                 <Button type="button" variant="outline" onClick={() => {setEditSheep(false);form.reset();}}>

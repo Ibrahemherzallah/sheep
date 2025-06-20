@@ -8,13 +8,14 @@ cron.schedule('0 0 * * *', async () => {
     console.log('⏳ Running patient status check...');
 
     try {
-        const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to start of day for comparison
 
-        const outdatedPatients = await Patient.find({
-            updatedAt: { $lte: fiveDaysAgo }
+        const duePatients = await Patient.find({
+            healingDate: { $lte: today }  // Check if healingDate is today or earlier
         });
 
-        for (const patient of outdatedPatients) {
+        for (const patient of duePatients) {
             const sheep = await Sheep.findById(patient.sheepId);
 
             if (sheep && sheep.isPatient === true) {
@@ -24,7 +25,6 @@ cron.schedule('0 0 * * *', async () => {
                 console.log(`✅ Sheep ${sheep.sheepNumber} marked as سليم`);
             }
         }
-
     } catch (error) {
         console.error('❌ Error in patient status checker:', error);
     }

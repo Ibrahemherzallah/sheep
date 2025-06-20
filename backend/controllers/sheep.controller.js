@@ -6,51 +6,73 @@ import Task from "../models/task.model.js";
 import InjectionModel from "../models/injection.model.js";
 import StockModel from "../models/stock.model.js";
 
+
 export const createSheep = async (req, res) => {
     try {
         const {
+            sheepNumber,
+            sheepGender,
             isPregnant,
-            pregnantDate,
-            expectedBornDate,
-            order,
             isPatient,
+            source,
+            status,
+            sellPrice,
             patientName,
             patientDate,
-            notes,
             drug,
-            ...sheepData
+            order,
+            pregnantDate,
+            expectedBornDate,
+            pregnantDuration,
+            birthDate, // 📌 NEW FIELD
+            notes,
         } = req.body;
 
         // Check if sheepNumber is unique
-        const existingSheep = await Sheep.findOne({ sheepNumber: sheepData.sheepNumber });
+        const existingSheep = await Sheep.findOne({ sheepNumber });
         if (existingSheep) {
-            return res.status(400).json({ error: 'رقم النعجة بالفعل موجود.' });
+            return res.status(400).json({ error: "رقم النعجة بالفعل موجود." });
         }
-        let medicalStatus = "حي"; // Default
+
+        // Validate birthDate
+        if (!birthDate) {
+            return res.status(400).json({ error: "تاريخ الميلاد مطلوب." });
+        }
+
+        let medicalStatus = "حي"; // Default status
         if (isPatient) {
             medicalStatus = "مريض";
         } else if (isPregnant) {
             medicalStatus = "حامل";
         }
-        // Create the sheep
-        const newSheep = new Sheep({ ...sheepData, isPregnant, isPatient, medicalStatus });
 
-        // Create pregnancy if applicable
+        // Create the sheep document
+        const newSheep = new Sheep({
+            sheepNumber,
+            sheepGender,
+            source,
+            status,
+            sellPrice,
+            birthDate,
+            isPregnant,
+            isPatient,
+            medicalStatus,
+            notes,
+        });
+
+        // Handle Pregnancy
         if (isPregnant) {
-            console.log("isPregnant", isPregnant);
-            console.log("pregnantDate", pregnantDate,'expectedBornDate', expectedBornDate,'order', order);
-
             if (!pregnantDate || !expectedBornDate || !order) {
                 return res.status(400).json({
-                    error: "Missing pregnancy data: 'pregnantDate', 'expectedBornDate', or 'order'."
+                    error: "Missing pregnancy data: 'pregnantDate', 'expectedBornDate', or 'order'.",
                 });
             }
-            if (sheepData.sheepGender === 'ذكر') {
+
+            if (sheepGender === "ذكر") {
                 return res.status(400).json({
-                    error: "الذكر لا يمكن ان يحمل."
+                    error: "الذكر لا يمكن ان يحمل.",
                 });
             }
-            const sheepId = newSheep._id;
 
             const pregnancy = await Pregnancy.create({
                 sheepId: newSheep._id,
@@ -58,42 +80,35 @@ export const createSheep = async (req, res) => {
                 expectedBornDate,
                 order,
             });
-            const task = await Task.create({
-                title: 'تاريخ الولادة المتوقع',
+
+            // Add task for expected birth date
+            await Task.create({
+                title: "تاريخ الولادة المتوقع",
                 dueDate: new Date(expectedBornDate),
-                type: 'born',
-                sheepIds: sheepId
+                type: "born",
+                sheepIds: newSheep._id,
             });
 
-
+            // Add task for injection (after 90 days)
             const pasteurellaDate = new Date(pregnantDate);
             pasteurellaDate.setDate(pasteurellaDate.getDate() + 90);
 
             await Task.create({
-                title: 'إعطاء لقاح الباستيريلا وال فيرست ايد',
+                title: "إعطاء لقاح الباستيريلا وال فيرست ايد",
                 dueDate: pasteurellaDate,
-                type: 'injection',
-                sheepIds: sheepId
+                type: "injection",
+                sheepIds: newSheep._id,
             });
 
-
             newSheep.pregnantCases.push(pregnancy._id);
-            await newSheep.save();
         }
 
-        // Save the sheep after modifications
-
-
-        // Create patient if applicable
+        // Handle Patient
         let patientRecord = null;
         if (isPatient) {
-            console.log("patientName" , patientName)
-            console.log("patientDate" , patientDate)
-            console.log("drugs" , drug)
-
-            if (!patientName || !patientDate || !drug ) {
+            if (!patientName || !patientDate || !drug) {
                 return res.status(400).json({
-                    error: "Missing patient data: 'patientName', 'patientDate' or 'drugs'."
+                    error: "Missing patient data: 'patientName', 'patientDate' or 'drug'.",
                 });
             }
 
@@ -102,24 +117,26 @@ export const createSheep = async (req, res) => {
                 patientName,
                 patientDate,
                 notes,
-                drugs: [{ drug, order: 1 }]
+                drugs: [{ drug, order: 1 }],
             });
 
             newSheep.patientCases.push(patientRecord._id);
-
         }
+
+        // Save the sheep
         await newSheep.save();
 
         res.status(201).json({
-            message: 'تمت إضافة النعجة بنجاح.',
+            message: "تمت إضافة النعجة بنجاح.",
             sheep: newSheep,
-            patient: patientRecord
+            patient: patientRecord,
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to create sheep and patient' });
+        console.error("❌ createSheep error:", err);
+        res.status(500).json({ error: "فشل في إضافة النعجة والمعلومات المرتبطة." });
     }
 };
+
 
 export const updateSheepStatus = async (req, res) => {
     try {
@@ -244,14 +261,16 @@ export const getSheepById = async (req, res) => {
     }
 };
 
+
+
 export const updateSheep = async (req, res) => {
     try {
         const { id } = req.params;
-        const { sheepNumber, notes } = req.body;
+        const { sheepNumber, notes, birthDate } = req.body;
 
         const updatedSheep = await Sheep.findByIdAndUpdate(
             id,
-            { sheepNumber, notes },
+            { sheepNumber, notes, birthDate },
             { new: true }
         );
 
@@ -265,6 +284,9 @@ export const updateSheep = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+
+
 
 export const deleteSheep = async (req, res) => {
     console.log("Enteredd ")

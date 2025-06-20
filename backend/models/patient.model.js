@@ -25,6 +25,10 @@ const patientSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    healingDate: {
+        type: Date,
+        required: true
+    },
     notes: {
         type: String,
         required: false,
