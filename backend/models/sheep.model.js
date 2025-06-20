@@ -46,6 +46,10 @@ const SheepSchema = new mongoose.Schema({
         type: Number,
         required: false,
     },
+    birthDate: {
+        type: Date,
+        required: true
+    },
     injectionCases: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'StockModel',

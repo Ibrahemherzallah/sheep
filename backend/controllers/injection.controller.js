@@ -3,11 +3,46 @@ import Sheep from '../models/sheep.model.js';
 import InjectionType from '../models/injectionType.model.js'; // Assuming you have this
 import Task from '../models/task.model.js';
 import StockModel from "../models/stock.model.js";
+import {addDays} from "../services/taskService.js";
 
 export const createInjection = async (req, res) => {
     try {
         const { sheepId, injectionType, numOfInject, injectDate, notes } = req.body;
+        const baseDate = new Date(injectDate || Date.now());
 
+        const injectionTypeDoc = await StockModel.findById(injectionType);
+        if (!injectionTypeDoc) {
+            return res.status(400).json({ error: 'Injection type not found in stock' });
+        }
+        const injectionName = injectionTypeDoc.name;
+        console.log("injectionName is : ", injectionName);
+
+        if (injectionName === 'اسفنجة') {
+            const hormoneDate = new Date(baseDate);
+            const checkPregnancyDate = new Date(baseDate);
+            hormoneDate.setDate(hormoneDate.getDate() + 12);
+            checkPregnancyDate.setDate(checkPregnancyDate.getDate() + 42);
+            console.log("hormoneDate is : ", hormoneDate);
+            await Task.insertMany([
+                {
+                    title: 'اعطاء الهرمون',
+                    dueDate: hormoneDate,
+                    sheepIds: sheepId,
+                    type: 'injection',
+                    notes: 'متابعة بعد 12 يوم من الاسفنجة',
+                },
+                {
+                    title: 'فحص الحمل',
+                    dueDate: checkPregnancyDate,
+                    type: 'pregnancy-check',
+                    sheepIds: sheepId,
+                }
+            ]);
+
+            return res.status(201).json({
+                message: 'تمت إضافة الاسفنجة بنجاح',
+            });
+        }
         const newInjection = new InjectionModel({
             sheepId,
             injectionType,
@@ -25,11 +60,7 @@ export const createInjection = async (req, res) => {
         );
 
         // 2. Check for the reputation and create tasks
-        const injectionTypeDoc = await StockModel.findById(injectionType);
-        if (!injectionTypeDoc) {
-            return res.status(400).json({ error: 'Injection type not found in stock' });
-        }
-        const injectionName = injectionTypeDoc.name;
+
 
         if (injectionTypeDoc?.reputation === '6m' ) {
             const baseDate = new Date(injectDate || Date.now());

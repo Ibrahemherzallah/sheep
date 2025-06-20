@@ -18,10 +18,15 @@ export const createPatient = async (req, res) => {
                 return res.status(404).json({ error: `النعجة صاحبة الرقم  ${sheep.sheepNumber} هي مريضة ` });
             }
 
+            // 🗓️ Calculate healingDate = patientDate + 5 days
+            const baseDate = new Date(patientDate || Date.now());
+            const healingDate = new Date(baseDate.getTime() + 5 * 24 * 60 * 60 * 1000); // +5 days
+
             const patient = await Patient.create({
                 sheepId: sheep._id,
                 patientName,
                 patientDate,
+                healingDate,
                 notes,
                 drugs
             });
@@ -95,6 +100,10 @@ export const addDrugToLatestPatient = async (req, res) => {
 
         // Add the new drug to the drugs array
         latestPatient.drugs.push({ drug, order });
+
+        // 🗓️ Recalculate healing date = now + 5 days
+        const newHealingDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+        latestPatient.healingDate = newHealingDate;
 
         // Save the updated patient case
         const updatedPatient = await latestPatient.save();

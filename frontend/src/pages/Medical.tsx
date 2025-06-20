@@ -68,8 +68,8 @@ const TreatmentCard = ({ treatment,allDrugs }: { treatment: any;allDrugs: any })
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">تاريخ الشفاء المتوقع :</span>
                 <span className="font-medium">
-                {formatDate(new Date(new Date(treatment?.latestPatient?.drugs?.length > 1 ? treatment?.latestPatient?.updatedAt : treatment?.latestPatient?.patientDate ).getTime() + 5 * 24 * 60 * 60 * 1000))}
-              </span>
+                   {formatDate(treatment?.latestPatient?.healingDate)}
+                </span>
               </div>
               <div className="pt-2">
                     <ChangeMedicine id={treatment?.sheepId} allDrugs={allDrugs} />
