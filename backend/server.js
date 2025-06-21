@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 3030;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(cors({
-    origin: ['https://thesheep.top'],
+    origin: ['http://localhost:8080','https://thesheep.top'],
     credentials: true
 }));
 dotenv.config();
