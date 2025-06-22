@@ -31,7 +31,7 @@ const CycleManagement = () => {
   const [useTodayDate,setUseTodayDate] = useState(true);
   const [cycles, setCycles] = useState([]);
   const [allCycles, setAllCycles] = useState([]);
-
+  const token = localStorage.getItem("token");
 
   interface AddCycleData {
     cycleName: string;
@@ -81,6 +81,7 @@ const CycleManagement = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(payload),
       });
@@ -156,7 +157,7 @@ const CycleManagement = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search cycles..."
+            placeholder="ابحث عن دورات..."
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

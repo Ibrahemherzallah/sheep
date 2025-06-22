@@ -52,6 +52,7 @@ const StockManagement = () => {
 
   const [allStockItems, setAllStockItems] = useState([]);
   const [stockType, setStockType] = useState<'sheep' | 'cycle'>('sheep');
+  const token = localStorage.getItem("token");
   const cycleStockData = [
     {
       category: 'الأدوية',
@@ -84,6 +85,7 @@ const StockManagement = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
           type: newItem.itemType,
@@ -151,15 +153,23 @@ const StockManagement = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
           itemId: newItem.itemId,
           quantity: Number(newItem.quantity),
+          operation: newItem.operation  // ✅ pass it here
         }),
       });
 
       if (!response.ok) {
-        throw new Error('فشل في تحديث الكمية');
+        const errorData = await response.json(); // Parse the error response
+        toast({
+          title: "خطأ",
+          description: errorData.message || "حدث خطأ أثناء العملية",
+          variant: "destructive",
+        });
+        return; // Optional: exit early
       }
 
       const updatedItem = await response.json();

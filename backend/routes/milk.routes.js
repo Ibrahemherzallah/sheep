@@ -1,11 +1,12 @@
 import express from 'express';
 import {createMilkRecord, getAllMilkRecords, updateMilkRecord, deleteMilkRecord,} from '../controllers/milk.controller.js';
+import {authenticate} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post('/', createMilkRecord);
+router.post('/', authenticate, createMilkRecord);
 router.get('/', getAllMilkRecords);
-router.put('/:id', updateMilkRecord);
-router.delete('/:id', deleteMilkRecord);
+router.put('/:id', authenticate, updateMilkRecord);
+router.delete('/:id', authenticate, deleteMilkRecord);
 
 export default router;

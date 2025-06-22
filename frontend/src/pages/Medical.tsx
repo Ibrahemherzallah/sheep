@@ -92,6 +92,7 @@ const NewInjectionModal = ({allSheep}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
   const filteredInjection = allInjections.filter(injection => injection.section === 'sheep' && injection.type === "Injection")
+  const token = localStorage.getItem("token");
 
   const selectedInjectionObj = filteredInjection?.find(
       (inj) => inj._id === selectedInjection
@@ -144,7 +145,10 @@ const NewInjectionModal = ({allSheep}) => {
       console.log("payload is : ", payload)
       const response = await fetch('https://thesheep.top/api/injections', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify(payload),
       });
 
@@ -293,7 +297,7 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
   const [useTodayDate,setTodayDate] = useState(true)
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
-
+  const token = localStorage.getItem("token");
 
   const handleSheepToggle = (sheepId: string) => {
     if (selectedSheep.includes(sheepId)) {
@@ -324,6 +328,7 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(payload),
       });
@@ -478,7 +483,7 @@ const ChangeMedicine = ({id,allDrugs}) => {
   const [newMedicine, setNewMedicine] = useState("");
   const [medicineNumber, setMedicineNumber] = useState("");
   const [open, setOpen] = useState(false);
-
+  const token = localStorage.getItem("token");
 
   const handleSubmit = async () => {
     if (!newMedicine || !medicineNumber) return;
@@ -488,6 +493,7 @@ const ChangeMedicine = ({id,allDrugs}) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
           drug: newMedicine,
@@ -580,7 +586,11 @@ const Medical = () => {
   const [loading, setLoading] = useState(true);
   const [allDrugs,setAllDrugs] = useState([])
   const [allSheep,setAllSheep] = useState([]);
+  const [openDateDialog, setOpenDateDialog] = useState(false);
+  const [currentTask, setCurrentTask] = useState(null);
+  const [injectDate, setInjectDate] = useState("");
   const filteredDrug = allDrugs.filter(drug => drug.section === 'sheep' && drug.type === "Medicine")
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchSheep = async () => {
@@ -667,6 +677,10 @@ const Medical = () => {
     try {
       const res = await fetch(`https://thesheep.top/api/tasks/${taskId}/complete`, {
         method: 'PUT',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
       });
 
       if (res.ok) {
@@ -692,6 +706,61 @@ const Medical = () => {
     }
   };
 
+  const handleTaskCompletion = (task) => {
+    console.log("task", task);
+    if (["إسفنجة", "اعطاء الهرمون"].includes(task.title)) {
+      setCurrentTask(task);
+      setOpenDateDialog(true);
+    } else {
+      markTaskAsCompleted(task._id);
+    }
+  };
+  const handleInjectConfirmation = async () => {
+    const date = new Date(injectDate);
+    const taskTitle = currentTask.title;
+
+    // 1. Mark current task as completed
+    await markTaskAsCompleted(currentTask._id);
+
+    // 2. Prepare new task
+    let newTask = null;
+    if (taskTitle === "إسفنجة") {
+      date.setDate(date.getDate() + 12);
+      newTask = {
+        title: "اعطاء الهرمون",
+        dueDate: date,
+        sheepIds: currentTask.sheepIds,
+        type: "injection",
+      };
+    } else if (taskTitle === "اعطاء الهرمون") {
+      date.setDate(date.getDate() + 30);
+      newTask = {
+        title: "فحص الحمل",
+        dueDate: date,
+        sheepIds: currentTask.sheepIds,
+        type: "pregnancy-check",
+      };
+    }
+
+    if (newTask) {
+      try {
+        await fetch("https://thesheep.top/api/tasks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+            },
+          body: JSON.stringify(newTask),
+        });
+        toast({ title: "تم إنشاء مهمة جديدة بنجاح" });
+      } catch (error) {
+        toast({
+          title: "فشل في إنشاء المهمة الجديدة",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   return (
       <div className="p-6 space-y-6 animate-fade-in">
@@ -714,7 +783,7 @@ const Medical = () => {
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="relative flex-grow max-w-md">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search by sheep ID..." className="pl-8" value={searchQuery}
+                  <Input placeholder="ابحث عن اغنام بواسطة الرقم..." className="pl-8" value={searchQuery}
                          onChange={(e) => setSearchQuery(e.target.value)}/>
                 </div>
 
@@ -729,7 +798,7 @@ const Medical = () => {
                 </CardTitle>
                 <CardDescription style={{fontWeight:'bold'}}>سجل الطعومات القادمة للطعومات التي يجب اعطاؤها</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-h-[600px] overflow-y-auto">
                 {upcomingInjections.length > 0 ? (
                     <Table>
                       <TableHeader>
@@ -755,8 +824,11 @@ const Medical = () => {
                                 {event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}
                               </TableCell>
                               <TableCell className={`px-1`}>
-                                <Button size="sm" variant="outline"
-                                        onClick={() => markTaskAsCompleted(event._id)}>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleTaskCompletion(event)}
+                                >
                                   ✅ تم
                                 </Button>
                               </TableCell>
@@ -780,7 +852,7 @@ const Medical = () => {
                 </CardTitle>
                 <CardDescription style={{fontWeight:'bold'}}>سجل الطعومات الكامل للطعومات التي تم اعطاؤها</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-h-[600px] overflow-y-auto">
                 {givenInjections.length > 0 ? (
                     <Table>
                       <TableHeader>
@@ -841,9 +913,9 @@ const Medical = () => {
                   <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
                     <Search className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-semibold">No treatments found</h3>
+                  <h3 className="text-lg font-semibold">لم يتم العثور على علاجات</h3>
                   <p className="text-muted-foreground mt-2">
-                    No treatments match your current search or filter criteria.
+                    لا توجد علاجات تتطابق مع معايير البحث أو التصفية الحالية الخاصة بك.
                   </p>
                   <Button variant="outline" className="mt-4"
                           onClick={() => {
@@ -851,12 +923,34 @@ const Medical = () => {
                             setFilterStatus('all');
                           }}
                   >
-                    Reset filters
+                    إعادة الفلاتر
                   </Button>
                 </div>
             )}
           </TabsContent>
         </Tabs>
+        {openDateDialog && (
+            <Dialog open={openDateDialog} onOpenChange={setOpenDateDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>أدخل تاريخ إعطاء {currentTask.title}</DialogTitle>
+                </DialogHeader>
+                <Input
+                    type="date"
+                    value={injectDate}
+                    onChange={(e) => setInjectDate(e.target.value)}
+                />
+                <Button
+                    onClick={async () => {
+                      await handleInjectConfirmation();
+                      setOpenDateDialog(false);
+                    }}
+                >
+                  تأكيد
+                </Button>
+              </DialogContent>
+            </Dialog>
+        )}
 
       </div>
   );

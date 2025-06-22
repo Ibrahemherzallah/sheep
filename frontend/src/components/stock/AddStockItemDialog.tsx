@@ -260,7 +260,7 @@ console.log("selected item is : ", form.watch('itemType'))
                                                         <SelectValue placeholder="اختر المنتج" />
                                                     </SelectTrigger>
                                                 </FormControl>
-                                                <SelectContent>
+                                                <SelectContent className="max-h-[300px] overflow-y-auto">
                                                     {selectedItems.map(item => (
                                                         <SelectItem key={item._id} value={item._id}>
                                                             {item.name}
@@ -271,6 +271,23 @@ console.log("selected item is : ", form.watch('itemType'))
                                             <FormMessage />
                                         </FormItem>
                                     )}/>
+                                <FormField control={existingForm.control} name="operation" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>العملية</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} dir="rtl">
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="اختر العملية" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="add">إضافة</SelectItem>
+                                                <SelectItem value="subtract">طرح</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
                                 <FormField control={existingForm.control} name="quantity" render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>الكمية</FormLabel>
@@ -290,7 +307,8 @@ console.log("selected item is : ", form.watch('itemType'))
                                     <Button type="submit" disabled={
                                         !existingForm.watch('category') ||
                                         !existingForm.watch('itemId')||
-                                        !existingForm.watch('quantity')
+                                        !existingForm.watch('quantity') ||
+                                        !existingForm.watch('operation')
                                     }>إضافة الكمية</Button>
                                 </DialogFooter>
                             </form>

@@ -1,6 +1,5 @@
 import Sheep from '../models/sheep.model.js';
 import Pregnancy from '../models/pregnancy.model.js';
-
 import Patient from '../models/patient.model.js';
 import Task from "../models/task.model.js";
 import InjectionModel from "../models/injection.model.js";
@@ -26,12 +25,13 @@ export const createSheep = async (req, res) => {
             pregnantDuration,
             birthDate, // 📌 NEW FIELD
             notes,
+            badgeColor
         } = req.body;
 
         // Check if sheepNumber is unique
-        const existingSheep = await Sheep.findOne({ sheepNumber });
+        const existingSheep = await Sheep.findOne({ sheepNumber, badgeColor });
         if (existingSheep) {
-            return res.status(400).json({ error: "رقم النعجة بالفعل موجود." });
+            return res.status(400).json({ error: `النعجة ذات الرقم ${sheepNumber} والبادج ${badgeColor} موجودة بالفعل.` });
         }
 
         // Validate birthDate
@@ -58,6 +58,7 @@ export const createSheep = async (req, res) => {
             isPatient,
             medicalStatus,
             notes,
+            badgeColor, // 🔑 Add here
         });
 
         // Handle Pregnancy
@@ -136,7 +137,6 @@ export const createSheep = async (req, res) => {
         res.status(500).json({ error: "فشل في إضافة النعجة والمعلومات المرتبطة." });
     }
 };
-
 
 export const updateSheepStatus = async (req, res) => {
     try {
@@ -261,13 +261,10 @@ export const getSheepById = async (req, res) => {
     }
 };
 
-
-
 export const updateSheep = async (req, res) => {
     try {
         const { id } = req.params;
         const { sheepNumber, notes, birthDate } = req.body;
-
         const updatedSheep = await Sheep.findByIdAndUpdate(
             id,
             { sheepNumber, notes, birthDate },
@@ -284,9 +281,6 @@ export const updateSheep = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
-
-
-
 
 export const deleteSheep = async (req, res) => {
     console.log("Enteredd ")

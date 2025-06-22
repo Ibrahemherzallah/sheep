@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {Activity, Baby, Calendar, Ear, Info, Pill,Milk, Syringe, Truck} from 'lucide-react';
-import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle,
+  Dialog, DialogContent,Input, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
 import { Link } from 'react-router-dom';
 import * as React from "react";
 import {formatDate} from "@/utils/dateUtils.ts";
@@ -60,6 +61,10 @@ const Dashboard = () => {
   const [modalLoading, setModalLoading] = useState(false);
   const displayedUpcoming = showAllUpcoming ? upcomingTasks : upcomingTasks.slice(0, 4);
   const displayedRecent = showAllRecent ? recentTasks : recentTasks.slice(0, 4);
+  const [openDateDialog, setOpenDateDialog] = useState(false);
+  const [currentTask, setCurrentTask] = useState(null);
+  const [injectDate, setInjectDate] = useState("");
+  const token = localStorage.getItem("token");
 
   const handleOpenModal = async (task: any) => {
     setModalLoading(true)
@@ -69,7 +74,10 @@ const Dashboard = () => {
     try {
       const response = await fetch(`https://thesheep.top/api/sheep/list-by-ids`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ ids: task.sheepIds }),
       });
       const data = await response.json();
@@ -86,6 +94,10 @@ const Dashboard = () => {
     try {
       const res = await fetch(`https://thesheep.top/api/tasks/${taskId}/complete`, {
         method: 'PUT',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
       });
 
       if (res.ok) {
@@ -114,6 +126,72 @@ const Dashboard = () => {
       });
     }
   };
+  const handleTaskCompletion = (task) => {
+    console.log("task", task);
+    if (["إسفنجة", "اعطاء الهرمون"].includes(task.title)) {
+      setCurrentTask(task);
+      setOpenDateDialog(true);
+    } else {
+      markTaskAsCompleted(task._id);
+    }
+  };
+
+
+
+
+
+
+  const handleInjectConfirmation = async () => {
+    const date = new Date(injectDate);
+    const taskTitle = currentTask.title;
+
+    // 1. Mark current task as completed
+    await markTaskAsCompleted(currentTask._id);
+
+    // 2. Prepare new task
+    let newTask = null;
+    if (taskTitle === "إسفنجة") {
+      date.setDate(date.getDate() + 12);
+      newTask = {
+        title: "هرمون",
+        dueDate: date,
+        sheepIds: currentTask.sheepIds,
+        type: "injection",
+      };
+    } else if (taskTitle === "اعطاء الهرمون") {
+      date.setDate(date.getDate() + 30);
+      newTask = {
+        title: "فحص الحمل",
+        dueDate: date,
+        sheepIds: currentTask.sheepIds,
+        type: "pregnancy-check",
+      };
+    }
+
+    if (newTask) {
+      try {
+        await fetch("https://thesheep.top/api/tasks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(newTask),
+        });
+        toast({ title: "تم إنشاء مهمة جديدة بنجاح" });
+      } catch (error) {
+        toast({
+          title: "فشل في إنشاء المهمة الجديدة",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+
+
+
+
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -267,8 +345,9 @@ const Dashboard = () => {
                             </Button>
                             {!task.completed && (
                                 <Button
-                                    variant="outline" size="sm"
-                                    onClick={() => markTaskAsCompleted(task._id)}
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleTaskCompletion(task)}
                                 >
                                   تم
                                 </Button>
@@ -327,7 +406,7 @@ const Dashboard = () => {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => markTaskAsCompleted(task._id)}
+                                    onClick={() => handleTaskCompletion(task)}
                                 >
                                   تم
                                 </Button>
@@ -393,6 +472,30 @@ const Dashboard = () => {
             </div>
           </div>
       )}
+
+      {openDateDialog && (
+          <Dialog open={openDateDialog} onOpenChange={setOpenDateDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>أدخل تاريخ إعطاء {currentTask.title}</DialogTitle>
+              </DialogHeader>
+              <Input
+                  type="date"
+                  value={injectDate}
+                  onChange={(e) => setInjectDate(e.target.value)}
+              />
+              <Button
+                  onClick={async () => {
+                    await handleInjectConfirmation();
+                    setOpenDateDialog(false);
+                  }}
+              >
+                تأكيد
+              </Button>
+            </DialogContent>
+          </Dialog>
+      )}
+
     </div>
   );
 };
