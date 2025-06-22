@@ -55,6 +55,7 @@ interface AddSheepFormData {
   ageYears: number;
   ageMonths: number;
   ageDays: number;
+  badgeColor: 'red' | 'yellow' | ''; // limit to options or use string
 }
 interface Drug {
   _id: string;
@@ -65,78 +66,77 @@ interface Drug {
 
 
 const SheepCard = ({ sheep }: { sheep: any }) => {
-
   return (
-    <div className="sheep-card" dir="rtl">
-      <div className="p-4">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-bold text-lg">#{sheep.sheepNumber}</h3>
-        </div>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">الجنس :</span>
-            <span className="font-medium">{sheep.sheepGender}</span>
+      <div className="sheep-card" dir="rtl">
+        <div className="p-4">
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-lg">#{sheep.sheepNumber}</h3>
+              {sheep.badgeColor && (
+                  <span
+                      className={`inline-block w-3 h-3 rounded-full ${
+                          sheep.badgeColor === 'أحمر' ? 'bg-red-500' : 'bg-yellow-400'
+                      }`}
+                      title={`علامة ${sheep.badgeColor === 'red' ? 'حمراء' : 'صفراء'}`}
+                  />
+              )}
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">المصدر :</span>
-            <span className="font-medium">{sheep.origin === 'farm-produced' ? 'إنتاج المزرعة' : 'شراء'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">تاريخ الإدخال :</span>
-            <span className="font-medium">
-              {formatDate(sheep.createdAt)}
+
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">الجنس :</span>
+              <span className="font-medium">{sheep.sheepGender}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">المصدر :</span>
+              <span className="font-medium">
+              {sheep.origin === 'farm-produced' ? 'إنتاج المزرعة' : 'شراء'}
             </span>
-          </div>
-          {sheep.isPregnant && sheep.pregnantCases.length > 0 && (() => {
-            const lastPregnancy = sheep.pregnantCases[sheep.pregnantCases.length - 1];
-            const expectedDate = new Date(lastPregnancy.expectedBornDate);
-            const today = new Date();
-            const timeDiff = expectedDate.getTime() - today.getTime();
-            const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">تاريخ الإدخال :</span>
+              <span className="font-medium">{formatDate(sheep.createdAt)}</span>
+            </div>
 
-            return (
-                <div className="flex items-center gap-1 mt-2 text-farm-blue-700">
-                  <Baby size={16} />
-                  <span className="text-xs font-medium">
-                    متوقع أن تلد خلال {daysRemaining > 0 ? `${daysRemaining} يوم` : 'اليوم أو قريبا'}
-                  </span>
+            {sheep.isPregnant && sheep.pregnantCases.length > 0 && (() => {
+              const lastPregnancy = sheep.pregnantCases[sheep.pregnantCases.length - 1];
+              const expectedDate = new Date(lastPregnancy.expectedBornDate);
+              const today = new Date();
+              const timeDiff = expectedDate.getTime() - today.getTime();
+              const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+              return (
+                  <div className="flex items-center gap-1 mt-2 text-farm-blue-700">
+                    <Baby size={16} />
+                    <span className="text-xs font-medium">
+                  متوقع أن تلد خلال {daysRemaining > 0 ? `${daysRemaining} يوم` : 'اليوم أو قريبا'}
+                </span>
+                  </div>
+              );
+            })()}
+
+            {sheep?.sellPrice > 0 && (
+                <div className="flex items-center gap-1 mt-2 text-red-700 font-medium">
+                  💰 تم بيع هذه النعجة بسعر {sheep.sellPrice} شيكل
                 </div>
-            );
-          })()}
-
-          {sheep?.sellPrice > 0 && (() => {
-            const lastPregnancy = sheep.pregnantCases[sheep.pregnantCases.length - 1];
-            const expectedDate = new Date(lastPregnancy.expectedBornDate);
-            const today = new Date();
-            const timeDiff = expectedDate.getTime() - today.getTime();
-            const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-            return (
-                <>
-                  {sheep?.sellPrice > 0 && (
-                      <div className="flex items-center gap-1 mt-2 text-red-700 font-medium">
-                        💰 تم بيع هذه النعجة بسعر {sheep.sellPrice} شيكل
-                      </div>
-                  )}
-                </>
-            );
-          })()}
+            )}
+          </div>
         </div>
-      </div>
-      <div className="border-t p-3 bg-muted/30 flex justify-between">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to={`/sheep/${sheep._id}`}>رؤوية التفاصيل</Link>
-        </Button>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Calendar size={16} />
+
+        <div className="border-t p-3 bg-muted/30 flex justify-between">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/sheep/${sheep._id}`}>رؤوية التفاصيل</Link>
           </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Calendar size={16} />
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
   );
 };
-
 
 const SheepManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -155,6 +155,8 @@ const SheepManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const token = localStorage.getItem("token");
+
   const filteredDrug = allDrugs.filter(drug => drug?.section === 'sheep' && drug?.type === "Medicine")
   // Forms
   const form = useForm<BirthFormData>({
@@ -195,9 +197,11 @@ const SheepManagement = () => {
       ageYears: 0,
       ageMonths: 0,
       ageDays: 0,
+      badgeColor: '',
     },
   });
   const sheepNumber = addSheepForm.watch("sheepNumber");
+
   //methods
   const filteredSheep = allSheep.filter(sheep => {
     if (activeTab === 'pregnant' && !sheep.isPregnant) return false;
@@ -236,6 +240,7 @@ const SheepManagement = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
@@ -304,7 +309,8 @@ const SheepManagement = () => {
       const response = await fetch('https://thesheep.top/api/pregnancies/bulk', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(requestData)
       });
@@ -366,6 +372,7 @@ const SheepManagement = () => {
     }
     // ✅ Ensure `order` is explicitly added if it's not coming from form
     requestData.order = 1;
+    requestData.badgeColor = data.badgeColor;
 
     console.log("The requestData is:", requestData);
 
@@ -375,6 +382,7 @@ const SheepManagement = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(requestData),
       });
@@ -422,7 +430,6 @@ const SheepManagement = () => {
     
     form.setValue('selectedSheep', selectedSheep);
   };
-
   const handleSheepToggle = (sheepId: string) => {
     if (selectedSheep.includes(sheepId)) {
       setSelectedSheep(selectedSheep.filter(id => id !== sheepId));
@@ -554,10 +561,10 @@ const SheepManagement = () => {
           </div>
           <h3 className="text-lg font-semibold">No sheep found</h3>
           <p className="text-muted-foreground mt-2">
-            We couldn't find any sheep matching your search criteria.
+            لا يوجد اي اغنام تطابق البحث
           </p>
           <Button variant="outline" className="mt-4" onClick={() => {setSearchQuery('');setActiveTab('all');}}>
-            Reset filters
+            اعادة الفلتر
           </Button>
         </div>
       )}
@@ -802,6 +809,32 @@ const SheepManagement = () => {
                     )} />
                   </div>
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+
+                  <div style={{ width: '100%' }}>
+                    <FormField control={addSheepForm.control} name="badgeColor" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>لون البادج</FormLabel>
+                          <Select
+                              dir="rtl"
+                              value={field.value}
+                              onValueChange={(value) => field.onChange(value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="اختر لون البطاقة" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="أحمر">أحمر</SelectItem>
+                                <SelectItem value="أصفر">أصفر</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                    )}/>
+                  </div>
+                </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                   <FormField control={addSheepForm.control} name="ageYears" render={({ field }) => (
                       <FormItem style={{ width: '30%' }}>
@@ -966,7 +999,7 @@ const SheepManagement = () => {
               </div>
 
               <DialogFooter>
-                <Button type="submit" disabled={!sheepNumber || !selectedSheepGender || !selectedSheepSource}>
+                <Button type="submit" disabled={!sheepNumber || !selectedSheepGender || !selectedSheepSource || !addSheepForm.watch("badgeColor")}>
                   إضافة النعجة
                 </Button>
 

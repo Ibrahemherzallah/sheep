@@ -29,11 +29,6 @@ export const AppHeader = ({
         <Button variant="ghost" size="icon" onClick={toggleSidebar} className="mr-2 md:hidden" aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}>
           {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </Button>
-        <Link to="/" className="flex items-center">
-          <span className="font-semibold text-farm-green-700 text-lg hidden sm:inline-block">
-            FlockWatch
-          </span>
-        </Link>
       </div>
       <div className="justify-between" style={{display:'flex', width:'80%',alignItems:'center'}}>
         <img src={logo} alt={"sheep-icon"} style={{width:'80px',height:'80px'}} />

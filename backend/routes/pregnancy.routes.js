@@ -10,17 +10,18 @@ import {
     updateEndMilkInfo,
     updateMilkAmountOnly
 } from '../controllers/pregnancy.controller.js';
+import {authenticate} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post('/bulk', createPregnancies);
+router.post('/bulk', authenticate, createPregnancies);
 router.get('/', getAllPregnancies);
-router.put('/update-after-birth', updateLastPregnanciesAfterBirth);
-router.put('/update-milk', updateMilkInfo);
-router.put("/update-end-milk", updateEndMilkInfo);
-router.put('/update-milk-amount', updateMilkAmountOnly);
+router.put('/update-after-birth', authenticate, updateLastPregnanciesAfterBirth);
+router.put('/update-milk', authenticate, updateMilkInfo);
+router.put("/update-end-milk", authenticate, updateEndMilkInfo);
+router.put('/update-milk-amount', authenticate, updateMilkAmountOnly);
 router.get('/:id', getPregnancyById);
-router.put('/:id', updateOnePregnancy);
-router.delete('/:id', deletePregnancy);
+router.put('/:id', authenticate, updateOnePregnancy);
+router.delete('/:id', authenticate, deletePregnancy);
 
 export default router;

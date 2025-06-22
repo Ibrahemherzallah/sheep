@@ -23,21 +23,13 @@ export const createInjection = async (req, res) => {
             hormoneDate.setDate(hormoneDate.getDate() + 12);
             checkPregnancyDate.setDate(checkPregnancyDate.getDate() + 42);
             console.log("hormoneDate is : ", hormoneDate);
-            await Task.insertMany([
-                {
-                    title: 'اعطاء الهرمون',
-                    dueDate: hormoneDate,
-                    sheepIds: sheepId,
-                    type: 'injection',
-                    notes: 'متابعة بعد 12 يوم من الاسفنجة',
-                },
-                {
-                    title: 'فحص الحمل',
-                    dueDate: checkPregnancyDate,
-                    type: 'pregnancy-check',
-                    sheepIds: sheepId,
-                }
-            ]);
+            await Task.create({
+                title: 'اعطاء الهرمون',
+                dueDate: hormoneDate,
+                sheepIds: sheepId,
+                type: 'injection',
+                notes: 'متابعة بعد 12 يوم من الاسفنجة',
+            });
 
             return res.status(201).json({
                 message: 'تمت إضافة الاسفنجة بنجاح',

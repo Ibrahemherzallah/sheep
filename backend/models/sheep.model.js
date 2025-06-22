@@ -5,7 +5,6 @@ const SheepSchema = new mongoose.Schema({
     sheepNumber: {
         type: Number,
         required: true,
-        unique: true
     },
     sheepGender: {
         type: String,
@@ -54,6 +53,11 @@ const SheepSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'StockModel',
     }],
+    badgeColor: {
+        type: String,
+        enum: ['أحمر', 'أصفر'], // red, yellow (you can use 'red'/'yellow' if you prefer)
+        required: true,
+    },
     notes: {
         type: String,
         required: false,

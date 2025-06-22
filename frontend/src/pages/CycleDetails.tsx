@@ -102,6 +102,7 @@ const CycleDetails = () => {
   const [allReports, setAllReports] = useState([]);
   const [loading,setLoading] = useState(true);
   const filteredVitamins = allVitamins?.filter(vitamin => vitamin.type === "Vitamins" && vitamin.section === "cycle")
+  const token = localStorage.getItem("token");
 
   console.log("Tha filteredVitamins  is : " , filteredVitamins);
 
@@ -137,6 +138,7 @@ const CycleDetails = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(payload),
       });
@@ -181,7 +183,10 @@ const CycleDetails = () => {
 
       const response = await fetch("https://thesheep.top/api/cycle/report", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           cycleId: id,
           startDate: data.startDate,
@@ -227,6 +232,7 @@ const CycleDetails = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(payload),
       });
@@ -249,6 +255,10 @@ const CycleDetails = () => {
     try {
       const response = await fetch(`https://thesheep.top/api/cycle/${id}`, {
         method: 'DELETE',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
       });
 
       const result = await response.json();
@@ -275,7 +285,7 @@ const CycleDetails = () => {
   const watch = reportForm.watch();
 
 // Basic checks
-  const isFeedValid = !!watch.feedAmount && Number(watch.feedAmount) > 0;
+  const isFeedValid = !!watch.feedAmount && Number(watch.feedAmount) >= 0;
   // const isMilkValid = !!watch.milkAmount && Number(watch.milkAmount) > 0 || ;
 
 // Check if every selected vitamin has a non-zero amount

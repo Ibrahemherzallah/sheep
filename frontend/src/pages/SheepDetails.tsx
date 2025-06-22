@@ -24,6 +24,10 @@ const SheepDetails = () => {
   const [sheepInjections,setSheepInjections] = useState([]);
   const [nextTask,setNextTask] = useState('');
   const sheep = allSheep.find(s => s._id === id);
+  const token = localStorage.getItem("token");
+
+
+
   useEffect(() => {
     const fetchSheep = async () => {
       try {
@@ -79,9 +83,12 @@ const SheepDetails = () => {
   });
   const handleSubmitMilkAmount = async (data: MilkFormData) => {
     try {
-      const response = await fetch("http://localhost:3030/api/pregnancies/update-milk", {
+      const response = await fetch("https://thesheep.top/api/pregnancies/update-milk", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ ...data, sheepId: sheep._id })
       });
 
@@ -108,7 +115,10 @@ const SheepDetails = () => {
     try {
       const response = await fetch("https://thesheep.top/api/pregnancies/update-end-milk", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ ...data, sheepId: sheep._id })
       });
 
@@ -136,7 +146,10 @@ const SheepDetails = () => {
     try {
       const response = await fetch("https://thesheep.top/api/pregnancies/update-milk-amount", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           sheepId: sheep._id,
           milkAmount: data.milkAmount,
@@ -170,18 +183,28 @@ const SheepDetails = () => {
       if (tab === "death") {
         await fetch(`https://thesheep.top/api/sheep/${id}/status`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify({ status: "نافقة" }),
         });
       } else if (tab === "sell") {
         await fetch(`https://thesheep.top/api/sheep/${id}/status`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify({ status: "مباعة", sellPrice }),
         });
       } else if (tab === "delete") {
         await fetch(`https://thesheep.top/api/sheep/${id}`, {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
         });
       }
 
@@ -204,12 +227,31 @@ const SheepDetails = () => {
     ageMonths: number;
     ageDays: number;
   }
+  const form = useForm<EditSheepData>({
+    defaultValues: {
+      notes: sheep?.notes,
+      sheepNumber: sheep?.sheepNumber,
+      ageYears: 0,
+      ageMonths: 0,
+      ageDays: 0,
+    },
+  });
+
   const handleSubmitEdit = async (data: EditSheepData) => {
+    const today = new Date();
+    const birthDate = new Date(today);
+    birthDate.setFullYear(birthDate.getFullYear() - data.ageYears);
+    birthDate.setMonth(birthDate.getMonth() - data.ageMonths);
+    birthDate.setDate(birthDate.getDate() - data.ageDays);
+    data.birthDate = birthDate.toISOString(); // 💾 Send to backend
     try {
       const response = await fetch(`https://thesheep.top/api/sheep/${sheep._id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) throw new Error('فشل التعديل');
@@ -227,15 +269,6 @@ const SheepDetails = () => {
       toast({ title: "خطأ", description: "فشل في تعديل النعجة" });
     }
   };
-  const form = useForm<EditSheepData>({
-    defaultValues: {
-      notes: sheep?.notes,
-      sheepNumber: sheep?.sheepNumber,
-      ageYears: 0,
-      ageMonths: 0,
-      ageDays: 0,
-    },
-  });
 
   if (loading) {
     return <div className="p-6 text-center">جارٍ تحميل البيانات...</div>;
@@ -285,7 +318,6 @@ const SheepDetails = () => {
   }
 
 // Usage
-  console.log("the {age.years} سنة، {age.months} شهر، {age.days} يوم is : " ,sheep)
   const age = calculateAge(sheep.birthDate);
 
   return (

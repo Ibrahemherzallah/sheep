@@ -37,10 +37,10 @@ export const createStockItem = async (req, res) => {
 };
 
 export const addStockQuantity = async (req, res) => {
-    const { itemId, quantity } = req.body;
+    const { itemId, quantity, operation } = req.body;
 
-    if (!itemId || typeof quantity !== 'number') {
-        return res.status(400).json({ message: 'Invalid item ID or quantity' });
+    if (!itemId || typeof quantity !== 'number' || !['add', 'subtract'].includes(operation)) {
+        return res.status(400).json({ message: 'Invalid item ID, quantity, or operation' });
     }
 
     try {
@@ -50,10 +50,18 @@ export const addStockQuantity = async (req, res) => {
             return res.status(404).json({ message: 'Item not found' });
         }
 
-        stockItem.quantity += quantity;
-        await stockItem.save();
+        if (operation === 'add') {
+            stockItem.quantity += quantity;
+        } else if (operation === 'subtract') {
+            if (stockItem.quantity < quantity) {
+                return res.status(400).json({ message: 'الكمية الحالية لا تكفي للطرح' });
+            }
+            stockItem.quantity -= quantity;
+        }
 
+        await stockItem.save();
         res.json(stockItem);
+
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error updating item quantity' });

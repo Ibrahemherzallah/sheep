@@ -37,7 +37,7 @@ type MilkRecord = {
 export default function Milk() {
   const [isLoading, setIsLoading] = useState(false);
   const [milkData, setMilkData] = useState([]);
-
+  const token = localStorage.getItem("token");
   const form = useForm<MilkFormValues>({
     resolver: zodResolver(milkFormSchema),
     defaultValues: {
@@ -53,7 +53,10 @@ export default function Milk() {
     try {
       const response = await fetch('https://thesheep.top/api/milk', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           date: data.date,
           production: data.productionLiters,

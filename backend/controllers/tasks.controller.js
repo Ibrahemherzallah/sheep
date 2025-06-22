@@ -102,3 +102,24 @@ export const markTaskComplete = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+
+export const createTask = async (req, res) => {
+    try {
+        const { title, dueDate, sheepIds, type, description, cycleId } = req.body;
+
+        const task = await Task.create({
+            title,
+            dueDate,
+            sheepIds,
+            type,
+            description,
+            cycleId,
+        });
+
+        res.status(201).json(task);
+    } catch (err) {
+        console.error("Error creating task:", err);
+        res.status(500).json({ message: "Failed to create task" });
+    }
+};
