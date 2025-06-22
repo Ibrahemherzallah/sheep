@@ -52,11 +52,21 @@ export const createPregnancies = async (req, res) => {
         });
         createdTasks.push(task);
         const pasteurellaDate = new Date(pregnantDate);
+
         pasteurellaDate.setDate(pasteurellaDate.getDate() + 90);
+        const pregnancyFix = new Date(pregnantDate);
+        pregnancyFix.setDate(pasteurellaDate.getDate() + 95);
 
         await Task.create({
             title: 'إعطاء لقاح الباستيريلا وال فيرست ايد',
             dueDate: pasteurellaDate,
+            type: 'injection',
+            sheepIds
+        });
+
+        await Task.create({
+            title: 'إعطاء لقاح تثبيت الحمل',
+            dueDate: pregnancyFix,
             type: 'injection',
             sheepIds
         });
