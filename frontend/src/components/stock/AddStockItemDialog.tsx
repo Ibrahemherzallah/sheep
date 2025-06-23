@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsTrigger } from '@/components/ui';
 import {TabsList} from "@/components/ui";
 import * as React from "react";
+import {Combobox} from "@/components/ui/combobox.tsx";
 
 interface StockItem {
     id: string;
@@ -84,7 +85,6 @@ const AddStockItemDialog: React.FC<AddStockItemDialogProps> = ({open, onOpenChan
     }, [selectedCategory]);
 
 
-console.log("selected item is : ", form.watch('itemType'))
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
@@ -251,26 +251,28 @@ console.log("selected item is : ", form.watch('itemType'))
                                         <FormMessage />
                                     </FormItem>
                                 )} />
-                                <FormField control={existingForm.control} name="itemId" render={({ field }) => (
+                                <FormField
+                                    control={existingForm.control}
+                                    name="itemId"
+                                    render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>المنتج</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value} dir={'rtl'}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="اختر المنتج" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent className="max-h-[300px] overflow-y-auto">
-                                                    {selectedItems.map(item => (
-                                                        <SelectItem key={item._id} value={item._id}>
-                                                            {item.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+
+                                            <Combobox
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                options={selectedItems.map((item) => ({
+                                                    label: item.name,
+                                                    value: item._id,
+                                                }))}
+                                                placeholder="ابحث واختر المنتج"
+                                                dir="rtl"
+                                            />
+
                                             <FormMessage />
                                         </FormItem>
-                                    )}/>
+                                    )}
+                                />
                                 <FormField control={existingForm.control} name="operation" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>العملية</FormLabel>
@@ -309,7 +311,7 @@ console.log("selected item is : ", form.watch('itemType'))
                                         !existingForm.watch('itemId')||
                                         !existingForm.watch('quantity') ||
                                         !existingForm.watch('operation')
-                                    }>إضافة الكمية</Button>
+                                    }>تم</Button>
                                 </DialogFooter>
                             </form>
                         </Form>
