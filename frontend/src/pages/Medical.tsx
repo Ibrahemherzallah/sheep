@@ -252,6 +252,14 @@ const NewInjectionModal = ({allSheep}) => {
                   <Checkbox id={`sheep-${sheep._id}`} checked={selectedSheep.includes(sheep._id)} onCheckedChange={() => handleSheepToggle(sheep._id)}/>
                   <Label htmlFor={`sheep-${sheep._id}`} className="flex-grow cursor-pointer">
                     &nbsp;# {sheep.sheepNumber}
+                    {sheep.badgeColor && (
+                        <span
+                            className={`inline-block w-3 h-3 rounded-full ms-2 ${
+                                sheep.badgeColor === 'أحمر' ? 'bg-red-500' : 'bg-yellow-400'
+                            }`}
+                            title={`علامة ${sheep.badgeColor === 'red' ? 'حمراء' : 'صفراء'}`}
+                        />
+                    )}
                   </Label>
                 </div>
               ))}
@@ -439,6 +447,14 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
                       <Checkbox id={`sheep-${sheep._id}`} checked={selectedSheep.includes(sheep._id)} onCheckedChange={() => handleSheepToggle(sheep._id)}/>
                       <Label htmlFor={`sheep-${sheep._id}`} className="flex-grow cursor-pointer">
                         &nbsp;# {sheep.sheepNumber}
+                        {sheep.badgeColor && (
+                            <span
+                                className={`inline-block w-3 h-3 rounded-full ms-2 ${
+                                    sheep.badgeColor === 'أحمر' ? 'bg-red-500' : 'bg-yellow-400'
+                                }`}
+                                title={`علامة ${sheep.badgeColor === 'red' ? 'حمراء' : 'صفراء'}`}
+                            />
+                        )}
                       </Label>
                     </div>
                 ))}

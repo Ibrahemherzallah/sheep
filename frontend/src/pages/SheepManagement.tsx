@@ -607,11 +607,19 @@ const SheepManagement = () => {
                     {pregnantSheep.filter(sheep =>
                         String(sheep.sheepNumber).toLowerCase().includes(searchTerm.toLowerCase())).map((sheep) => (
                         <div key={sheep._id} className="flex items-start space-x-2">
-
                           <div className="grid gap-1.5 w-full">
                             <label htmlFor={`sheep-${sheep._id}`} className="text-sm font-medium leading-none cursor-pointer">
                               {sheep.sheepNumber}#
+                              {sheep.badgeColor && (
+                                  <span
+                                      className={`inline-block w-3 h-3 rounded-full ms-2 ${
+                                          sheep.badgeColor === 'أحمر' ? 'bg-red-500' : 'bg-yellow-400'
+                                      }`}
+                                      title={`علامة ${sheep.badgeColor === 'red' ? 'حمراء' : 'صفراء'}`}
+                                  />
+                              )}
                             </label>
+
                             {selectedSheep.includes(sheep._id) && (
                                 <div className="flex items-center gap-3 mt-1">
                                   <div className="flex-1">
@@ -724,6 +732,14 @@ const SheepManagement = () => {
                           <div key={sheep._id} className="flex items-center space-x-2 py-2 border-b last:border-0">
                             <Label htmlFor={`sheep-${sheep._id}`} className="flex-grow cursor-pointer">
                               #{sheep.sheepNumber}
+                              {sheep.badgeColor && (
+                                  <span
+                                      className={`inline-block w-3 h-3 rounded-full ms-2 ${
+                                          sheep.badgeColor === 'أحمر' ? 'bg-red-500' : 'bg-yellow-400'
+                                      }`}
+                                      title={`علامة ${sheep.badgeColor === 'red' ? 'حمراء' : 'صفراء'}`}
+                                  />
+                              )}
                             </Label>
                             <Checkbox id={`sheep-${sheep._id}`} checked={selectedSheep.includes(sheep._id)} onCheckedChange={() => handleSheepToggle(sheep._id)}/>
                           </div>
