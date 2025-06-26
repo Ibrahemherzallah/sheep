@@ -835,7 +835,7 @@ const Medical = () => {
                               <TableCell className={`p-1`}>{event.title}</TableCell>
                               <TableCell className={`p-1`}>{event.notes || 'لا يوجد ملاحظات'}</TableCell>
                               <TableCell className={`p-1`}
-                                         // style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                         style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
                                          title={event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}>
                                 {event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}
                               </TableCell>
