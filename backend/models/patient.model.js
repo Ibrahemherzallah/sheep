@@ -11,16 +11,21 @@ const patientSchema = new mongoose.Schema({
         required: true,
     },
     drugs: [{
-        drug: {
+        drug: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: 'StockModel',
             required: true
-        },
+        }],
         order: {
             type: Number,
             required: true
         },
     }],
+    order: {
+      type: Number,
+      required: true,
+      default: 1
+    },
     patientDate: {
         type: Date,
         required: true

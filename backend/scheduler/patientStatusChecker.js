@@ -108,7 +108,7 @@ cron.schedule('1 5 * * *', async () => {
             const drugName = lastDrug?.drug?.name || 'دواء غير معروف';
             // Create task for this sheep
             const task = new Task({
-                title: `يرجى إعطاء (${drugName}) للنعجة المريض رقم ${sheep.sheepNumber}`,
+                title: `يجب إعطاء دواء للنعجة المريض رقم ${sheep.sheepNumber}`,
                 sheepIds: [sheep._id],
                 dueDate: today,
                 type: 'injection',

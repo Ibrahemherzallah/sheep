@@ -52,7 +52,9 @@ const TreatmentCard = ({ treatment,allDrugs }: { treatment: any;allDrugs: any })
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">الدواء :</span>
                 <span className="font-medium">
-                  {treatment?.latestPatient?.drugs?.[treatment?.latestPatient?.drugs?.length - 1]?.drug?.name || 'غير متوفر'}
+                  {
+                    treatment?.latestPatient?.drugs?.filter(drug => drug.order === treatment?.latestPatient?.order).map(drugg => drugg?.drug?.name).join(', ')
+                  }
                 </span>
               </div>
               <div className="flex justify-between text-sm">
@@ -295,7 +297,7 @@ const NewInjectionModal = ({allSheep}) => {
 // Treatment Modal Component
 const NewTreatmentModal = ({allDrugs,allSheep}) => {
   const [selectedSheep, setSelectedSheep] = useState<string[]>([]);
-  const [selectedDrug, setSelectedDrug] = useState("");
+  const [drugList, setDrugList] = useState([{ drug: "", order: 1 }]);
   const [dueDate, setDueDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split("T")[0];
@@ -319,18 +321,22 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
       sheep.sheepNumber.toString().includes(searchTerm.trim())
   );
   const handleSubmit = async () => {
+    // Convert the drugList into valid drug entries
+    const validDrugs = drugList
+        .filter(entry => entry.drug && entry.order)
+        .map(entry => ({
+          drug: entry.drug,
+          order: entry.order
+        }));
 
-    const payload = {sheepIds: selectedSheep, patientName: injectNumber,
-      drugs: [
-        {
-          drug: selectedDrug,
-          order: 1,
-        },
-      ],
-      patientDate: dueDate,
+    const payload = {
+      sheepIds: selectedSheep,
+      patientName: injectNumber,
+      drugs: validDrugs,
+      patientDate: useTodayDate ? new Date().toISOString() : dueDate,
       notes,
     };
-
+    console.log("the payload is : ",  payload);
     try {
       const res = await fetch("https://thesheep.top/api/patient", {
         method: "POST",
@@ -347,12 +353,11 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
         throw new Error(data.error || "فشل في إضافة الحالة المرضية");
       }
 
-      // Optionally: toast success or close dialog here
       toast({ title: 'تم إضافة الحالات المرضية بنجاح!' });
 
       // Reset form
       setSelectedSheep([]);
-      setSelectedDrug("");
+      setDrugList([{ drug: "", order: 1 }]);
       setDueDate(() => {
         const today = new Date();
         return today.toISOString().split("T")[0];
@@ -367,7 +372,6 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
       toast({ title: 'حدث خطأ أثناء إضافة الحالات المرضية', description: String(error) });
     }
   };
-
   return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
@@ -397,19 +401,48 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
 
             {/* Given Drug */}
             <div className="space-y-1">
-              <Label htmlFor="injection-type">الدواء المعطى</Label>
-              <Combobox
-                  value={selectedDrug}
-                  onChange={setSelectedDrug}
-                  options={allDrugs.map((drug) => ({
-                    label: drug.name,
-                    value: drug._id,
-                  }))}
-                  placeholder="حدد الدواء المعطى"
-                  dir="rtl"
-              />
-
+              <Label>الأدوية المعطاة</Label>
+              {drugList.map((entry, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Combobox
+                        value={entry.drug}
+                        onChange={(value) => {
+                          const updated = [...drugList];
+                          updated[index].drug = value;
+                          setDrugList(updated);
+                        }}
+                        options={allDrugs.map((drug) => ({
+                          label: drug.name,
+                          value: drug._id,
+                        }))}
+                        placeholder="حدد الدواء"
+                        dir="rtl"
+                    />
+                    <Input
+                        type="number"
+                        min="1"
+                        value={entry.order}
+                        onChange={(e) => {
+                          const updated = [...drugList];
+                          updated[index].order = parseInt(e.target.value);
+                          setDrugList(updated);
+                        }}
+                        placeholder="الترتيب"
+                        className="w-20"
+                    />
+                    <Button variant="destructive" size="icon" onClick={() => {
+                      const updated = drugList.filter((_, i) => i !== index);
+                      setDrugList(updated);
+                    }}>
+                      ✕
+                    </Button>
+                  </div>
+              ))}
+              <Button type="button" onClick={() => setDrugList([...drugList, { drug: "", order: drugList.length + 1 }])}>
+                + أضف دواء
+              </Button>
             </div>
+
 
 
             {/* Due Date */}
@@ -482,7 +515,7 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
             <Button
                 type="submit"
                 onClick={handleSubmit}
-                disabled={!selectedDrug || selectedSheep.length === 0 || !dueDate}
+                disabled={selectedSheep.length === 0 || !dueDate || !injectNumber}
             >
               <Syringe className="mr-1" size={16} />
               إضافة
@@ -496,13 +529,14 @@ const NewTreatmentModal = ({allDrugs,allSheep}) => {
 // ChangeMedicine Modal Component
 const ChangeMedicine = ({id,allDrugs}) => {
 
-  const [newMedicine, setNewMedicine] = useState("");
   const [medicineNumber, setMedicineNumber] = useState("");
   const [open, setOpen] = useState(false);
+  const [drugList, setDrugList] = useState([{ drug: "", order: 2 }]);
   const token = localStorage.getItem("token");
 
   const handleSubmit = async () => {
-    if (!newMedicine || !medicineNumber) return;
+    if (drugList.length === 0 || !medicineNumber) return;
+    const validDrugs = drugList.filter(d => d.drug && d.order !== null);
 
     try {
       const response = await fetch(`https://thesheep.top/api/patient/add-drug/${id}`, {
@@ -512,7 +546,7 @@ const ChangeMedicine = ({id,allDrugs}) => {
           "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
-          drug: newMedicine,
+          drugs: validDrugs,
           order: Number(medicineNumber),
         }),
       });
@@ -524,7 +558,7 @@ const ChangeMedicine = ({id,allDrugs}) => {
       }
 
       // Reset form
-      setNewMedicine('');
+      setDrugList([{ drug: "", order: 2 }]);
       setMedicineNumber('');
       setOpen(false);
 
@@ -553,19 +587,48 @@ const ChangeMedicine = ({id,allDrugs}) => {
 
           <div className="space-y-3 py-2" dir={'rtl'}>
             <div className="space-y-1">
-              <Label htmlFor="injection-type">الدواء الجديد</Label>
-                <Combobox
-                    value={newMedicine}
-                    onChange={setNewMedicine}
-                    options={allDrugs.map((drug) => ({
-                      label: drug.name,
-                      value: drug._id,
-                    }))}
-                    placeholder="ابحث واختر الدواء"
-                    dir="rtl"
-                />
-
+              <Label>الأدوية المعطاة</Label>
+              {drugList.map((entry, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Combobox
+                        value={entry.drug}
+                        onChange={(value) => {
+                          const updated = [...drugList];
+                          updated[index].drug = value;
+                          setDrugList(updated);
+                        }}
+                        options={allDrugs.map((drug) => ({
+                          label: drug.name,
+                          value: drug._id,
+                        }))}
+                        placeholder="حدد الدواء"
+                        dir="rtl"
+                    />
+                    <Input
+                        type="number"
+                        min="1"
+                        value={entry.order}
+                        onChange={(e) => {
+                          const updated = [...drugList];
+                          updated[index].order = parseInt(e.target.value);
+                          setDrugList(updated);
+                        }}
+                        placeholder="الترتيب"
+                        className="w-20"
+                    />
+                    <Button variant="destructive" size="icon" onClick={() => {
+                      const updated = drugList.filter((_, i) => i !== index);
+                      setDrugList(updated);
+                    }}>
+                      ✕
+                    </Button>
+                  </div>
+              ))}
+              <Button type="button" onClick={() => setDrugList([...drugList, { drug: "", order: drugList.length + 1 }])}>
+                + أضف دواء
+              </Button>
             </div>
+
             {/* Number Of Inject */}
             <div className="space-y-1">
               <Label htmlFor="injectNumber">ترتيب الدواء</Label>
@@ -580,7 +643,7 @@ const ChangeMedicine = ({id,allDrugs}) => {
           </div>
 
           <DialogFooter>
-            <Button type="submit" onClick={handleSubmit} disabled={!newMedicine ||  !medicineNumber}>
+            <Button type="submit" onClick={handleSubmit} disabled={!medicineNumber}>
               <Syringe className="mr-1" size={16} />
               تغيير الدواء
             </Button>
@@ -605,6 +668,7 @@ const Medical = () => {
   const [openDateDialog, setOpenDateDialog] = useState(false);
   const [currentTask, setCurrentTask] = useState(null);
   const [injectDate, setInjectDate] = useState("");
+  // const [isLoading,setIsLoading] = useState(false);
   const filteredDrug = allDrugs.filter(drug => drug.section === 'sheep' && drug.type === "Medicine")
   const token = localStorage.getItem("token");
 
@@ -647,6 +711,7 @@ const Medical = () => {
         }
       };
       const fetchLatestPatients = async () => {
+        setLoading(true)
         try {
           const res = await fetch('https://thesheep.top/api/sheep/latest-patient-cases');
           const data = await res.json();

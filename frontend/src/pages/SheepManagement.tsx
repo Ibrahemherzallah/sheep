@@ -943,65 +943,6 @@ const SheepManagement = () => {
                     )}
                   </div>
 
-                  {/* هل هي مريضة؟ */}
-                  <div style={{ width: '45%' }}>
-                    <FormField
-                        control={addSheepForm.control}
-                        name="isPatient"
-                        render={({ field }) => (
-                            <FormItem>
-                              <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="sheep-patient"
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                />
-                                <Label htmlFor="sheep-patient" className="cursor-pointer">
-                                  &nbsp;   هل هي مريضة ؟
-                                </Label>
-                              </div>
-                            </FormItem>
-                        )}
-                    />
-
-                    {addSheepForm.watch('isPatient') && (
-                        <>
-                          {/* المرض */}
-                          <FormField
-                              control={addSheepForm.control}
-                              name="patientName"
-                              render={({ field }) => (
-                                  <FormItem className="mt-3">
-                                    <FormControl>
-                                      <Input placeholder="قم بإدخال المرض المصابة به" {...field} />
-                                    </FormControl>
-                                  </FormItem>
-                              )}
-                          />
-
-                          {/* الدواء */}
-                          <FormField
-                              control={addSheepForm.control}
-                              name="drug"
-                              render={({ field }) => (
-                                  <FormItem className="mt-3">
-                                    <FormLabel>الدواء</FormLabel>
-                                    <Combobox
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        options={filteredDrug.map((drug) => ({
-                                          label: drug.name,
-                                          value: drug._id,
-                                        }))}
-                                        placeholder="ابحث واختر الدواء"
-                                        dir="rtl"
-                                    />
-                                  </FormItem>
-                              )}
-                          />
-                        </>
-                    )}
-                  </div>
                 </div>
                 <FormField control={addSheepForm.control} name="notes" render={({ field }) => (
                     <FormItem >

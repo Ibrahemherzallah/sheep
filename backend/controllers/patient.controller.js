@@ -7,40 +7,47 @@ export const createPatient = async (req, res) => {
         const { sheepIds, patientName, drugs, patientDate, notes } = req.body;
         const createdPatiencies = [];
 
+        // Basic validation for drugs structure
+        if (!Array.isArray(drugs) || drugs.length === 0) {
+            return res.status(400).json({ error: "يجب إضافة دواء واحد على الأقل" });
+        }
+
+        for (const entry of drugs) {
+            if (!entry.drug || typeof entry.order !== "number") {
+                return res.status(400).json({ error: "الرجاء التحقق من تنسيق الأدوية وترتيبها" });
+            }
+        }
+
         for (const sheepId of sheepIds) {
             const sheep = await Sheep.findById(sheepId);
 
             if (!sheep) {
                 return res.status(404).json({ error: `Sheep with ID ${sheepId} not found` });
             }
+
             if (sheep.isPatient) {
                 console.warn(`Sheep ${sheepId} is already patient, skipping.`);
-                return res.status(404).json({ error: `النعجة صاحبة الرقم  ${sheep.sheepNumber} هي مريضة ` });
+                return res.status(400).json({ error: `النعجة صاحبة الرقم ${sheep.sheepNumber} هي مريضة بالفعل` });
             }
 
-            // 🗓️ Calculate healingDate = patientDate + 5 days
             const baseDate = new Date(patientDate || Date.now());
             const healingDate = new Date(baseDate.getTime() + 5 * 24 * 60 * 60 * 1000); // +5 days
 
             const patient = await Patient.create({
                 sheepId: sheep._id,
                 patientName,
-                patientDate,
+                patientDate: baseDate,
                 healingDate,
                 notes,
-                drugs
+                drugs,
             });
 
-            // Update sheep with new pregnancy
             sheep.isPatient = true;
             sheep.medicalStatus = "مريضة";
             sheep.patientCases.push(patient._id);
             await sheep.save();
 
-
-
             createdPatiencies.push(patient);
-
         }
 
         res.status(201).json({
@@ -48,7 +55,7 @@ export const createPatient = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Failed to create patient record" });
+        res.status(500).json({ error: "حدث خطأ أثناء إضافة الحالة المرضية" });
     }
 };
 
@@ -84,37 +91,43 @@ export const getPatientById = async (req, res) => {
 export const addDrugToLatestPatient = async (req, res) => {
     try {
         const { sheepId } = req.params;
-        const { drug, order } = req.body;
+        const { drugs, order } = req.body;
 
-        if (!drug || order == null) {
-            return res.status(400).json({ error: "Both 'drug' and 'order' are required." });
+        if (!Array.isArray(drugs) || drugs.length === 0 || order == null) {
+            return res.status(400).json({ error: "الرجاء توفير الأدوية وترتيب الدواء." });
         }
 
-        // Find the latest patient case for the given sheep
-        const latestPatient = await Patient.findOne({ sheepId })
-            .sort({ createdAt: -1 });
+        const latestPatient = await Patient.findOne({ sheepId }).sort({ createdAt: -1 });
 
         if (!latestPatient) {
-            return res.status(404).json({ error: "No patient case found for this sheep." });
+            return res.status(404).json({ error: "لم يتم العثور على حالة مرضية لهذه النعجة." });
         }
 
-        // Add the new drug to the drugs array
-        latestPatient.drugs.push({ drug, order });
+        // Append all new drugs
+        for (const entry of drugs) {
+            if (entry.drug && entry.order != null) {
+                latestPatient.drugs.push({
+                    drug: entry.drug,
+                    order: entry.order,
+                });
+            }
+        }
 
-        // 🗓️ Recalculate healing date = now + 5 days
-        const newHealingDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
-        latestPatient.healingDate = newHealingDate;
+        // ✅ Update the patient's global order field to the new one entered
+        latestPatient.order = order;
 
-        // Save the updated patient case
+        // 🗓️ Optionally update healing date again
+        latestPatient.healingDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+
         const updatedPatient = await latestPatient.save();
 
         res.status(200).json({
-            message: "Drug added to latest patient case",
+            message: "تمت إضافة الأدوية بنجاح",
             data: updatedPatient
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "فشل التعديل المرض مع الدواء الجديد" });
+        res.status(500).json({ error: "فشل في تعديل الحالة المرضية مع الأدوية الجديدة" });
     }
 };
 
