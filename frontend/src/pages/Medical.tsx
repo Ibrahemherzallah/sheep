@@ -53,7 +53,10 @@ const TreatmentCard = ({ treatment,allDrugs }: { treatment: any;allDrugs: any })
                 <span className="text-muted-foreground">الدواء :</span>
                 <span className="font-medium">
                   {
-                    treatment?.latestPatient?.drugs?.filter(drug => drug.order === treatment?.latestPatient?.order).map(drugg => drugg?.drug?.name).join(', ')
+                    treatment?.latestPatient?.drugs
+                        ?.filter(drug => drug.order === treatment?.latestPatient?.order)
+                        .map(drugg => drugg?.drug?.[0]?.name)
+                        .join(', ')
                   }
                 </span>
               </div>
