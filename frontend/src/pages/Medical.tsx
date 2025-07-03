@@ -763,7 +763,6 @@ const Medical = () => {
         method: 'PUT',
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
         },
       });
 
@@ -832,8 +831,7 @@ const Medical = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-            },
+          },
           body: JSON.stringify(newTask),
         });
         toast({ title: "تم إنشاء مهمة جديدة بنجاح" });
