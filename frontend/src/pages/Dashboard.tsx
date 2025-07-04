@@ -1,7 +1,26 @@
 import {useEffect, useState} from 'react';
 import {Activity, Baby, Calendar, Ear, Info, Pill,Milk, Syringe, Truck} from 'lucide-react';
-import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle,
-  Dialog, DialogContent,Input, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Dialog,
+  DialogContent,
+  Input,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  toast,
+  Checkbox,
+} from '@/components/ui';
 import { Link } from 'react-router-dom';
 import * as React from "react";
 import {formatDate} from "@/utils/dateUtils.ts";
@@ -65,7 +84,12 @@ const Dashboard = () => {
   const [currentTask, setCurrentTask] = useState(null);
   const [injectDate, setInjectDate] = useState("");
   const token = localStorage.getItem("token");
-
+  const [selectedSheepIds, setSelectedSheepIds] = useState<string[]>([]);
+  const toggleSheepSelection = (id: string) => {
+    setSelectedSheepIds((prev) =>
+        prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+  };
   const handleOpenModal = async (task: any) => {
     setModalLoading(true)
     setSelectedTask(task);
@@ -126,6 +150,8 @@ const Dashboard = () => {
       });
     }
   };
+
+
   const handleTaskCompletion = (task) => {
     console.log("task", task);
     if (["إسفنجة", "اعطاء الهرمون"].includes(task.title)) {
@@ -138,24 +164,36 @@ const Dashboard = () => {
 
 
 
+  const handleTaskCompletionForSelectedSheep = (task) => {
+    console.log("task", task);
+    if (["إسفنجة", "اعطاء الهرمون"].includes(task.title)) {
+      setCurrentTask(task);
+      setOpenDateDialog(true);
+    } else {
+      confirmCompletionForSelectedSheep();
+    }
+  };
+
 
 
 
   const handleInjectConfirmation = async () => {
+
     const date = new Date(injectDate);
-    const taskTitle = currentTask.title;
+        const taskTitle = currentTask.title;
+        console.log("currentTask is :" ,currentTask)
+        // 1. Mark current task as completed
+    selectedSheepIds.length > 0 ?  confirmCompletionForSelectedSheep() : await markTaskAsCompleted(currentTask._id)
 
-    // 1. Mark current task as completed
-    await markTaskAsCompleted(currentTask._id);
 
-    // 2. Prepare new task
+        // 2. Prepare new task
     let newTask = null;
     if (taskTitle === "إسفنجة") {
       date.setDate(date.getDate() + 12);
       newTask = {
-        title: "هرمون",
+        title: "اعطاء الهرمون",
         dueDate: date,
-        sheepIds: currentTask.sheepIds,
+        sheepIds: selectedSheepIds.length > 0 ? selectedSheepIds : currentTask.sheepIds,
         type: "injection",
       };
     } else if (taskTitle === "اعطاء الهرمون") {
@@ -163,7 +201,7 @@ const Dashboard = () => {
       newTask = {
         title: "فحص الحمل",
         dueDate: date,
-        sheepIds: currentTask.sheepIds,
+        sheepIds: selectedSheepIds.length > 0 ? selectedSheepIds : currentTask.sheepIds,
         type: "pregnancy-check",
       };
     }
@@ -189,7 +227,44 @@ const Dashboard = () => {
   };
 
 
+  const confirmCompletionForSelectedSheep = async () => {
+    console.log("selectedTask : " , selectedTask);
+    console.log("selectedSheepIds : " , selectedSheepIds);
 
+    if (!selectedTask || selectedSheepIds.length === 0) {
+      toast({
+        title: "الرجاء اختيار بعض الخراف أولاً",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      // 1. Mark selected sheep as completed for this task
+      const res = await fetch(`http://localhost:3030/api/tasks/${selectedTask._id}/markTaskCompleteForSelectedSheep`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ completedSheepIds: selectedSheepIds }),
+      });
+
+      if (!res.ok) {
+        return toast({
+          title: "خطأ",
+          description: "فشل في تحديث المهمة",
+          variant: "destructive",
+        });
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      toast({
+        title: "فشل الاتصال",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  };
 
 
 
@@ -447,15 +522,29 @@ const Dashboard = () => {
                         <ul className="space-y-2 max-h-[300px] overflow-y-auto">
                           {sheepList.length > 0 ? (
                               sheepList.map((sheep) => (
-                                  <li key={sheep._id} className="text-sm text-gray-800 border-b py-1">
-                                    🐑 النعجة رقم: {sheep.sheepNumber}
-                                  </li>
+                                  <>
+                                    <div key={sheep._id} className="flex items-center gap-2">
+                                      <Checkbox
+                                          checked={selectedSheepIds.includes(sheep._id)}
+                                          onCheckedChange={() => toggleSheepSelection(sheep._id)}
+                                      />
+                                      <span>
+                                        🐑 النعجة رقم: {sheep.sheepNumber}
+                                      </span>
+                                    </div>
+
+                                  </>
+
                               ))
                           ) : (
                               <li className="text-muted-foreground text-sm">لا يوجد نعاج</li>
                           )}
                         </ul>
-                        <div className="flex justify-end mt-4">
+                        <div className="flex justify-end gap-2 mt-4">
+
+                          <Button onClick={()=>{handleTaskCompletionForSelectedSheep(selectedTask)}} size="sm" disabled={selectedSheepIds.length === 0}>
+                            تأكيد تنفيذ المهمة للخراف المحددة
+                          </Button>
                           <Button size="sm" onClick={() => setIsModalOpen(false)}>
                             إغلاق
                           </Button>

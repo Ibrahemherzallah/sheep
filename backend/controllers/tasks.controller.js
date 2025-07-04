@@ -85,6 +85,7 @@ export const getUpcomingInjectionTasksForCycle = async (req, res) => {
     }
 };
 
+
 export const markTaskComplete = async (req, res) => {
     try {
         const { id } = req.params;
@@ -102,6 +103,35 @@ export const markTaskComplete = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+
+export const markTaskCompleteForSelectedSheep = async (req, res) => {
+    const { id: taskId } = req.params;
+    const { completedSheepIds } = req.body;
+    console.log("taskId is : ", taskId)
+
+    console.log("completedSheepIds is : ", completedSheepIds)
+
+    try {
+        const task = await Task.findById(taskId);
+        if (!task) return res.status(404).json({ message: 'Task not found' });
+        console.log("task is : ", task)
+
+        // Filter out completed sheep
+        task.sheepIds = task.sheepIds.filter(id => !completedSheepIds.includes(id.toString()));
+        console.log("task.sheepIds is : ", task.sheepIds)
+        if (task.sheepIds.length === 0) {
+            task.completed = true;
+        }
+
+        await task.save();
+        res.status(200).json({ message: 'Task updated', task });
+    } catch (err) {
+        res.status(500).json({ message: 'Error updating task', error: err.message });
+    }
+};
+
+
 
 
 export const createTask = async (req, res) => {
