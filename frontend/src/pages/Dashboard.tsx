@@ -240,7 +240,7 @@ const Dashboard = () => {
     }
     try {
       // 1. Mark selected sheep as completed for this task
-      const res = await fetch(`http://localhost:3030/api/tasks/${selectedTask._id}/markTaskCompleteForSelectedSheep`, {
+      const res = await fetch(`https://thesheep.top/api/tasks/${selectedTask._id}/markTaskCompleteForSelectedSheep`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
