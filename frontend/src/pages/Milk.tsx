@@ -25,18 +25,12 @@ const milkFormSchema = z.object({
 
 type MilkFormValues = z.infer<typeof milkFormSchema>;
 
-type MilkRecord = {
-  id: string;
-  date: string;
-  productionLiters: number;
-  soldLiters: number;
-  pricePerLiter: number;
-  revenue: number;
-};
 
 export default function Milk() {
   const [isLoading, setIsLoading] = useState(false);
   const [milkData, setMilkData] = useState([]);
+  const [milkSummary, setMilkSummary] = useState([]);
+
   const token = localStorage.getItem("token");
   const form = useForm<MilkFormValues>({
     resolver: zodResolver(milkFormSchema),
@@ -102,6 +96,12 @@ export default function Milk() {
       const data = await res.json();
       setMilkData(data);
     };
+    const fetchMilkSummary = async () => {
+      const res = await fetch("https://thesheep.top/api/milk/summary");
+      const data = await res.json();
+      setMilkSummary(data);
+    };
+    fetchMilkSummary();
     fetchMilk();
   }, []);
 
@@ -243,6 +243,39 @@ export default function Milk() {
           </div>
         </CardContent>
       </Card>
+      <Card className="mt-10" dir="rtl">
+        <CardHeader>
+          <CardTitle>ملخص سنوي وشهري لإنتاج الحليب</CardTitle>
+          <CardDescription>عرض تفصيلي لإجمالي الإنتاج والمبيعات لكل شهر</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+              <tr className="border-b">
+                <th className="py-2 px-4 text-right">السنة</th>
+                <th className="py-2 px-4 text-right">الشهر</th>
+                <th className="py-2 px-4 text-right">الإنتاج (L)</th>
+                <th className="py-2 px-4 text-right">المباع (L)</th>
+                <th className="py-2 px-4 text-right">الإيرادات (₪)</th>
+              </tr>
+              </thead>
+              <tbody>
+              {milkSummary.map(({ _id, totalProduction, totalSold, totalRevenue }) => (
+                  <tr key={`${_id.year}-${_id.month}`} className="border-b">
+                    <td className="py-2 px-4">{_id.year}</td>
+                    <td className="py-2 px-4">{_id.month}</td>
+                    <td className="py-2 px-4">{totalProduction.toFixed(2)}</td>
+                    <td className="py-2 px-4">{totalSold.toFixed(2)}</td>
+                    <td className="py-2 px-4">₪{totalRevenue.toFixed(2)}</td>
+                  </tr>
+              ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
     </div>
   );
 }

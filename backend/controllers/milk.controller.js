@@ -30,6 +30,34 @@ export const getAllMilkRecords = async (req, res) => {
     }
 };
 
+
+export const getMilkYearlySummary = async (req, res) => {
+    try {
+        const result = await MilkProduction.aggregate([
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$date" },
+                        month: { $month: "$date" }
+                    },
+                    totalProduction: { $sum: "$production" },
+                    totalSold: { $sum: "$sold" },
+                    totalRevenue: { $sum: { $multiply: ["$price", "$sold"] } },
+                }
+            },
+            {
+                $sort: { "_id.year": -1, "_id.month": -1 } // latest first
+            }
+        ]);
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("❌ Error fetching milk summary:", error);
+        res.status(500).json({ error: "Failed to get milk summary" });
+    }
+};
+
+
 // Update
 export const updateMilkRecord = async (req, res) => {
     try {
