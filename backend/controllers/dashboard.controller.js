@@ -19,7 +19,7 @@ export const dashboard = async (req, res) => {
         next7Days.setDate(today.getDate() + 7);
 
         // 🐑 Sheep Stats
-        const totalSheep = await Sheep.countDocuments({});
+        const totalSheep = await Sheep.countDocuments({ status: { $nin: ['مباعة', 'نافقة'] } });
         const pregnantSheep = await Sheep.countDocuments({ isPregnant: true });
         const patientSheep = await Sheep.countDocuments({ isPatient: true });
 
@@ -103,7 +103,7 @@ export const medicalDashboard = async (req, res) => {
         const drugIdsSet = new Set();
         recentPatients.forEach(patient => {
             patient.drugs.forEach(entry => {
-                drugIdsSet.add(entry.drug._id.toString());
+                drugIdsSet.add(entry?.drug?._id?.toString());
             });
         });
         const differentMedicineTypesCount = drugIdsSet.size;
