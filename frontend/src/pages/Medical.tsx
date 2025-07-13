@@ -115,7 +115,15 @@ const NewInjectionModal = ({allSheep}) => {
   );
   console.log('filteredInjection : ' , filteredInjection);
   //
-
+  const allSelected = filteredSheepMultiSelector.length > 0 && filteredSheepMultiSelector.every(sheep => selectedSheep.includes(sheep._id));
+  const handleSelectAllToggle = () => {
+    if (allSelected) {
+      setSelectedSheep([]); // Deselect all
+    } else {
+      const allIds = filteredSheepMultiSelector.map(sheep => sheep._id);
+      setSelectedSheep(allIds); // Select all
+    }
+  };
   useEffect(() => {
     const fetchInjections = async () => {
       try {
@@ -252,23 +260,41 @@ const NewInjectionModal = ({allSheep}) => {
             </div>
 
             <div className="max-h-40 overflow-y-auto p-2 border rounded-md">
+              {/* Select All */}
+              <div className="flex items-center space-x-2 border-b pb-2 mb-2">
+                <Checkbox
+                    id="select-all"
+                    checked={allSelected}
+                    onCheckedChange={handleSelectAllToggle}
+                />
+                <Label htmlFor="select-all" className="cursor-pointer">
+                  &nbsp;تحديد الكل
+                </Label>
+              </div>
+
+              {/* Individual Sheep */}
               {filteredSheepMultiSelector.map((sheep) => (
-                <div key={sheep._id} className="flex items-center space-x-2 py-2 border-b last:border-0">
-                  <Checkbox id={`sheep-${sheep._id}`} checked={selectedSheep.includes(sheep._id)} onCheckedChange={() => handleSheepToggle(sheep._id)}/>
-                  <Label htmlFor={`sheep-${sheep._id}`} className="flex-grow cursor-pointer">
-                    &nbsp;# {sheep.sheepNumber}
-                    {sheep.badgeColor && (
-                        <span
-                            className={`inline-block w-3 h-3 rounded-full ms-2 ${
-                                sheep.badgeColor === 'أحمر' ? 'bg-red-500' : 'bg-yellow-400'
-                            }`}
-                            title={`علامة ${sheep.badgeColor === 'red' ? 'حمراء' : 'صفراء'}`}
-                        />
-                    )}
-                  </Label>
-                </div>
+                  <div key={sheep._id} className="flex items-center space-x-2 py-2 border-b last:border-0">
+                    <Checkbox
+                        id={`sheep-${sheep._id}`}
+                        checked={selectedSheep.includes(sheep._id)}
+                        onCheckedChange={() => handleSheepToggle(sheep._id)}
+                    />
+                    <Label htmlFor={`sheep-${sheep._id}`} className="flex-grow cursor-pointer">
+                      &nbsp;# {sheep.sheepNumber}
+                      {sheep.badgeColor && (
+                          <span
+                              className={`inline-block w-3 h-3 rounded-full ms-2 ${
+                                  sheep.badgeColor === 'أحمر' ? 'bg-red-500' : 'bg-yellow-400'
+                              }`}
+                              title={`علامة ${sheep.badgeColor === 'أحمر' ? 'حمراء' : 'صفراء'}`}
+                          />
+                      )}
+                    </Label>
+                  </div>
               ))}
             </div>
+
             <div className="text-sm text-muted-foreground mt-1">
               {selectedSheep.length} الأغنام المحددة
             </div>
