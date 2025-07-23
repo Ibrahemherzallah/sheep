@@ -17,7 +17,7 @@ import MedicineManagement from "@/pages/MedicineManagement";
 import NotFound from "@/pages/NotFound";
 import Profile from "@/pages/Profile.tsx";
 import Milk from "@/pages/Milk.tsx";
-
+import Inventory from "@/pages/Inventory.tsx";
 import StockManagement from "@/pages/StockManagement.tsx";
 const queryClient = new QueryClient();
 
@@ -48,6 +48,7 @@ function App() {
               <Route path="stock-management" element={<StockManagement />} />
               <Route path="milk" element={<Milk />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="inventory" element={<Inventory />} />
             </Route>
 
             {/* Fallback Route */}

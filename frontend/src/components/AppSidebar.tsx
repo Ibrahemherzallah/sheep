@@ -1,5 +1,5 @@
 import {Link, useLocation, useNavigate} from 'react-router-dom';
-import {Ear, Calendar, Activity, Syringe, Boxes, BarChart3, Settings, FileText, Milk, LogOut, X} from 'lucide-react';
+import {Ear, Calendar, Activity, Syringe, Boxes, BarChart3, Settings, FileText, Milk, Package, LogOut, X} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {toast} from "@/hooks/use-toast.ts";
 
@@ -42,6 +42,7 @@ export const AppSidebar: React.FC<SidebarProps> = ({ isOpen,setIsSidebarOpen }) 
     { to: "/cycles", icon: Calendar, label: "ادارة الدورات" },
     { to: "/milk", icon: Milk, label: "انتاج الحليب" },
     { to: "/stock-management", icon: Boxes, label: "المخزون" },
+    { to: "/inventory", icon: Package, label: "الجرد" },
     { to: "/profile", icon: Settings, label: "الاعدادات" },
   ];
 

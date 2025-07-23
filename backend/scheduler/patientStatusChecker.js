@@ -2,7 +2,9 @@ import cron from 'node-cron';
 import Patient from '../models/patient.model.js';
 import Sheep from '../models/sheep.model.js';
 import Task from "../models/task.model.js";
-
+import Inventory from '../models/inventory.model.js';
+import Income from '../models/income.model.js';
+import Outcome from '../models/outcome.model.js';
 // 🕛 Patient status check — runs daily at midnight
 cron.schedule('0 0 * * *', async () => {
     console.log('⏳ Running patient status check...');
@@ -122,5 +124,56 @@ cron.schedule('1 5 * * *', async () => {
 
     } catch (error) {
         console.error('❌ Error while creating patient drug tasks:', error);
+    }
+});
+
+cron.schedule('0 0 1 * *', async () => {
+    console.log('📆 Running monthly reset and report generation');
+
+    try {
+        const allInventories = await Inventory.find();
+        const currentDate = new Date();
+        const month = currentDate.getMonth() + 1;
+        const year = currentDate.getFullYear();
+
+        const incomeItems = allInventories.filter(i => i.category === 'income');
+        const outcomeItems = allInventories.filter(i => i.category === 'outcome');
+
+        const incomeResources = incomeItems.map(i => ({
+            item: i._id,
+            price: i.price,
+        }));
+
+        const outcomeResources = outcomeItems.map(i => ({
+            item: i._id,
+            price: i.price,
+        }));
+
+        const incomeDoc = new Income({
+            month,
+            year,
+            resources: incomeResources,
+            totalCost: incomeResources.reduce((sum, r) => sum + r.price, 0),
+        });
+
+        const outcomeDoc = new Outcome({
+            month,
+            year,
+            resources: outcomeResources,
+            totalCost: outcomeResources.reduce((sum, r) => sum + r.price, 0),
+        });
+
+        await incomeDoc.save();
+        await outcomeDoc.save();
+
+        // Reset inventory prices for the new month
+        for (const item of allInventories) {
+            item.price = 0;
+            await item.save();
+        }
+
+        console.log('✅ Monthly reset and report generation completed');
+    } catch (error) {
+        console.error('❌ Monthly reset failed:', error.message);
     }
 });
