@@ -147,6 +147,8 @@ export const addSale = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+
 export const addExpense = async (req, res) => {
     try {
         const { selectedItemId, quantity, price } = req.body;

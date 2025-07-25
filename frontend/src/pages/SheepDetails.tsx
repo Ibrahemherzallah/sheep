@@ -190,7 +190,7 @@ const SheepDetails = () => {
           body: JSON.stringify({ status: "نافقة" }),
         });
       } else if (tab === "sell") {
-        await fetch(`https://thesheep.top/api/sheep/${id}/status`, {
+        await fetch(`http://localhost:3030/api/sheep/${id}/status`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
