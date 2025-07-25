@@ -178,13 +178,6 @@ export const endCycle = async (req, res) => {
             endDate
         } = req.body;
 
-        console.log('cycleId:', cycleId);
-        console.log('numOfSell:', numOfSell);
-        console.log('totalKilos:', totalKilos);
-        console.log('priceOfKilo:', priceOfKilo);
-        console.log('numOfDied:', numOfDied);
-        console.log('numOfStock:', numOfStock);
-        console.log('endDate:', endDate);
 
         const updatedCycle = await Cycle.findByIdAndUpdate(
             cycleId,

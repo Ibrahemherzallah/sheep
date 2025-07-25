@@ -14,6 +14,8 @@ import injectionsRoutes from './routes/injection.routes.js';
 import milkRoutes from './routes/milk.routes.js';
 import stockRoutes from './routes/stock.routes.js';
 import protectedRoutes from './routes/protected.routes.js';
+import inventoryRoutes from './routes/inventory.routes.js';
+import summaryRoutes from './routes/summary.routes.js';
 import path from 'path';
 import './scheduler/patientStatusChecker.js';
 import { fileURLToPath } from 'url';
@@ -39,6 +41,9 @@ app.use('/api/cycle', cycleRoutes);
 app.use('/api/injections', injectionsRoutes);
 app.use('/api/milk', milkRoutes);
 app.use('/api/stock', stockRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/summary', summaryRoutes);
+
 const staticPath = path.join(__dirname, 'static');
 app.use(express.static(staticPath));
 app.get('*', (req, res, next) => {
