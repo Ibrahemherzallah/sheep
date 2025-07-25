@@ -20,7 +20,7 @@ const incomeSchema = new mongoose.Schema({
             required: true,
         }
     }],
-    totalCost: {
+    totalCost: {    
         type: Number,
         required: true,
     }

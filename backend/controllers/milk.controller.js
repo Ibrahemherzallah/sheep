@@ -1,13 +1,75 @@
 import MilkProduction from '../models/milkProduction.model.js';
+import Inventory from '../models/inventory.model.js';
+import Income from '../models/income.model.js';
 
-// Create
+// export const createMilkRecord = async (req, res) => {
+//     try {
+//         const { date, production, sold, price } = req.body;
+//         const record = await MilkProduction.create({ date, production, sold, price });
+//         res.status(201).json(record);
+//     } catch (err) {
+//         res.status(500).json({ error: 'خطأ في إنشاء التسجيل' });
+//     }
+// };
+
+
 export const createMilkRecord = async (req, res) => {
+    console.log("entered here is  : ",req.body);
     try {
         const { date, production, sold, price } = req.body;
+
+        // 1. Create the milk record
         const record = await MilkProduction.create({ date, production, sold, price });
-        res.status(201).json(record);
+
+        // 2. Find inventory item for milk (assumes name is "حليب")
+        const milkInventory = await Inventory.findOne({ type: 'حليب', category: 'income' });
+        if (!milkInventory) {
+            return res.status(400).json({ error: 'لم يتم العثور على عنصر الحليب في الجرد' });
+        }
+
+        // 3. Update milk inventory: add sold quantity and revenue
+        milkInventory.quantity += sold;
+        const revenue = sold * price;
+        milkInventory.price += revenue;
+        await milkInventory.save();
+
+        // 4. Get current month/year from date
+        const recordDate = new Date(date);
+        const month = recordDate.getMonth() + 1;
+        const year = recordDate.getFullYear();
+
+        // 5. Update/create income entry for that month
+        let income = await Income.findOne({ month, year });
+        if (!income) {
+            income = new Income({
+                month,
+                year,
+                resources: [],
+                totalCost: 0,
+            });
+        }
+
+        const existingResource = income.resources.find(r =>
+            r.item.toString() === milkInventory._id.toString()
+        );
+
+        if (existingResource) {
+            existingResource.price += revenue;
+        } else {
+            income.resources.push({
+                item: milkInventory._id,
+                price: revenue,
+            });
+        }
+
+        income.totalCost += revenue;
+
+        await income.save();
+
+        res.status(201).json({ message: 'تم إنشاء تسجيل الحليب وتحديث الجرد والإيرادات', record });
     } catch (err) {
-        res.status(500).json({ error: 'خطأ في إنشاء التسجيل' });
+        console.error(err);
+        res.status(500).json({ error: 'خطأ في إنشاء التسجيل وتحديث البيانات' });
     }
 };
 

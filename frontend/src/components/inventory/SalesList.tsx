@@ -111,6 +111,7 @@ export const SalesList: React.FC<SalesListProps> = ({ type, sales, onDelete, onA
                                         variant="ghost"
                                         size="sm"
                                         className="h-8 w-8 p-0"
+                                        disabled={sale.type === "حليب" || sale.type === "بيع أغنام" }
                                         onClick={() => {
                                             setSelectedItemId(sale._id);
                                             setOpenAddDialog(true);

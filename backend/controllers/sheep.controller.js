@@ -4,7 +4,8 @@ import Patient from '../models/patient.model.js';
 import Task from "../models/task.model.js";
 import InjectionModel from "../models/injection.model.js";
 import StockModel from "../models/stock.model.js";
-
+import Inventory from '../models/inventory.model.js';
+import Income from '../models/income.model.js';
 
 export const createSheep = async (req, res) => {
     try {
@@ -142,7 +143,7 @@ export const updateSheepStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status, sellPrice } = req.body;
-
+        console.log("req.body is : 0" , status, sellPrice);
         // Step 1: Update the sheep
         const updatedSheep = await Sheep.findByIdAndUpdate(
             id,
@@ -164,6 +165,49 @@ export const updateSheepStatus = async (req, res) => {
             { sheepIds: id },
             { $pull: { sheepIds: id } }
         );
+        if(status === 'مباعة'){
+            const sellSheepInventory = await Inventory.findOne({ type: 'بيع أغنام', category: 'income' });
+            if (!sellSheepInventory) {
+                return res.status(400).json({ error: 'لم يتم العثور على عنصر بيع الاغنام في الجرد' });
+            }
+            const intSellPrice = Number(sellPrice);
+
+            sellSheepInventory.quantity += 1;
+            sellSheepInventory.price += intSellPrice;
+            await sellSheepInventory.save();
+
+            // 4. Get current month/year from date
+            const recordDate = new Date();
+            const month = recordDate.getMonth() + 1;
+            const year = recordDate.getFullYear();
+
+            let income = await Income.findOne({ month, year });
+            if (!income) {
+                income = new Income({
+                    month,
+                    year,
+                    resources: [],
+                    totalCost: 0,
+                });
+            }
+
+            const existingResource = income.resources.find(r =>
+                r.item.toString() === sellSheepInventory._id.toString()
+            );
+            if (existingResource) {
+                existingResource.price += intSellPrice;
+            } else {
+                income.resources.push({
+                    item: sellSheepInventory._id,
+                    price: intSellPrice,
+                });
+            }
+
+            income.totalCost += intSellPrice;
+
+            await income.save();
+
+        }
 
         res.status(200).json({
             message: 'Sheep status updated and removed from tasks.',
