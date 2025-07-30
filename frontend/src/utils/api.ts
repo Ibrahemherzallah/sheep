@@ -8,7 +8,7 @@ export const addInventory = async (data: {
     date: Date
 }) => {
     console.log("The data is : " , data)
-    const response = await fetch('http://localhost:3030/api/inventory', {
+    const response = await fetch('https://thesheep.top/api/inventory', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -20,5 +20,22 @@ export const addInventory = async (data: {
     });
 
     if (!response.ok) throw new Error('Failed to add inventory item');
+    return response.json();
+};
+
+
+export const addCycleInventory = async (data: {
+    name: string;
+    quantity: number;
+    price: number;
+    cycleId: string;
+}) => {
+    const response = await fetch('https://thesheep.top/api/inventory/add-cycle-inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) throw new Error('Failed to add cycle inventory');
     return response.json();
 };

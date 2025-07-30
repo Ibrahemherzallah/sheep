@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import {addInventory} from "@/utils/api.ts";
+import {addCycleInventory, addInventory} from "@/utils/api.ts";
 
 interface Expense {
     id: string;
@@ -26,10 +26,11 @@ interface AddExpenseDialogProps {
     isOpen: boolean;
     onClose: () => void;
     type: 'sheep' | 'cycles';
+    cycle: string;
     onAdd: (expense: Omit<Expense, 'id'>) => void;
 }
 
-export const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({ isOpen, onClose, type, onAdd }) => {
+export const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({ isOpen, onClose, type,  onAdd, cycle }) => {
     const [formData, setFormData] = useState({
         item: '',
         price: '',
@@ -43,39 +44,72 @@ export const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({ isOpen, onCl
         e.preventDefault();
         // Here you would typically save the expense to your state management or API
         console.log('Adding expense:', formData);
-        const expenseData = {
-            item: formData.item,
-            price: parseFloat(formData.price),
-            quantity: formData.quantity,
-            section: type === 'sheep' ? 'sheep' : 'cycle',
-            result: 'outcome',
-            date: formData.date,
-        };
-        try {
-            await addInventory(expenseData);
-            onAdd({
-                item: formData.item,
-                price: expenseData.price,
-                date: formData.date,
-                quantity: formData.quantity,
-                ...(type === 'sheep' ? { sheepId: formData.targetId || 'general' } : { cycleId: formData.targetId || 'general' })
-            });
-            onClose();
-            setFormData({ item: '', price: '', quantity: 0, date: new Date(), targetId: '' });
-            toast({
-                title: "تمت الإضافة",
-                description: "تمت الإضافة الى المنصرفات بنجاح.",
-                duration: 3000,
-            });
-        } catch (error) {
-            console.error(error);
-            toast({
-                title: "فشل الإضافة",
-                variant: "destructive",
-            });
-        }
-    };
+        if(type === 'sheep'){
 
+            const expenseData = {
+                item: formData.item,
+                price: parseFloat(formData.price),
+                quantity: formData.quantity,
+                section: type === 'sheep' ? 'sheep' : 'cycle',
+                result: 'outcome',
+                date: formData.date,
+            };
+            try {
+                await addInventory(expenseData);
+                onAdd({
+                    item: formData.item,
+                    price: expenseData.price,
+                    date: formData.date,
+                    quantity: formData.quantity,
+                    ...(type === 'sheep' ? { sheepId: formData.targetId || 'general' } : { cycleId: formData.targetId || 'general' })
+                });
+                onClose();
+                setFormData({ item: '', price: '', quantity: 0, date: new Date(), targetId: '' });
+                toast({
+                    title: "تمت الإضافة",
+                    description: "تمت الإضافة الى المنصرفات بنجاح.",
+                    duration: 3000,
+                });
+            } catch (error) {
+                console.error(error);
+                toast({
+                    title: "فشل الإضافة",
+                    variant: "destructive",
+                });
+            }
+
+        }
+        else if (type === 'cycles') {
+            try {
+                const data = {
+                    name: formData.item,
+                    quantity: formData.quantity,
+                    price: parseFloat(formData.price),
+                    cycleId: cycle,
+                    result: 'outcome',
+                };
+
+                await addCycleInventory(data);
+
+                onClose();
+                setFormData({ item: '', price: '', quantity: 0, date: new Date(), targetId: '' });
+
+                toast({
+                    title: 'تمت الإضافة',
+                    description: 'تمت الإضافة الى مصاريف الدورة بنجاح.',
+                    duration: 3000,
+                });
+            } catch (error) {
+                console.error(error);
+                toast({
+                    title: 'فشل الإضافة',
+                    variant: 'destructive',
+                });
+            }
+        }
+    }
+
+    console.log("the cycle idddddddddddddddd : ", cycle)
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px]">

@@ -1,6 +1,9 @@
 import Inventory from '../models/inventory.model.js';
 import Income from '../models/income.model.js';
 import Outcome from '../models/outcome.model.js';
+import Cycle from '../models/cycle.model.js';
+import CycleInventory from '../models/cycleInventory.js';
+
 
 export const createInventory = async (req, res) => {
     console.log("TEST  " ,req.body);
@@ -71,8 +74,6 @@ export const createInventory = async (req, res) => {
     }
 };
 
-
-// Get all inventory items (optional filtering)
 export const getInventory = async (req, res) => {
     try {
         const items = await Inventory.find().sort({ createdAt: -1 });
@@ -82,7 +83,6 @@ export const getInventory = async (req, res) => {
     }
 };
 
-// Delete an item (if needed)
 export const deleteInventory = async (req, res) => {
     try {
         const { id } = req.params;
@@ -92,7 +92,6 @@ export const deleteInventory = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 
 export const addSale = async (req, res) => {
     try {
@@ -147,7 +146,6 @@ export const addSale = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
-
 
 export const addExpense = async (req, res) => {
     try {
@@ -208,5 +206,147 @@ export const addExpense = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
+export const addCycleSale = async (req, res) => {
+    try {
+        const { selectedItemId, quantity, price } = req.body;
+        console.log("itemId",selectedItemId)
+        const cycleInventory = await CycleInventory.findById(selectedItemId);
+        console.log("inventoryItem",cycleInventory)
+        if (!cycleInventory || cycleInventory.category !== 'income') {
+            return res.status(400).json({ message: 'Invalid item or not income category' });
+        }
+
+        // Update inventory
+        cycleInventory.quantity += quantity;
+        cycleInventory.price += price;
+        await cycleInventory.save();
+        res.status(200).json({ message: 'Sale added and inventory/income updated.' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const addCycleExpense = async (req, res) => {
+    try {
+        const { selectedItemId, quantity, price } = req.body;
+        console.log("itemId",selectedItemId)
+        const cycleInventory = await CycleInventory.findById(selectedItemId);
+        console.log("inventoryItem",cycleInventory)
+        if (!cycleInventory || cycleInventory.category !== 'outcome') {
+            return res.status(400).json({ message: 'Invalid item or not income category' });
+        }
+
+        // Update inventory
+        cycleInventory.quantity += quantity;
+        cycleInventory.price += price;
+        await cycleInventory.save();
+
+        res.status(200).json({ message: 'Expens added and inventory/outcome updated.' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
+
+export const getCyclesWithInventories = async (req, res) => {
+    console.log("ENTER");
+    try {
+        const cycles = await Cycle.find().sort({ createdAt: -1 });
+
+        const result = await Promise.all(cycles.map(async (cycle) => {
+            const inventories = await CycleInventory.find({ cycleId: cycle._id });
+
+            const income = inventories.filter(inv => inv.category === 'income');
+            const outcome = inventories.filter(inv => inv.category === 'outcome');
+
+            return {
+                cycle,
+                income,
+                outcome
+            };
+        }));
+
+        res.status(200).json(result);
+    } catch (err) {
+        console.error("Error fetching cycles with inventories:", err);
+        res.status(500).json({ error: "Failed to fetch data" });
+    }
+};
+
+export const addCycleInventory = async (req, res) => {
+    try {
+        const { name, quantity, price, cycleId, result } = req.body;
+
+        const newItem = new CycleInventory({
+            type: name,
+            quantity,
+            price,
+            cycleId,
+            category: result,
+        });
+
+        await newItem.save();
+        res.status(201).json({ message: 'Cycle inventory item added', item: newItem });
+    } catch (error) {
+        console.error('Error adding cycle inventory:', error);
+        res.status(500).json({ message: 'Failed to add cycle inventory item' });
+    }
+};
+
+// POST /api/finance/retroactive
+export const addRetroactiveMonth = async (req, res) => {
+    try {
+        const { month, year, resources } = req.body;
+
+        // Group resources by category
+        const incomeResources = resources
+            .filter(r => r.category === 'income')
+            .map(r => ({
+                item: r.itemId,
+                price: r.price
+            }));
+
+        const outcomeResources = resources
+            .filter(r => r.category === 'outcome')
+            .map(r => ({
+                item: r.itemId,
+                price: r.price
+            }));
+
+        // Calculate total costs
+        const totalIncome = incomeResources.reduce((sum, r) => sum + r.price, 0);
+        const totalOutcome = outcomeResources.reduce((sum, r) => sum + r.price, 0);
+
+        // Create Income record if needed
+        if (incomeResources.length > 0) {
+            await Income.create({
+                month,
+                year,
+                resources: incomeResources,
+                totalCost: totalIncome
+            });
+        }
+
+        // Create Outcome record if needed
+        if (outcomeResources.length > 0) {
+            await Outcome.create({
+                month,
+                year,
+                resources: outcomeResources,
+                totalCost: totalOutcome
+            });
+        }
+
+        res.status(200).json({ message: 'تمت الإضافة بنجاح' });
+    } catch (error) {
+        console.error('Error in addRetroactiveFinance:', error);
+        res.status(500).json({ message: 'حدث خطأ أثناء إضافة البيانات' });
     }
 };

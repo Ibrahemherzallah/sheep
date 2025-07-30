@@ -21,7 +21,7 @@ export const YearlySummary: React.FC<YearlySummaryProps> = ({ type }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch('http://localhost:3030/api/summary/yearly-summary');
+                const res = await fetch('https://thesheep.top/api/summary/yearly-summary');
                 const data = await res.json();
 
                 setYearlySummary(data);
@@ -36,8 +36,7 @@ export const YearlySummary: React.FC<YearlySummaryProps> = ({ type }) => {
 
         fetchData();
     }, [type]);
-    console.log("aaaaaaaaaaaaa typw  L ",  type)
-    console.log("aaaaaaaaaaaaa yearlySummary  L ",  yearlySummary)
+
     const currentData = yearlySummary[selectedYear];
     const previousYear = (parseInt(selectedYear) - 1).toString();
     const previousData = yearlySummary[previousYear];

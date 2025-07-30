@@ -204,11 +204,19 @@ export const updateSheepStatus = async (req, res) => {
             }
 
             income.totalCost += intSellPrice;
-
             await income.save();
 
         }
+        if(status === 'نافقة'){
+            const diedSheepInventory = await Inventory.findOne({ type: 'الفاقد', category: 'outcome' });
+            if (!diedSheepInventory) {
+                return res.status(400).json({ error: 'لم يتم العثور على عنصر الفاقد في الجرد' });
+            }
+            console.log("diedSheepInventory :" , diedSheepInventory);
+            diedSheepInventory.quantity+= 1;
+            await diedSheepInventory.save();
 
+        }
         res.status(200).json({
             message: 'Sheep status updated and removed from tasks.',
             sheep: updatedSheep
