@@ -45,7 +45,7 @@ export default function Milk() {
   async function onSubmit(data: MilkFormValues) {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3030/api/milk', {
+      const response = await fetch('https://thesheep.top/api/milk', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

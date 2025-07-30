@@ -53,7 +53,7 @@ export const InventorySection: React.FC<InventorySectionProps> = ({
         if (!confirm('هل أنت متأكد من حذف هذه العملية؟')) return;
 
         try {
-            const response = await fetch(`http://localhost:3030/api/inventory/${id}`, {
+            const response = await fetch(`https://thesheep.top/api/inventory/${id}`, {
                 method: 'DELETE',
             });
 
@@ -120,6 +120,7 @@ export const InventorySection: React.FC<InventorySectionProps> = ({
                 onClose={() => setShowAddExpense(false)}
                 type={type}
                 onAdd={onAddExpense}
+                cycle={null}
             />
 
             <AddSaleDialog
@@ -127,6 +128,8 @@ export const InventorySection: React.FC<InventorySectionProps> = ({
                 onClose={() => setShowAddSale(false)}
                 type={type}
                 onAdd={onAddSale}
+                cycle={null
+            }
             />
         </div>
     );

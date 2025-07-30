@@ -11,7 +11,23 @@ const reportSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    priceOfFeed: {
+        type: Number,
+        required: true,
+    },
     numOfMilk: {
+        type: Number,
+        required: true,
+    },
+    priceOfMilk: {
+        type: Number,
+        required: true,
+    },
+    strawAmount :{
+        type: Number,
+        required: true,
+    },
+    priceOfStraw :{
         type: Number,
         required: true,
     },

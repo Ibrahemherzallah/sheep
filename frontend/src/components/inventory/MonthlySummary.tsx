@@ -22,7 +22,7 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ type }) => {
     useEffect(() => {
         const fetchSummary = async () => {
             try {
-                const res = await axios.get('http://localhost:3030/api/summary/monthly-summary');
+                const res = await axios.get('https://thesheep.top/api/summary/monthly-summary');
                 setSummaryData(res.data);
 
                 const firstMonth = Object.keys(res.data)[0];

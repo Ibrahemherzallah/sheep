@@ -32,13 +32,10 @@ export const SalesList: React.FC<SalesListProps> = ({ type, sales, onDelete, onA
     const totalSales = sales.reduce((sum, sale) => sum + sale.price, 0);
 
     const handleAdd = async () => {
-        console.log("TEST quantity" , quantity);
-        console.log("TEST price" , price);
-        console.log("TEST selectedItemId" , selectedItemId);
 
-        if (!quantity || !price || !selectedItemId) return;
+        if (!price || !selectedItemId) return;
         try {
-            const response = await fetch('http://localhost:3030/api/inventory/sales/add', {
+            const response = await fetch('https://thesheep.top/api/inventory/sales/add', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -54,13 +51,9 @@ export const SalesList: React.FC<SalesListProps> = ({ type, sales, onDelete, onA
                 throw new Error('Failed to add sale');
             }
 
-            // Optional: parse response if needed
-            // const data = await response.json();
-
         } catch (err) {
             console.error('Error adding sale:', err);
         }
-        // onAdd({ quantity, price }); // Ensure itemId is handled in parent
         setOpenAddDialog(false);
         setQuantity(0);
         setPrice(0);

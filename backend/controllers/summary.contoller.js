@@ -1,33 +1,7 @@
 import Income from '../models/income.model.js';
 import Outcome from '../models/outcome.model.js';
 
-// export const getMonthlySummary = async (req, res) => {
-//     try {
-//         const incomes = await Income.find();
-//         const outcomes = await Outcome.find();
-//
-//         const summary = {};
-//
-//         // Group incomes
-//         incomes.forEach((inc) => {
-//             const key = `${inc.year}-${String(inc.month).padStart(2, '0')}`;
-//             if (!summary[key]) summary[key] = { sales: 0, expenses: 0 };
-//             summary[key].sales += inc.totalCost;
-//         });
-//
-//         // Group outcomes
-//         outcomes.forEach((out) => {
-//             const key = `${out.year}-${String(out.month).padStart(2, '0')}`;
-//             if (!summary[key]) summary[key] = { sales: 0, expenses: 0 };
-//             summary[key].expenses += out.totalCost;
-//         });
-//
-//         res.json(summary);
-//     } catch (err) {
-//         console.error('Error fetching monthly summary:', err);
-//         res.status(500).json({ error: 'Server error' });
-//     }
-// };
+
 export const getMonthlySummary = async (req, res) => {
     try {
         const outcomes = await Outcome.find()
@@ -99,9 +73,7 @@ export const getYearlySummary = async (req, res) => {
         // Process outcome (expenses)
         outcomes.forEach(doc => {
             const { year, resources } = doc;
-            console.log("year, resources : " , year, resources);
             const total = resources.reduce((sum, r) => sum + r.price, 0);
-            console.log("total : " , total);
             if (!summaryByYear[year]) summaryByYear[year] = { sales: 0, expenses: 0 };
             summaryByYear[year].expenses += total;
         });

@@ -128,52 +128,56 @@ cron.schedule('1 5 * * *', async () => {
 });
 
 cron.schedule('0 0 1 * *', async () => {
-    console.log('📆 Running monthly reset and report generation');
+    console.log('📅 Running monthly income/outcome inventory summary...');
+
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
 
     try {
+        // Get all inventories
         const allInventories = await Inventory.find();
-        const currentDate = new Date();
-        const month = currentDate.getMonth() + 1;
-        const year = currentDate.getFullYear();
 
-        const incomeItems = allInventories.filter(i => i.category === 'income');
-        const outcomeItems = allInventories.filter(i => i.category === 'outcome');
+        // Separate income and outcome inventories
+        const incomeInventories = allInventories.filter(inv => inv.category === 'income');
+        const outcomeInventories = allInventories.filter(inv => inv.category === 'outcome');
 
-        const incomeResources = incomeItems.map(i => ({
-            item: i._id,
-            price: i.price,
+        // Prepare resources arrays
+        const incomeResources = incomeInventories.map(inv => ({
+            item: inv._id,
+            price: inv.price
         }));
 
-        const outcomeResources = outcomeItems.map(i => ({
-            item: i._id,
-            price: i.price,
+        const outcomeResources = outcomeInventories.map(inv => ({
+            item: inv._id,
+            price: inv.price
         }));
 
-        const incomeDoc = new Income({
+        // Calculate totals
+        const incomeTotal = incomeInventories.reduce((acc, inv) => acc + inv.price, 0);
+        const outcomeTotal = outcomeInventories.reduce((acc, inv) => acc + inv.price, 0);
+
+        // Save Income and Outcome records
+        await Income.create({
             month,
             year,
             resources: incomeResources,
-            totalCost: incomeResources.reduce((sum, r) => sum + r.price, 0),
+            totalCost: incomeTotal
         });
 
-        const outcomeDoc = new Outcome({
+        await Outcome.create({
             month,
             year,
             resources: outcomeResources,
-            totalCost: outcomeResources.reduce((sum, r) => sum + r.price, 0),
+            totalCost: outcomeTotal
         });
 
-        await incomeDoc.save();
-        await outcomeDoc.save();
+        // Reset inventory price and quantity
+        await Inventory.updateMany({}, { $set: { price: 0, quantity: 0 } });
 
-        // Reset inventory prices for the new month
-        for (const item of allInventories) {
-            item.price = 0;
-            await item.save();
-        }
+        console.log('✅ Monthly income and outcome records created, inventory reset done.');
 
-        console.log('✅ Monthly reset and report generation completed');
     } catch (error) {
-        console.error('❌ Monthly reset failed:', error.message);
+        console.error('❌ Error in monthly summary task:', error);
     }
 });

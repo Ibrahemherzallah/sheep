@@ -27,16 +27,12 @@ export const ExpensesList: React.FC<ExpensesListProps> = ({ expenses, onDelete, 
     const [quantity, setQuantity] = React.useState<number>(0);
     const [price, setPrice] = React.useState<number>(0);
     const [selectedItemId, setSelectedItemId] = React.useState<string | null>(null);
-    console.log("TEST selectedItemId" , selectedItemId);
 
     const handleAdd = async () => {
-        console.log("TEST quantity" , quantity);
-        console.log("TEST price" , price);
-        console.log("TEST selectedItemId" , selectedItemId);
 
-        if (!quantity || !price || !selectedItemId) return;
+        if (!price || !selectedItemId) return;
         try {
-            const response = await fetch('http://localhost:3030/api/inventory/expense/add', {
+            const response = await fetch('https://thesheep.top/api/inventory/expense/add', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

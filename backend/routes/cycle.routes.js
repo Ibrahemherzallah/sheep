@@ -2,6 +2,7 @@ import express from 'express';
 import {getAllCycles, getCycleById, updateCycle, deleteCycle, createReport, endCycle, createCycle, addInjectionToCycle, getReportsByCycleId}
 from '../controllers/cycle.controller.js';
 import {authenticate} from "../middleware/authMiddleware.js";
+import {getCyclesWithInventories} from "../controllers/inventory.controller.js";
 
 const router = express.Router();
 

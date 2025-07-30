@@ -3,20 +3,22 @@ import Cycle from '../models/cycle.model.js';
 import CycleInjection from '../models/cycleInjection.model.js';
 import Task from '../models/task.model.js';
 import StockModel from "../models/stock.model.js";
-
-
+import CycleInventory from "../models/cycleInventory.js";
 
 export const createReport = async (req, res) => {
     try {
-        const { cycleId, startDate, endDate, numOfFeed, numOfMilk, vitamins } = req.body;
-        console.log("vitamins is " , vitamins);
+        const { cycleId, startDate, endDate, numOfFeed, numOfMilk, vitamins, priceOfMilk, priceOfFeed, strawAmount, priceOfStraw } = req.body;
         const newReport = new ReportModel({
             cycleId,
             startDate,
             endDate,
             numOfFeed,
+            priceOfFeed,
             numOfMilk,
+            priceOfMilk,
             vitamins,
+            strawAmount,
+            priceOfStraw
         });
 
         const isCycle = await Cycle.findByIdAndUpdate(
@@ -70,7 +72,40 @@ export const createReport = async (req, res) => {
             }
         }
 
+
+        // ✅ Update Feed stock safely
+// ✅ Update Vitamins stock safely
+// 🔁 Update related CycleInventory records (علف, قش, حليب)
+        const inventoryUpdates = [
+            { type: 'علف', quantity: numOfFeed, price: priceOfFeed },
+            { type: 'قش', quantity: strawAmount, price: priceOfStraw },
+            { type: 'حليب', quantity: numOfMilk, price: priceOfMilk },
+        ];
+
+        for (const item of inventoryUpdates) {
+            const quantity = Number(item.quantity);
+            const price = Number(item.price);
+
+            if (!isNaN(quantity) && !isNaN(price)) {
+                await CycleInventory.updateOne(
+                    { cycleId, type: item.type },
+                    {
+                        $inc: {
+                            quantity,
+                            price,
+                        },
+                    }
+                );
+            } else {
+                console.warn(`Skipping item with invalid number:`, item);
+            }
+        }
+
+
         await newReport.save();
+
+
+
 
         res.status(201).json({
             message: 'Report created, linked to cycle, and stock updated',
@@ -81,8 +116,6 @@ export const createReport = async (req, res) => {
         res.status(500).json({ error: 'Failed to create report' });
     }
 };
-
-
 
 export const getReportsByCycleId = async (req, res) => {
     try {
@@ -241,6 +274,27 @@ export const createCycle = async (req, res) => {
 
         const savedCycle = await newCycle.save();
 
+        // ✅ Create related inventory records with zero price/quantity
+        const defaultInventories = [
+            { type: 'قش', category: 'outcome' },
+            { type: 'علف', category: 'outcome' },
+            { type: 'حليب', category: 'outcome' },
+            { type: 'موت خرفان', category: 'outcome' },
+            { type: 'خرفان مباعة', category: 'income' },
+            { type: 'خرفان مربوطة', category: 'income' },
+        ];
+
+        const inventoryDocs = defaultInventories.map(item => ({
+            cycleId: savedCycle._id,
+            type: item.type,
+            category: item.category,
+            price: 0,
+            quantity: 0,
+        }));
+
+        await CycleInventory.insertMany(inventoryDocs);
+
+        // ✅ Create end-of-cycle task
         const pasteurellaDate = new Date(startDate);
         pasteurellaDate.setMonth(pasteurellaDate.getMonth() + 6);
 
@@ -249,7 +303,7 @@ export const createCycle = async (req, res) => {
             dueDate: pasteurellaDate,
             type: 'end-cycle',
             sheepIds: [],
-            cycleId: savedCycle._id  // ✅ Add this
+            cycleId: savedCycle._id
         });
 
         res.status(201).json(savedCycle);

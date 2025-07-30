@@ -42,7 +42,11 @@ interface AddReport {
   startDate: string;
   endDate: string;
   feedAmount: number;
+  priceOfFeed: number;
   milkAmount: number;
+  priceOfMilk: number;
+  strawAmount: number;
+  priceOfStraw: number;
   vitaminAmounts: Record<string, number>;
   notes: string;
 }
@@ -116,7 +120,18 @@ const CycleDetails = () => {
   });
 
   const reportForm = useForm<AddReport>({
-    defaultValues : {startDate: new Date().toISOString().split('T')[0],endDate: new Date().toISOString().split('T')[0],feedAmount: 0,milkAmount: 0,vitaminAmounts: {},notes: ''}
+    defaultValues : {
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0],
+      feedAmount: 0,
+      priceOfFeed: 0,
+      milkAmount: 0,
+      priceOfMilk: 0,
+      strawAmount: 0,
+      priceOfStraw: 0,
+      vitaminAmounts: {},
+      notes: ''
+    }
   })
 
   const endCycleForm = useForm<EndCycle>({
@@ -193,6 +208,10 @@ const CycleDetails = () => {
           endDate: data.endDate,
           numOfFeed: data.feedAmount,
           numOfMilk: data.milkAmount,
+          strawAmount: data.strawAmount,
+          priceOfFeed: data.priceOfFeed,
+          priceOfMilk: data.priceOfMilk,
+          priceOfStraw: data.priceOfStraw,
           vitamins: formattedVitamins,
         }),
       });
@@ -652,14 +671,14 @@ const CycleDetails = () => {
                                     <p className="font-medium">{record.numOfMilk} L</p>
                                   </div>
                                   <div>
+                                    <p className="text-sm text-muted-foreground">كمية القش</p>
+                                    <p className="font-medium">{record.strawAmount} kg</p>
+                                  </div>
+                                  <div>
                                     <p className="text-sm text-muted-foreground">الفيتامينات المعطاة</p>
                                     <div className="flex flex-wrap gap-2 mt-1">
                                       {record.vitamins.map((vitamin) => (
-                                          <Badge
-                                              key={vitamin?.vitamin?._id}
-                                              variant="secondary"
-                                              className="text-xs"
-                                          >
+                                          <Badge key={vitamin?.vitamin?._id} variant="secondary" className="text-xs">
                                             {vitamin?.vitamin?.name} - {vitamin?.amount}
                                           </Badge>
                                       ))}
@@ -858,11 +877,51 @@ const CycleDetails = () => {
                         <FormMessage />
                       </FormItem>
                   )}/>
+                  <FormField control={reportForm.control} name="priceOfFeed"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>سعر العلف</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال كمية العلف المستهلكة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                </div>
+                <div style={{display:'flex', justifyContent:'space-between'}}>
                   <FormField control={reportForm.control} name="milkAmount"  render={({ field }) => (
                       <FormItem style={{width:'45%'}}>
                         <FormLabel>كمية الحليب</FormLabel>
                         <FormControl>
                           <Input type="text" placeholder={'الرجاء إدخال كمية الحليب المستهلكة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                  <FormField control={reportForm.control} name="priceOfMilk"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>سعر الحليب</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال كمية الحليب المستهلكة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                </div>
+                <div style={{display:'flex', justifyContent:'space-between'}}>
+                  <FormField control={reportForm.control} name="strawAmount"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>كمية القش</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال كمية القش المستخدمة'} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                  )}/>
+                  <FormField control={reportForm.control} name="priceOfStraw"  render={({ field }) => (
+                      <FormItem style={{width:'45%'}}>
+                        <FormLabel>سعر القش</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder={'الرجاء إدخال سعر القش'} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -933,7 +992,7 @@ const CycleDetails = () => {
               </div>
 
               <DialogFooter>
-                <Button type="submit" disabled={!isFormValid}>
+                <Button type="submit">
                   إضافة التقرير
                 </Button>
 
