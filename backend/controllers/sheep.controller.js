@@ -94,6 +94,7 @@ export const createSheep = async (req, res) => {
             // Add task for injection (after 90 days)
             const pasteurellaDate = new Date(pregnantDate);
             pasteurellaDate.setDate(pasteurellaDate.getDate() + 90);
+            const pregnancyFix = new Date(pregnantDate);
 
             await Task.create({
                 title: "إعطاء لقاح الباستيريلا وال فيرست ايد",
@@ -101,7 +102,12 @@ export const createSheep = async (req, res) => {
                 type: "injection",
                 sheepIds: newSheep._id,
             });
-
+            await Task.create({
+                title: 'إعطاء لقاح تثبيت الحمل',
+                dueDate: pregnancyFix,
+                type: 'injection',
+                sheepIds: newSheep._id,
+            });
             newSheep.pregnantCases.push(pregnancy._id);
         }
 
@@ -160,11 +166,18 @@ export const updateSheepStatus = async (req, res) => {
             return res.status(404).json({ message: "Sheep not found" });
         }
 
-        // Step 2: Remove the sheep ID from any tasks
-        await Task.updateMany(
-            { sheepIds: id },
-            { $pull: { sheepIds: id } }
-        );
+        const relatedTasks = await Task.find({ sheepIds: id });
+
+        for (const task of relatedTasks) {
+            if (task.sheepIds.length === 1) {
+                await Task.findByIdAndDelete(task._id);
+            } else {
+                await Task.findByIdAndUpdate(task._id, {
+                    $pull: { sheepIds: id }
+                });
+            }
+        }
+
         if(status === 'مباعة'){
             const sellSheepInventory = await Inventory.findOne({ type: 'بيع أغنام', category: 'income' });
             if (!sellSheepInventory) {

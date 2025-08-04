@@ -259,7 +259,7 @@ const SheepManagement = () => {
       setBirthDialogOpen(false);
       form.reset();
       setSelectedSheep([]);
-
+      window.location.reload()
     } catch (error: any) {
       console.error('Failed to submit birth data:', error);
       toast({
@@ -332,7 +332,7 @@ const SheepManagement = () => {
       pregnantForm.reset();
       setSelectedSheep([]);
       setPregnantDialogOpen(false);
-
+      window.location.reload()
     } catch (error: any) {
       console.error("❌ Error submitting pregnancy:", error);
       toast({
@@ -403,6 +403,7 @@ const SheepManagement = () => {
 
       setAddSheepDialog(false);
       addSheepForm.reset();
+      window.location.reload()
     } catch (error: any) {
       console.error('خطأ في الإرسال:', error);
 

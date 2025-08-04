@@ -3,7 +3,7 @@ import {
     createTask,
     getDashboardTasks,
     getInjectionTasks,
-    getNextInjectionTaskForSheep, getUpcomingInjectionTasksForCycle, markTaskComplete, markTaskCompleteForSelectedSheep
+    getNextInjectionTaskForSheep, getUpcomingInjectionTasksForCycle, markTaskComplete, markTaskCompleteForSelectedSheep,updateTaskDate,deleteTask
 } from '../controllers/tasks.controller.js';
 import {authenticate} from "../middleware/authMiddleware.js";
 
@@ -16,5 +16,7 @@ router.get('/next-injection-cycle/:id', getUpcomingInjectionTasksForCycle);
 router.post('/', createTask);
 router.put('/:id/complete', markTaskComplete);
 router.put('/:id/markTaskCompleteForSelectedSheep', markTaskCompleteForSelectedSheep);
+router.patch('/:id', updateTaskDate);
+router.delete('/:id', deleteTask);
 
 export default router;

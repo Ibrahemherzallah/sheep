@@ -1,26 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Activity, Baby, Calendar, Ear, Info, Pill,Milk, Syringe, Truck} from 'lucide-react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Dialog,
-  DialogContent,
-  Input,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  toast,
-  Checkbox,
-} from '@/components/ui';
+import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Dialog, DialogContent, Input, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Tabs, TabsContent, TabsList, TabsTrigger, toast, Checkbox,} from '@/components/ui';
 import { Link } from 'react-router-dom';
 import * as React from "react";
 import {formatDate} from "@/utils/dateUtils.ts";
@@ -83,6 +63,11 @@ const Dashboard = () => {
   const [openDateDialog, setOpenDateDialog] = useState(false);
   const [currentTask, setCurrentTask] = useState(null);
   const [injectDate, setInjectDate] = useState("");
+  const [selectedTaskId, setSelectedTaskId] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [selectedTaskTitle, setSelectedTaskTitle] = useState('');
+
   const token = localStorage.getItem("token");
   const [selectedSheepIds, setSelectedSheepIds] = useState<string[]>([]);
   const toggleSheepSelection = (id: string) => {
@@ -113,7 +98,6 @@ const Dashboard = () => {
       setModalLoading(false)
     }
   };
-
   const markTaskAsCompleted = async (taskId) => {
     try {
       const res = await fetch(`https://thesheep.top/api/tasks/${taskId}/complete`, {
@@ -150,8 +134,6 @@ const Dashboard = () => {
       });
     }
   };
-
-
   const handleTaskCompletion = (task) => {
     console.log("task", task);
     if (["إسفنجة", "اعطاء الهرمون"].includes(task.title)) {
@@ -161,9 +143,6 @@ const Dashboard = () => {
       markTaskAsCompleted(task._id);
     }
   };
-
-
-
   const handleTaskCompletionForSelectedSheep = (task) => {
     console.log("task", task);
     if (["إسفنجة", "اعطاء الهرمون"].includes(task.title)) {
@@ -173,10 +152,6 @@ const Dashboard = () => {
       confirmCompletionForSelectedSheep();
     }
   };
-
-
-
-
   const handleInjectConfirmation = async () => {
 
     const date = new Date(injectDate);
@@ -225,8 +200,6 @@ const Dashboard = () => {
       }
     }
   };
-
-
   const confirmCompletionForSelectedSheep = async () => {
     console.log("selectedTask : " , selectedTask);
     console.log("selectedSheepIds : " , selectedSheepIds);
@@ -265,9 +238,70 @@ const Dashboard = () => {
       });
     }
   };
+  //////////////// EDIT TASK \\\\\\\\\\\\\\
+  const openDialogForTask = (task: any) => {
+    setSelectedTaskId(task._id);
+    setSelectedTaskTitle(task.title);
+    setSelectedDate(task.dueDate?.slice(0, 10)); // format as YYYY-MM-DD
+    setOpenEditDialog(true);
+  };
 
+  const handleUpdateTask = async () => {
+    const success = await EditTask(selectedTaskId, selectedDate);
+    if (success) {
+      setOpenEditDialog(false);
+      // refresh task list if needed
+    }
+  };
 
+  const handleDeleteTask = async () => {
+    const confirmed = window.confirm("هل أنت متأكد أنك تريد حذف هذه المهمة؟");
+    if (!confirmed) return;
 
+    const success = await EditTask(selectedTaskId, '', true);
+    if (success) {
+      setOpenEditDialog(false);
+      // refresh task list if needed
+    }
+  };
+  const EditTask = async (taskId: string, newDate?: string, deleteTask = false) => {
+    try {
+      let response;
+
+      if (deleteTask) {
+        response = await fetch(`https://thesheep.top/api/tasks/${taskId}`, {
+          method: 'DELETE',
+        });
+      } else {
+        response = await fetch(`https://thesheep.top/api/tasks/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ dueDate: newDate }),
+        });
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || "حدث خطأ");
+
+      toast({
+        title: deleteTask ? "تم الحذف" : "تم التحديث",
+        description: data.message,
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error("EditTask error:", error);
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في العملية",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
@@ -411,12 +445,20 @@ const Dashboard = () => {
                             </div>
                           </div>
                           <div className="flex gap-2">
+
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleOpenModal(task)}
                             >
                               رؤية القائمة
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openDialogForTask(task)}
+                            >
+                              تعديل
                             </Button>
                             {!task.completed && (
                                 <Button
@@ -470,12 +512,20 @@ const Dashboard = () => {
                             </div>
                           </div>
                           <div className="flex gap-2">
+
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleOpenModal(task)}
                             >
                               رؤية القائمة
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openDialogForTask(task)}
+                            >
+                              تعديل
                             </Button>
                             {!task.completed && (
                                 <Button
@@ -584,7 +634,32 @@ const Dashboard = () => {
             </DialogContent>
           </Dialog>
       )}
+      {openEditDialog && (
+          <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle style={{textAlign:'end'}}>تعديل مهمة - {selectedTaskTitle}</DialogTitle>
+              </DialogHeader>
 
+              <div className="space-y-4">
+                <Input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                />
+
+                <div className="flex justify-between gap-2">
+                  <Button className="w-full" onClick={handleUpdateTask}>
+                    تحديث التاريخ
+                  </Button>
+                  <Button variant="destructive" className="w-full" onClick={handleDeleteTask}>
+                    حذف المهمة
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+      )}
     </div>
   );
 };

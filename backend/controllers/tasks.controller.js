@@ -125,7 +125,7 @@ export const markTaskCompleteForSelectedSheep = async (req, res) => {
         }
 
         await task.save();
-        res.status(200).json({ message: 'Task updated', task });
+        res.status(200).json({ message: 'تم تحديث المهمة بنجاح', task });
     } catch (err) {
         res.status(500).json({ message: 'Error updating task', error: err.message });
     }
@@ -151,5 +151,53 @@ export const createTask = async (req, res) => {
     } catch (err) {
         console.error("Error creating task:", err);
         res.status(500).json({ message: "Failed to create task" });
+    }
+};
+
+
+
+
+// Update due date
+export const updateTaskDate = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { dueDate } = req.body;
+
+        if (!dueDate) {
+            return res.status(400).json({ message: 'Due date is required.' });
+        }
+
+        const updatedTask = await Task.findByIdAndUpdate(
+            id,
+            { dueDate },
+            { new: true }
+        );
+
+        if (!updatedTask) {
+            return res.status(404).json({ message: 'Task not found.' });
+        }
+
+        res.status(200).json({ message: 'تم تحديث تاريخ المهمة بنجاح', task: updatedTask });
+    } catch (err) {
+        console.error('Error updating task date:', err);
+        res.status(500).json({ message: 'Server error while updating task.' });
+    }
+};
+
+// Delete task
+export const deleteTask = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const deleted = await Task.findByIdAndDelete(id);
+
+        if (!deleted) {
+            return res.status(404).json({ message: 'Task not found.' });
+        }
+
+        res.status(200).json({ message: 'تم حذف المهمة بنجاح' });
+    } catch (err) {
+        console.error('Error deleting task:', err);
+        res.status(500).json({ message: 'Server error while deleting task.' });
     }
 };
