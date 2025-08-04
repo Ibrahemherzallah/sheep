@@ -113,8 +113,6 @@ const NewInjectionModal = ({allSheep}) => {
   const filteredSheepMultiSelector = allSheep.filter((sheep) =>
       sheep.sheepNumber.toString().includes(searchTerm.trim()) && sheep.status === ''
   );
-  console.log('filteredInjection : ' , filteredInjection);
-  //
   const allSelected = filteredSheepMultiSelector.length > 0 && filteredSheepMultiSelector.every(sheep => selectedSheep.includes(sheep._id));
   const handleSelectAllToggle = () => {
     if (allSelected) {
@@ -697,10 +695,77 @@ const Medical = () => {
   const [openDateDialog, setOpenDateDialog] = useState(false);
   const [currentTask, setCurrentTask] = useState(null);
   const [injectDate, setInjectDate] = useState("");
+  const [selectedTaskId, setSelectedTaskId] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [selectedTaskTitle, setSelectedTaskTitle] = useState('');
   // const [isLoading,setIsLoading] = useState(false);
   const filteredDrug = allDrugs.filter(drug => drug.section === 'sheep' && drug.type === "Medicine")
   const token = localStorage.getItem("token");
+  //////////////// EDIT TASK \\\\\\\\\\\\\\
+  const openDialogForTask = (task: any) => {
+    setSelectedTaskId(task._id);
+    setSelectedTaskTitle(task.title);
+    setSelectedDate(task.dueDate?.slice(0, 10)); // format as YYYY-MM-DD
+    setOpenEditDialog(true);
+  };
 
+  const handleUpdateTask = async () => {
+    const success = await EditTask(selectedTaskId, selectedDate);
+    if (success) {
+      setOpenEditDialog(false);
+      // refresh task list if needed
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    const confirmed = window.confirm("هل أنت متأكد أنك تريد حذف هذه المهمة؟");
+    if (!confirmed) return;
+
+    const success = await EditTask(selectedTaskId, '', true);
+    if (success) {
+      setOpenEditDialog(false);
+      // refresh task list if needed
+    }
+  };
+  const EditTask = async (taskId: string, newDate?: string, deleteTask = false) => {
+    try {
+      let response;
+
+      if (deleteTask) {
+        response = await fetch(`https://thesheep.top/api/tasks/${taskId}`, {
+          method: 'DELETE',
+        });
+      } else {
+        response = await fetch(`https://thesheep.top/api/tasks/${taskId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ dueDate: newDate }),
+        });
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || "حدث خطأ");
+
+      toast({
+        title: deleteTask ? "تم الحذف" : "تم التحديث",
+        description: data.message,
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error("EditTask error:", error);
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في العملية",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
   useEffect(() => {
     const fetchSheep = async () => {
       try {
@@ -932,13 +997,23 @@ const Medical = () => {
                                 {event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}
                               </TableCell>
                               <TableCell className={`px-1`}>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleTaskCompletion(event)}
-                                >
-                                  ✅ تم
-                                </Button>
+                                <div className={'flex gap-2'}>
+                                  <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openDialogForTask(event)}
+                                  >
+                                    تعديل
+                                  </Button>
+                                  <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleTaskCompletion(event)}
+                                  >
+                                    ✅ تم
+                                  </Button>
+                                </div>
+
                               </TableCell>
                             </TableRow>
                         ))}
@@ -970,6 +1045,7 @@ const Medical = () => {
                           <TableHead style={{textAlign:"start"}}>الجرعة</TableHead>
                           <TableHead style={{textAlign:"start"}}>الملاحظات</TableHead>
                           <TableHead style={{textAlign:"start"}}>قائمة الاغنام</TableHead>
+                          <TableHead style={{textAlign:"start"}}>الحالة</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -989,6 +1065,15 @@ const Medical = () => {
                                   style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
                                   title={event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}>
                                 {event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openDialogForTask(event)}
+                                >
+                                  تعديل
+                                </Button>
                               </TableCell>
                             </TableRow>
                         ))}
@@ -1059,7 +1144,32 @@ const Medical = () => {
               </DialogContent>
             </Dialog>
         )}
+        {openEditDialog && (
+            <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle style={{textAlign:'end'}}>تعديل مهمة - {selectedTaskTitle}</DialogTitle>
+                </DialogHeader>
 
+                <div className="space-y-4">
+                  <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                  />
+
+                  <div className="flex justify-between gap-2">
+                    <Button className="w-full" onClick={handleUpdateTask}>
+                      تحديث التاريخ
+                    </Button>
+                    <Button variant="destructive" className="w-full" onClick={handleDeleteTask}>
+                      حذف المهمة
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+        )}
       </div>
   );
 };

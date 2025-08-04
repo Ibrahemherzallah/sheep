@@ -1,17 +1,7 @@
 import MilkProduction from '../models/milkProduction.model.js';
 import Inventory from '../models/inventory.model.js';
 import Income from '../models/income.model.js';
-
-// export const createMilkRecord = async (req, res) => {
-//     try {
-//         const { date, production, sold, price } = req.body;
-//         const record = await MilkProduction.create({ date, production, sold, price });
-//         res.status(201).json(record);
-//     } catch (err) {
-//         res.status(500).json({ error: 'خطأ في إنشاء التسجيل' });
-//     }
-// };
-
+import Task from '../models/task.model.js';
 
 export const createMilkRecord = async (req, res) => {
     console.log("entered here is  : ",req.body);
@@ -65,7 +55,13 @@ export const createMilkRecord = async (req, res) => {
         income.totalCost += revenue;
 
         await income.save();
-
+        await Task.deleteMany({
+            type: 'milk',
+            dueDate: {
+                $gte: new Date(date),
+                $lt: new Date(new Date(date).getTime() + 24 * 60 * 60 * 1000) // matches the same day
+            }
+        });
         res.status(201).json({ message: 'تم إنشاء تسجيل الحليب وتحديث الجرد والإيرادات', record });
     } catch (err) {
         console.error(err);

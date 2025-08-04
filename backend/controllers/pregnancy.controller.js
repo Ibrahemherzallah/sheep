@@ -38,9 +38,9 @@ export const createPregnancies = async (req, res) => {
             sheep.pregnantCases.push(pregnancy._id);
             await sheep.save();
 
-
-
             createdPregnancies.push(pregnancy);
+
+            await deleteTasksForSheepAfterPregnant(sheepId);
 
         }
         const task = await Task.create({
@@ -81,7 +81,6 @@ export const createPregnancies = async (req, res) => {
         res.status(500).json({ error: "Failed to create pregnancies" });
     }
 };
-
 
 export const getAllPregnancies = async (req, res) => {
     try {
@@ -196,14 +195,9 @@ export const updateOnePregnancy = async (req, res) => {
     }
 };
 
-
 export const updateLastPregnanciesAfterBirth = async (req, res) => {
-    console.log("TESTTTT")
     try {
         const { bornDate, births, notes } = req.body;
-        console.log('bornDate',bornDate);
-        console.log('bornDate',births);
-        console.log('bornDate',notes);
 
         const updatedPregnancies = [];
         const allBornedSheepIds = [];
@@ -237,7 +231,13 @@ export const updateLastPregnanciesAfterBirth = async (req, res) => {
 
             allBornedSheepIds.push(sheepId);
             updatedPregnancies.push(updatedPregnancy);
+
+
+            // 🔥 Call the cleanup function here
+            await deleteTasksForSheepAfterBirth(sheepId);
+
         }
+
 
         // Create tasks for all borned sheep
         if (allBornedSheepIds.length > 0) {
@@ -253,6 +253,66 @@ export const updateLastPregnanciesAfterBirth = async (req, res) => {
         res.status(500).json({ error: "فشل تعديل الحمل بعد الولادة" });
     }
 };
+
+
+const TARGET_TITLES_AFTER_PREGNANT = ["إسفنجة", "اعطاء الهرمون", "فحص الحمل"];
+const TARGET_TITLES_AFTER_BIRTH = ["تاريخ الولادة المتوقع", "إعطاء لقاح الباستيريلا وال فيرست ايد", "إعطاء لقاح تثبيت الحمل"];
+
+export const deleteTasksForSheepAfterBirth = async (sheepId) => {
+    try {
+        const tasks = await Task.find({
+            title: { $in: TARGET_TITLES_AFTER_BIRTH },
+            sheepIds: sheepId
+        });
+        console.log("tasks is : ", tasks)
+        for (const task of tasks) {
+            if (task.sheepIds.length === 1) {
+                // Task only has this one sheep — delete whole task
+                await Task.findByIdAndDelete(task._id);
+            } else {
+                // Task has multiple sheep — remove this sheep only
+                await Task.findByIdAndUpdate(
+                    task._id,
+                    { $pull: { sheepIds: sheepId } }
+                );
+            }
+        }
+
+        console.log(`Cleaned up tasks for sheep ${sheepId}`);
+    } catch (error) {
+        console.error(`Failed to clean up tasks for sheep ${sheepId}:`, error);
+    }
+};
+
+
+
+export const deleteTasksForSheepAfterPregnant = async (sheepId) => {
+    try {
+        const tasks = await Task.find({
+            title: { $in: TARGET_TITLES_AFTER_PREGNANT },
+            sheepIds: sheepId
+        });
+        console.log("tasks is : ", tasks)
+        for (const task of tasks) {
+            if (task.sheepIds.length === 1) {
+                // Task only has this one sheep — delete whole task
+                await Task.findByIdAndDelete(task._id);
+            } else {
+                // Task has multiple sheep — remove this sheep only
+                await Task.findByIdAndUpdate(
+                    task._id,
+                    { $pull: { sheepIds: sheepId } }
+                );
+            }
+        }
+
+        console.log(`Cleaned up tasks for sheep ${sheepId}`);
+    } catch (error) {
+        console.error(`Failed to clean up tasks for sheep ${sheepId}:`, error);
+    }
+};
+
+
 
 
 export const deletePregnancy = async (req, res) => {
