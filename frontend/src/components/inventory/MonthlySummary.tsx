@@ -40,14 +40,6 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ type }) => {
     // const currentData = summaryData[selectedMonth];
     // const profit = currentData.sales - currentData.expenses;
 
-    const months = Object.keys(summaryData).map(key => {
-        const [year, month] = key.split('-');
-        const date = new Date(parseInt(year), parseInt(month) - 1);
-        return {
-            value: key,
-            label: `${month}/${year}`
-        };
-    });
     const currentData = summaryData[selectedMonth] || {
         expenses: 0,
         sales: 0,
@@ -57,7 +49,6 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ type }) => {
 
     const profit = currentData.sales - currentData.expenses;
 
-    const profitMargin = ((profit / currentData.sales) * 100).toFixed(1);
 
     return (
         <Card>
@@ -71,11 +62,18 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ type }) => {
                         <SelectValue placeholder="اختر الشهر" />
                     </SelectTrigger>
                     <SelectContent>
-                        {Object.keys(summaryData).map((month) => (
-                            <SelectItem key={month} value={month}>
-                                {month}
-                            </SelectItem>
-                        ))}
+                        {Object.keys(summaryData)
+                            .sort((a, b) => {
+                                const [aYear, aMonth] = a.split('-').map(Number);
+                                const [bYear, bMonth] = b.split('-').map(Number);
+                                if (aYear !== bYear) return bYear - aYear;
+                                return bMonth - aMonth;
+                            })
+                            .map((month) => (
+                                <SelectItem key={month} value={month}>
+                                    {month}
+                                </SelectItem>
+                            ))}
                     </SelectContent>
                 </Select>
             </CardHeader>

@@ -145,31 +145,29 @@ cron.schedule('0 0 1 * *', async () => {
         // Prepare resources arrays
         const incomeResources = incomeInventories.map(inv => ({
             item: inv._id,
-            price: inv.price
+            price: 0,
+            quantity: 0
         }));
 
         const outcomeResources = outcomeInventories.map(inv => ({
             item: inv._id,
-            price: inv.price
+            price: 0,
+            quantity: 0
         }));
-
-        // Calculate totals
-        const incomeTotal = incomeInventories.reduce((acc, inv) => acc + inv.price, 0);
-        const outcomeTotal = outcomeInventories.reduce((acc, inv) => acc + inv.price, 0);
 
         // Save Income and Outcome records
         await Income.create({
             month,
             year,
             resources: incomeResources,
-            totalCost: incomeTotal
+            totalCost: 0
         });
 
         await Outcome.create({
             month,
             year,
             resources: outcomeResources,
-            totalCost: outcomeTotal
+            totalCost: 0
         });
 
         // Reset inventory price and quantity
