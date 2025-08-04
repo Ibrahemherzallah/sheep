@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { Button } from "@/components/ui/button"; // assuming you have a button component
 import axios from 'axios';
+import { toast } from "@/hooks/use-toast"; // make sure this is at the top
 
 interface MonthlySummaryProps {
     type: 'sheep' | 'cycles';
@@ -117,14 +119,56 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ type }) => {
                             <DollarSign className="h-4 w-4" />
                             الإجمالي
                         </div>
-                        <div
-                            className={`text-xl font-bold ${
-                                profit >= 0 ? 'text-green-600' : 'text-red-600'
-                            }`}
-                        >
+                        <div className={`text-xl font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             ₪{Math.abs(profit).toFixed(2)} {profit < 0 ? 'خسارة' : 'ربح'}
                         </div>
                     </div>
+                    <div>
+                        <Button
+                            variant="destructive"
+                            className="mt-5 w-full"
+                            onClick={async () => {
+                                if (!selectedMonth) return;
+
+                                const [year, month] = selectedMonth.split('-');
+
+                                const confirmed = window.confirm("هل أنت متأكد أنك تريد حذف هذا الشهر؟");
+                                if (!confirmed) return;
+
+                                try {
+                                    const url = `https://thesheep.top/api/inventory/delete-month?month=${month}&year=${year}`;
+                                    const res = await fetch(url, {
+                                        method: 'DELETE',
+                                    });
+
+                                    if (!res.ok) {
+                                        throw new Error(`HTTP error! Status: ${res.status}`);
+                                    }
+
+                                    toast({
+                                        title: "تم الحذف",
+                                        description: "تم حذف السجلات بنجاح لهذا الشهر.",
+                                        // variant: "success", // or simply omit this if "success" is default
+                                    });
+
+                                    const newSummary = { ...summaryData };
+                                    delete newSummary[selectedMonth];
+                                    setSummaryData(newSummary);
+                                    setSelectedMonth(Object.keys(newSummary)[0] || '');
+                                } catch (error) {
+                                    console.error('Error deleting records:', error);
+                                    toast({
+                                        title: "خطأ أثناء الحذف",
+                                        description: "حدث خطأ أثناء محاولة حذف السجلات.",
+                                        variant: "destructive",
+                                    });
+                                }
+                            }}
+                        >
+                            حذف هذا الشهر
+                        </Button>
+                    </div>
+
                 </div>
             </CardContent>
         </Card>

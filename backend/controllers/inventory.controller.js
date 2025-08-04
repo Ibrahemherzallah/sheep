@@ -350,3 +350,27 @@ export const addRetroactiveMonth = async (req, res) => {
         res.status(500).json({ message: 'حدث خطأ أثناء إضافة البيانات' });
     }
 };
+
+
+export const deleteRecord = async (req, res) => {
+    console.log("ENTER")
+    try {
+        const { month, year } = req.query;
+
+        if (!month || !year) {
+            return res.status(400).json({ message: 'Month and year are required.' });
+        }
+
+        const incomeResult = await Income.deleteMany({ month: Number(month), year: Number(year) });
+        const outcomeResult = await Outcome.deleteMany({ month: Number(month), year: Number(year) });
+
+        return res.status(200).json({
+            message: 'Deleted records successfully',
+            incomeDeleted: incomeResult.deletedCount,
+            outcomeDeleted: outcomeResult.deletedCount,
+        });
+    } catch (error) {
+        console.error('Error deleting monthly summary:', error);
+        res.status(500).json({ message: 'Server error during deletion.' });
+    }
+}
