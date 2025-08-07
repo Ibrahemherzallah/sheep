@@ -699,9 +699,9 @@ const Medical = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedTaskTitle, setSelectedTaskTitle] = useState('');
-  // const [isLoading,setIsLoading] = useState(false);
   const filteredDrug = allDrugs.filter(drug => drug.section === 'sheep' && drug.type === "Medicine")
   const token = localStorage.getItem("token");
+
   //////////////// EDIT TASK \\\\\\\\\\\\\\
   const openDialogForTask = (task: any) => {
     setSelectedTaskId(task._id);
@@ -885,7 +885,8 @@ const Medical = () => {
     if (["إسفنجة", "اعطاء الهرمون"].includes(task.title)) {
       setCurrentTask(task);
       setOpenDateDialog(true);
-    } else {
+    }
+    else {
       markTaskAsCompleted(task._id);
     }
   };
@@ -937,6 +938,7 @@ const Medical = () => {
 
   return (
       <div className="p-6 space-y-6 animate-fade-in">
+
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold tracking-tight">الإدارة الطبية</h1>
           <div className="flex items-center gap-2">
@@ -951,8 +953,7 @@ const Medical = () => {
             <TabsTrigger value="injections">الطعومات</TabsTrigger>
             <TabsTrigger value="sicks">الأمراض</TabsTrigger>
           </TabsList>
-          {
-              activeTab === 'sicks' &&
+          {activeTab === 'sicks' &&
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="relative flex-grow max-w-md">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -960,8 +961,7 @@ const Medical = () => {
                          onChange={(e) => setSearchQuery(e.target.value)}/>
                 </div>
 
-              </div>
-          }
+              </div>}
           <TabsContent value="injections">
             <Card dir={'rtl'}>
               <CardHeader className="pb-2">
@@ -1088,7 +1088,6 @@ const Medical = () => {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="sicks">
             {sickSheep.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1122,11 +1121,12 @@ const Medical = () => {
             )}
           </TabsContent>
         </Tabs>
+
         {openDateDialog && (
             <Dialog open={openDateDialog} onOpenChange={setOpenDateDialog}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>أدخل تاريخ إعطاء {currentTask.title}</DialogTitle>
+                  <DialogTitle style={{textAlign:'end'}}>أدخل تاريخ إعطاء {currentTask.title}</DialogTitle>
                 </DialogHeader>
                 <Input
                     type="date"
@@ -1170,6 +1170,7 @@ const Medical = () => {
               </DialogContent>
             </Dialog>
         )}
+
       </div>
   );
 };

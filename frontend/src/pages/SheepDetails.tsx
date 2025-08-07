@@ -1,6 +1,20 @@
 import {useEffect, useState} from 'react';
 import { useParams, Link } from 'react-router-dom';
-import {ArrowLeft, Baby, Calendar, Edit, FileText, Heart, History, LineChart, Plus, Syringe, Tag, Users} from 'lucide-react';
+import {
+  ArrowLeft,
+  Baby,
+  Calendar,
+  Edit,
+  FileText,
+  Heart,
+  History,
+  LineChart,
+  Pencil,
+  Plus,
+  Syringe,
+  Tag,
+  Users
+} from 'lucide-react';
 import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Separator, Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
 import {useForm} from "react-hook-form";
 import { formatDate } from "../utils/dateUtils";
@@ -14,7 +28,7 @@ const SheepDetails = () => {
   const [milkAmountModal, setMilkAmountModal] = useState(false)
   const [changeMilkAmountModal, setChangeMilkAmountModal] = useState(false)
   const [endMilkDateModal, setEndMilkDateModal] = useState(false)
-
+  const [editPregnancyModal, setEditPregnancyModal] = useState(false)
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [allSheep,setAllSheep] = useState([]);
@@ -23,10 +37,11 @@ const SheepDetails = () => {
   const [injectionTypes,setInjectionTypes] = useState([]);
   const [sheepInjections,setSheepInjections] = useState([]);
   const [nextTask,setNextTask] = useState('');
+  const [selectedPregnancy, setSelectedPregnancy] = useState('');
+  const [selectedIsfenjeh,setSelectedIsfenjeh] = useState('');
+  const [editIsfenjehModal,setEditIsfenjehModal] = useState(false);
   const sheep = allSheep.find(s => s._id === id);
   const token = localStorage.getItem("token");
-
-
 
   useEffect(() => {
     const fetchSheep = async () => {
@@ -99,6 +114,7 @@ const SheepDetails = () => {
       toast({ title: "تم إضافة الحليب بنجاح" });
       setMilkAmountModal(false);
       milkForm.reset();
+      window.location.reload()
     } catch (error) {
       console.error("Error submitting milk data:", error);
       toast({ title: "خطأ", description: error.message });
@@ -129,6 +145,7 @@ const SheepDetails = () => {
       toast({ title: "تم تحديث تاريخ التنشيف بنجاح" });
       setEndMilkDateModal(false); // <-- your second modal
       endMilkForm.reset();
+      window.location.reload()
     } catch (error: any) {
       console.error("Error submitting end milk data:", error);
       toast({ title: "خطأ", description: error.message });
@@ -163,6 +180,7 @@ const SheepDetails = () => {
       toast({ title: "تم تحديث كمية الحليب بنجاح" });
       setChangeMilkAmountModal(false);  // close the modal
       milkAmountForm.reset();           // reset the form
+      window.location.reload()
     } catch (error: any) {
       console.error("Error updating milk amount:", error);
       toast({ title: "خطأ", description: error.message });
@@ -222,7 +240,6 @@ const SheepDetails = () => {
   interface EditSheepData {
     sheepNumber: number;
     notes: string;
-    // 👇 New fields for age input
     ageYears: number;
     ageMonths: number;
     ageDays: number;
@@ -269,6 +286,126 @@ const SheepDetails = () => {
       toast({ title: "خطأ", description: "فشل في تعديل النعجة" });
     }
   };
+
+
+  interface EditPregnancyData {
+    males: number;
+    females: number;
+    notes: string;
+  }
+
+  interface EditSupplimantsData {
+    isfenjeh: number;
+    hermon: number;
+  }
+
+  const pregnancyForm = useForm<EditPregnancyData>({
+    defaultValues: {
+      males: sheep?.males,
+      females: sheep?.females,
+      notes: sheep?.notes,
+    },
+  });
+
+
+  const supplimantsForm = useForm<EditSupplimantsData>({
+    defaultValues: {
+      isfenjeh: 0,
+      hermon: 0,
+    },
+  });
+
+  const handleEditPregnancy = async (data: EditPregnancyData) => {
+    console.log("Enter frotnend")
+    try {
+      const response = await fetch(`https://thesheep.top/api/pregnancies/${selectedPregnancy}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          males: data.males,
+          females: data.females,
+          notes: data.notes,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('فشل تعديل الولادة');
+      }
+
+      const updated = await response.json();
+      toast({
+        title: "تم التعديل بنجاح",
+        description: `عدد الذكور: ${updated.numberOfMaleLamb}, عدد الإناث: ${updated.numberOfFemaleLamb}`,
+      });
+
+      // Reset form and close modal
+      pregnancyForm.reset();
+      setEditPregnancyModal(false);
+      window.location.reload();
+      // (Optional) Refetch data or update UI manually
+      // await refetchSheep(); or updateLocalState(updated);
+
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "حدث خطأ",
+        description: "فشل تعديل حالة الولادة",
+        variant: "destructive",
+      });
+    }
+  };
+
+
+
+
+
+  const handleEditSupplimants = async (data: EditSupplimantsData) => {
+    console.log("Enter frotnend data" , data)
+    console.log("Enter selectedIsfenjeh data" , selectedIsfenjeh)
+    try {
+      const response = await fetch(`https://thesheep.top/api/pregnantSupplimants/${selectedIsfenjeh}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          isfenjeh: data.isfenjeh,
+          hermon: data.hermon,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('فشل تعديل الولادة');
+      }
+
+      const updated = await response.json();
+      toast({
+        title: "تم التعديل بنجاح",
+        description: `عدد الذكور: ${updated.numberOfMaleLamb}, عدد الإناث: ${updated.numberOfFemaleLamb}`,
+      });
+
+      // Reset form and close modal
+      pregnancyForm.reset();
+      setEditPregnancyModal(false);
+      window.location.reload();
+      // (Optional) Refetch data or update UI manually
+      // await refetchSheep(); or updateLocalState(updated);
+
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "حدث خطأ",
+        description: "فشل تعديل حالة الولادة",
+        variant: "destructive",
+      });
+    }
+  };
+
+
 
   if (loading) {
     return <div className="p-6 text-center">جارٍ تحميل البيانات...</div>;
@@ -698,6 +835,7 @@ const SheepDetails = () => {
                           <TableHead style={{textAlign:'start'}}>الذكور</TableHead>
                           <TableHead style={{textAlign:'start'}}>الإناث</TableHead>
                           <TableHead style={{textAlign:'start'}}>الملاحظات</TableHead>
+                          <TableHead style={{textAlign:'start'}}>التعديل</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -713,6 +851,12 @@ const SheepDetails = () => {
                             <TableCell>{record.numberOfMaleLamb} </TableCell>
                             <TableCell>{record.numberOfFemaleLamb}</TableCell>
                             <TableCell>{record.notes || 'لا يوجد ملاحظات'}</TableCell>
+                            <TableCell>
+                              <Button onClick={() => {setEditPregnancyModal(true); setSelectedPregnancy(record._id)}} variant="outline" className="gap-1">
+                                <Pencil size={18} />
+                                <span>تعديل</span>
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -750,6 +894,63 @@ const SheepDetails = () => {
                   </CardContent>
                 </Card>
               )}
+
+
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Syringe size={18} />
+                    <span>تاريخ الاسفنجة والهرمون</span>
+                  </CardTitle>
+                  <CardDescription>تاريخ لجميع تسجيلات الاسفنجة والهرمون لهذه النعجة</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {sheep?.pregnantCases?.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead style={{textAlign:'start'}}>تاريخ اخر تعديل</TableHead>
+                            <TableHead style={{textAlign:'start'}}>عدد الاسفنجات</TableHead>
+                            <TableHead style={{textAlign:'start'}}>عدد الهرمون</TableHead>
+                            <TableHead style={{textAlign:'start'}}>التعديل</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        {!(sheep?.pregnantSupplimans.length > 0) && (<p>لا يوجد سجلات لهذه النعجة </p>)}
+                        <TableBody>
+                          {sheep?.pregnantSupplimans.map((record) => (
+                              <TableRow key={record.id}>
+                                <TableCell>
+                                  {new Date(record.updatedAt).toLocaleString('en-US', {
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true,
+                                  })}
+                                </TableCell>
+                                <TableCell> {record.numOfIsfenjeh} </TableCell>
+                                <TableCell>{record.numOfHermon} </TableCell>
+                                <TableCell>
+                                  <Button onClick={() => {setEditIsfenjehModal(true); setSelectedIsfenjeh(record._id)}} variant="outline" className="gap-1">
+                                    <Pencil size={18} />
+                                    <span>تعديل</span>
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                  ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Baby className="mx-auto h-12 w-12 opacity-20 mb-2" />
+                        <p>لا يوجد تسجيلات ولادة متاحة لهذه النعجة.</p>
+                      </div>
+                  )}
+                </CardContent>
+              </Card>
+
             </>
           )}
         </TabsContent>
@@ -1059,7 +1260,104 @@ const SheepDetails = () => {
           </Form>
         </DialogContent>
       </Dialog>
+      {/* edit Pregnancy Modal */}
+      <Dialog open={editPregnancyModal} onOpenChange={setEditPregnancyModal}>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign:'end'}}>
+            <DialogTitle>تعديل معلومات الولادة</DialogTitle>
+            <DialogDescription>
+            </DialogDescription>
+          </DialogHeader>
 
+          <Form {...pregnancyForm}>
+            <form onSubmit={pregnancyForm.handleSubmit(handleEditPregnancy)} className="space-y-4" dir={'rtl'}>
+              <div className="space-y-4 py-2 max-h-[400px]  overflow-y-auto pr-2">
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                  <FormField control={pregnancyForm.control} name="males" render={({ field }) => (
+                      <FormItem style={{ width: '45%' }}>
+                        <FormLabel>عدد الذكور</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="أدخل عدد الدكور" min={0} {...field} />
+                        </FormControl>
+                      </FormItem>
+                  )} />
+                  <FormField control={pregnancyForm.control} name="females" render={({ field }) => (
+                      <FormItem style={{ width: '45%' }}>
+                        <FormLabel>عدد اللإناث</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="أدخل عدد الإناث" min={0} max={11} {...field} />
+                        </FormControl>
+                      </FormItem>
+                  )} />
+                </div>
+                <FormField control={pregnancyForm.control} name="notes" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ملاحظات</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="أي ملاحظات إضافية .." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="submit" disabled={!pregnancyForm.watch('males') || !pregnancyForm.watch('females')}>
+                  احفظ التعديلات
+                </Button>
+                <Button type="button" variant="outline" onClick={() => {setEditPregnancyModal(false);pregnancyForm.reset();}}>
+                  الغاء
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      {/* edit Supplimants Modal */}
+      <Dialog open={editIsfenjehModal} onOpenChange={setEditIsfenjehModal}>
+        <DialogContent className="sm:max-w-[600px]" >
+          <DialogHeader style={{textAlign:'end'}}>
+            <DialogTitle>اضافة إسفنجة او هرمون</DialogTitle>
+            <DialogDescription>
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...supplimantsForm}>
+            <form onSubmit={supplimantsForm.handleSubmit(handleEditSupplimants)} className="space-y-4" dir={'rtl'}>
+              <div className="space-y-4 py-2 max-h-[400px]  overflow-y-auto pr-2">
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                  <FormField control={supplimantsForm.control} name="isfenjeh" render={({ field }) => (
+                      <FormItem style={{ width: '45%' }}>
+                        <FormLabel>عدد الإسفنجات</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="أدخل عدد الإسفنجات" min={-10} {...field} />
+                        </FormControl>
+                      </FormItem>
+                  )} />
+                  <FormField control={supplimantsForm.control} name="hermon" render={({ field }) => (
+                      <FormItem style={{ width: '45%' }}>
+                        <FormLabel>عدد الهرمون</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="أدخل عدد الهرمون" min={-10} max={11} {...field} />
+                        </FormControl>
+                      </FormItem>
+                  )} />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button type="submit">
+                  احفظ التعديلات
+                </Button>
+                <Button type="button" variant="outline" onClick={() => {setEditIsfenjehModal(false);supplimantsForm.reset();}}>
+                  الغاء
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

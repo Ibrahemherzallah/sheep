@@ -4,6 +4,7 @@ import InjectionType from '../models/injectionType.model.js'; // Assuming you ha
 import Task from '../models/task.model.js';
 import StockModel from "../models/stock.model.js";
 import {addDays} from "../services/taskService.js";
+import Supplimant from "../models/pregnantSupplimants.model.js";
 
 export const createInjection = async (req, res) => {
     try {
@@ -30,6 +31,32 @@ export const createInjection = async (req, res) => {
                 type: 'injection',
                 notes: 'متابعة بعد 12 يوم من الاسفنجة',
             });
+            for (const sheepIdd of sheepId) {
+                const sheep = await Sheep.findById(sheepIdd).populate('pregnantSupplimans');
+
+                if (!sheep) continue;
+
+                if (!sheep.pregnantSupplimans || sheep.pregnantSupplimans.length === 0) {
+                    console.log("The sheep id is : " , sheepIdd)
+                    // 🆕 No previous supplimant → create new
+                    const newSupplimant = await Supplimant.create({
+                        sheepId: sheepIdd,
+                        numOfIsfenjeh: 1,
+                        numOfHermon: 0,
+                    });
+                    console.log("The newSupplimant id is : " , newSupplimant)
+
+                    await Sheep.findByIdAndUpdate(sheepIdd, {
+                        $push: { pregnantSupplimans: newSupplimant._id },
+                    });
+                } else {
+                    // ✅ Already has at least one → increment numOfIsfenjeh in the last one
+                    const lastSupplimant = sheep.pregnantSupplimans[sheep.pregnantSupplimans.length - 1];
+                    await Supplimant.findByIdAndUpdate(lastSupplimant._id, {
+                        $inc: { numOfIsfenjeh: 1 },
+                    });
+                }
+            }
 
             return res.status(201).json({
                 message: 'تمت إضافة الاسفنجة بنجاح',
