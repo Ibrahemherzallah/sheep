@@ -16,6 +16,7 @@ import stockRoutes from './routes/stock.routes.js';
 import protectedRoutes from './routes/protected.routes.js';
 import inventoryRoutes from './routes/inventory.routes.js';
 import summaryRoutes from './routes/summary.routes.js';
+import pregnantSupplimantsRoutes from './routes/pregnantSupplimans.routes.js';
 import path from 'path';
 import './scheduler/patientStatusChecker.js';
 import { fileURLToPath } from 'url';
@@ -43,6 +44,7 @@ app.use('/api/milk', milkRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/summary', summaryRoutes);
+app.use('/api/pregnantSupplimants', pregnantSupplimantsRoutes);
 
 const staticPath = path.join(__dirname, 'static');
 app.use(express.static(staticPath));

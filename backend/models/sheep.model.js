@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import StockModel from "./stock.model.js";
 
 const SheepSchema = new mongoose.Schema({
     sheepNumber: {
@@ -27,6 +26,10 @@ const SheepSchema = new mongoose.Schema({
     patientCases: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Patient',
+    }],
+    pregnantSupplimans: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Supplimant'
     }],
     isPatient: {
         type: Boolean,

@@ -2,6 +2,7 @@ import { createBirthRelatedTasks } from '../services/taskService.js';
 import Pregnancy from '../models/pregnancy.model.js';
 import Sheep from '../models/sheep.model.js';
 import Task from "../models/task.model.js";
+import Supplimant from "../models/pregnantSupplimants.model.js";
 
 export const createPregnancies = async (req, res) => {
     try {
@@ -187,7 +188,18 @@ export const updateMilkAmountOnly = async (req, res) => {
 
 export const updateOnePregnancy = async (req, res) => {
     try {
-        const updated = await Pregnancy.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const { males, females, notes } = req.body;
+
+        const updated = await Pregnancy.findByIdAndUpdate(
+            req.params.id,
+            {
+                numberOfMaleLamb: males,
+                numberOfFemaleLamb: females,
+                notes,
+            },
+            { new: true }
+        );
+
         res.status(200).json(updated);
     } catch (err) {
         console.error(err);
@@ -228,6 +240,18 @@ export const updateLastPregnanciesAfterBirth = async (req, res) => {
 
             // Set isPregnant to false after birth
             await Sheep.findByIdAndUpdate(sheepId, { isPregnant: false });
+
+            //
+            // 3. Create Supplimant record
+            const newSupplimant = await Supplimant.create({
+                sheepId,
+                numOfIsfenjeh: 0,
+                numOfHermon: 0,
+            });
+
+            sheep.pregnantSupplimans.push(newSupplimant._id);
+            // 5. Save updated sheep
+            await sheep.save();
 
             allBornedSheepIds.push(sheepId);
             updatedPregnancies.push(updatedPregnancy);

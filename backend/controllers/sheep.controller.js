@@ -243,15 +243,21 @@ export const updateSheepStatus = async (req, res) => {
 export const getAllSheep = async (req, res) => {
     try {
         const sheep = await Sheep.find()
-            .populate('pregnantCases')
+            .populate({
+                path: 'pregnantSupplimans',
+                options: { sort: { createdAt: -1 } },
+            })
+            .populate({
+                path: 'pregnantCases',
+                options: { sort: { bornDate: -1 } },
+            })
             .populate({
                 path: 'patientCases',
                 populate: {
-                    path: 'drugs.drug', // 👈 populate the nested drug field
+                    path: 'drugs.drug',
                     model: 'StockModel',
                 },
             });
-
         res.json(sheep);
     } catch (err) {
         console.error(err);

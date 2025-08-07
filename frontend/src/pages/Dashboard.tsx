@@ -67,7 +67,8 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [selectedTaskTitle, setSelectedTaskTitle] = useState('');
-
+  const [newSelectedTaskId,setNewSelectedTaskId] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState(false);
   const token = localStorage.getItem("token");
   const [selectedSheepIds, setSelectedSheepIds] = useState<string[]>([]);
   const toggleSheepSelection = (id: string) => {
@@ -134,12 +135,56 @@ const Dashboard = () => {
       });
     }
   };
+  const markPregnantTaskAsCompleted = async (donePregnant:boolean) => {
+    try {
+      const res = await fetch(`https://thesheep.top/api/tasks/${newSelectedTaskId||selectedTask._id}/completePregnant`, {
+        method: 'PUT',
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ completedSheepIds: selectedSheepIds, donePregnant }),
+      });
+
+      if (res.ok) {
+        const updated = displayedRecent.map((task) =>
+            task._id === selectedTask._id || task._id === newSelectedTaskId ? { ...task, completed: true } : task
+        );
+
+        toast({
+          title: "تمت المهمة ✅",
+          description: "تم تحديث حالة المهمة إلى مكتملة بنجاح.",
+          duration: 3000,
+        });
+        setIsModalOpen(false)
+      } else {
+        toast({
+          title: "حدث خطأ",
+          description: "فشل في تحديث حالة المهمة.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "خطأ في الاتصال",
+        description: "تعذر الاتصال بالخادم.",
+        variant: "destructive",
+      });
+    }
+  };
+
+
   const handleTaskCompletion = (task) => {
+    setNewSelectedTaskId(task._id)
     console.log("task", task);
     if (["إسفنجة", "اعطاء الهرمون"].includes(task.title)) {
       setCurrentTask(task);
       setOpenDateDialog(true);
-    } else {
+    }
+    else if(["فحص الحمل"].includes(task.title)){
+      setConfirmDialog(true);
+    }
+    else {
       markTaskAsCompleted(task._id);
     }
   };
@@ -192,7 +237,8 @@ const Dashboard = () => {
           body: JSON.stringify(newTask),
         });
         toast({ title: "تم إنشاء مهمة جديدة بنجاح" });
-      } catch (error) {
+        window.location.reload()}
+      catch (error) {
         toast({
           title: "فشل في إنشاء المهمة الجديدة",
           variant: "destructive",
@@ -209,6 +255,10 @@ const Dashboard = () => {
         title: "الرجاء اختيار بعض الخراف أولاً",
         variant: "destructive",
       });
+      return;
+    }
+    if (selectedTask.title === 'فحص الحمل') {
+      setConfirmDialog(true);
       return;
     }
     try {
@@ -230,6 +280,7 @@ const Dashboard = () => {
         });
       }
       setIsModalOpen(false);
+      window.location.reload()
     } catch (err) {
       toast({
         title: "فشل الاتصال",
@@ -290,7 +341,7 @@ const Dashboard = () => {
         title: deleteTask ? "تم الحذف" : "تم التحديث",
         description: data.message,
       });
-
+      window.location.reload()
       return true;
     } catch (error: any) {
       console.error("EditTask error:", error);
@@ -616,7 +667,7 @@ const Dashboard = () => {
           <Dialog open={openDateDialog} onOpenChange={setOpenDateDialog}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>أدخل تاريخ إعطاء {currentTask.title}</DialogTitle>
+                <DialogTitle style={{textAlign:'end'}}>أدخل تاريخ إعطاء {currentTask.title}</DialogTitle>
               </DialogHeader>
               <Input
                   type="date"
@@ -656,6 +707,36 @@ const Dashboard = () => {
                     حذف المهمة
                   </Button>
                 </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+      )}
+
+      {confirmDialog && (
+          <Dialog open={confirmDialog} onOpenChange={setConfirmDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle style={{textAlign:'end'}}>تأكيد حدوث الحمل</DialogTitle>
+              </DialogHeader>
+              <div className={'flex gap-2 mt-5'}>
+                <Button
+                    variant={'ghost'}
+                    onClick={async () => {
+                      await markPregnantTaskAsCompleted(false);  // 👈 Not Pregnant
+                      setConfirmDialog(false);
+                    }}
+                >
+                  لم يتم
+                </Button>
+                <Button
+                    onClick={async () => {
+                      await markPregnantTaskAsCompleted(true);  // 👈 Pregnant confirmed
+                      setConfirmDialog(false);
+                    }}
+                >
+                  تم الحمل
+                </Button>
+
               </div>
             </DialogContent>
           </Dialog>
