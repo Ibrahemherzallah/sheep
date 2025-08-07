@@ -18,9 +18,15 @@ export const createMilkRecord = async (req, res) => {
         }
 
         // 3. Update milk inventory: add sold quantity and revenue
-        milkInventory.quantity += sold;
-        const revenue = sold * price;
-        milkInventory.price += revenue;
+
+        const quantity = Number(milkInventory.quantity);
+        const soldAmount = Number(sold);
+        const unitPrice = Number(price);
+        const revenue = soldAmount * unitPrice
+
+        milkInventory.quantity = quantity + soldAmount;
+        milkInventory.price += soldAmount * unitPrice;
+
         await milkInventory.save();
 
         // 4. Get current month/year from date

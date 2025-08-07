@@ -113,13 +113,12 @@ const Dashboard = () => {
         const updated = displayedRecent.map((task) =>
             task._id === taskId ? { ...task, completed: true } : task
         );
-        console.log(updated);
-
         toast({
           title: "تمت المهمة ✅",
           description: "تم تحديث حالة المهمة إلى مكتملة بنجاح.",
           duration: 3000,
         });
+        setSelectedSheepIds([])
       } else {
         toast({
           title: "حدث خطأ",
@@ -157,6 +156,8 @@ const Dashboard = () => {
           duration: 3000,
         });
         setIsModalOpen(false)
+        setSelectedSheepIds([])
+        window.location.reload()
       } else {
         toast({
           title: "حدث خطأ",
@@ -237,6 +238,7 @@ const Dashboard = () => {
           body: JSON.stringify(newTask),
         });
         toast({ title: "تم إنشاء مهمة جديدة بنجاح" });
+        setSelectedSheepIds([])
         window.location.reload()}
       catch (error) {
         toast({
@@ -247,9 +249,6 @@ const Dashboard = () => {
     }
   };
   const confirmCompletionForSelectedSheep = async () => {
-    console.log("selectedTask : " , selectedTask);
-    console.log("selectedSheepIds : " , selectedSheepIds);
-
     if (!selectedTask || selectedSheepIds.length === 0) {
       toast({
         title: "الرجاء اختيار بعض الخراف أولاً",
@@ -280,6 +279,7 @@ const Dashboard = () => {
         });
       }
       setIsModalOpen(false);
+      setSelectedSheepIds([])
       window.location.reload()
     } catch (err) {
       toast({
@@ -646,7 +646,7 @@ const Dashboard = () => {
                           <Button onClick={()=>{handleTaskCompletionForSelectedSheep(selectedTask)}} size="sm" disabled={selectedSheepIds.length === 0}>
                             تأكيد تنفيذ المهمة للخراف المحددة
                           </Button>
-                          <Button size="sm" onClick={() => setIsModalOpen(false)}>
+                          <Button size="sm" onClick={() => {setIsModalOpen(false);setSelectedSheepIds([])}}>
                             إغلاق
                           </Button>
                         </div>
