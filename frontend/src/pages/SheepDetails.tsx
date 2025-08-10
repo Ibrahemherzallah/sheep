@@ -906,7 +906,7 @@ const SheepDetails = () => {
                   <CardDescription>تاريخ لجميع تسجيلات الاسفنجة والهرمون لهذه النعجة</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {sheep?.pregnantCases?.length > 0 ? (
+                  {sheep?.pregnantSupplimans?.length > 0 ? (
                       <Table>
                         <TableHeader>
                           <TableRow>

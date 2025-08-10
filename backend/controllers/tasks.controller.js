@@ -129,13 +129,27 @@ export const markTaskComplete = async (req, res) => {
         else if (updated.title === "اعطاء الهرمون" && updated.sheepIds?.length > 0) {
             for (const sheepId of updated.sheepIds) {
                 const sheep = await Sheep.findById(sheepId).populate('pregnantSupplimans');
-                if (!sheep || sheep.pregnantSupplimans.length === 0) continue;
-                // 2. Get the last Supplimant (assuming it's the last in the array)
-                const lastSupplimantId = sheep.pregnantSupplimans[sheep.pregnantSupplimans.length - 1]._id;
-                // 3. Increment the numOfHermon field by 1
-                await Supplimant.findByIdAndUpdate(lastSupplimantId, {
-                    $inc: { numOfHermon: 1 }
-                });
+                if (!sheep) continue;
+
+                if (!sheep.pregnantSupplimans || sheep.pregnantSupplimans.length === 0) {
+                    // 🆕 No previous supplimant → create new
+                    const newSupplimant = await Supplimant.create({
+                        sheepId,
+                        numOfIsfenjeh: 1,
+                        numOfHermon: 1,
+                    });
+
+                    await Sheep.findByIdAndUpdate(sheepId, {
+                        $push: { pregnantSupplimans: newSupplimant._id },
+                    });
+                } else {
+                    // 2. Get the last Supplimant (assuming it's the last in the array)
+                    const lastSupplimantId = sheep.pregnantSupplimans[sheep.pregnantSupplimans.length - 1]._id;
+                    // 3. Increment the numOfHermon field by 1
+                    await Supplimant.findByIdAndUpdate(lastSupplimantId, {
+                        $inc: { numOfHermon: 1 }
+                    });
+                }
             }
         }
 

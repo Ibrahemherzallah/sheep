@@ -71,6 +71,8 @@ const Dashboard = () => {
   const [confirmDialog, setConfirmDialog] = useState(false);
   const token = localStorage.getItem("token");
   const [selectedSheepIds, setSelectedSheepIds] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const toggleSheepSelection = (id: string) => {
     setSelectedSheepIds((prev) =>
         prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
@@ -132,6 +134,8 @@ const Dashboard = () => {
         description: "تعذر الاتصال بالخادم.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
   const markPregnantTaskAsCompleted = async (donePregnant:boolean) => {
@@ -199,7 +203,7 @@ const Dashboard = () => {
     }
   };
   const handleInjectConfirmation = async () => {
-
+    setIsLoading(true);
     const date = new Date(injectDate);
         const taskTitle = currentTask.title;
         console.log("currentTask is :" ,currentTask)
@@ -287,6 +291,8 @@ const Dashboard = () => {
         description: err.message,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
   //////////////// EDIT TASK \\\\\\\\\\\\\\
@@ -675,12 +681,13 @@ const Dashboard = () => {
                   onChange={(e) => setInjectDate(e.target.value)}
               />
               <Button
+                  disabled={isLoading}
                   onClick={async () => {
                     await handleInjectConfirmation();
                     setOpenDateDialog(false);
                   }}
               >
-                تأكيد
+                {isLoading ? "جار تأكيد..." : "تأكيد"}
               </Button>
             </DialogContent>
           </Dialog>

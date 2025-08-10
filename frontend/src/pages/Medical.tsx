@@ -698,6 +698,7 @@ const Medical = () => {
   const [selectedTaskId, setSelectedTaskId] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedTaskTitle, setSelectedTaskTitle] = useState('');
   const filteredDrug = allDrugs.filter(drug => drug.section === 'sheep' && drug.type === "Medicine")
   const token = localStorage.getItem("token");
@@ -891,6 +892,7 @@ const Medical = () => {
     }
   };
   const handleInjectConfirmation = async () => {
+    setIsLoading(true)
     const date = new Date(injectDate);
     const taskTitle = currentTask.title;
 
@@ -932,6 +934,8 @@ const Medical = () => {
           title: "فشل في إنشاء المهمة الجديدة",
           variant: "destructive",
         });
+      } finally {
+         setIsLoading(false);
       }
     }
   };
@@ -1134,12 +1138,13 @@ const Medical = () => {
                     onChange={(e) => setInjectDate(e.target.value)}
                 />
                 <Button
+                    disabled={isLoading}
                     onClick={async () => {
                       await handleInjectConfirmation();
                       setOpenDateDialog(false);
                     }}
                 >
-                  تأكيد
+                  {isLoading ? "جار تأكيد..." : "تأكيد"}
                 </Button>
               </DialogContent>
             </Dialog>
