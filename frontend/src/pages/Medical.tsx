@@ -318,7 +318,8 @@ const NewInjectionModal = ({allSheep}) => {
             disabled={isLoading || !selectedInjection || selectedSheep.length === 0 || (selectedInjectionObj?.reputation === '6m' && !injectNumber) }
           >
             <Syringe className="mr-1" size={16} />
-              اضافة
+            {isLoading ? 'جار الإضافة...' : 'اضافة'}
+
           </Button>
         </DialogFooter>
       </DialogContent>
