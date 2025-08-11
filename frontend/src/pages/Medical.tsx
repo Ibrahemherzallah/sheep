@@ -96,6 +96,8 @@ const NewInjectionModal = ({allSheep}) => {
   const [useTodayDate,setTodayDate] = useState(true)
   const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const filteredInjection = allInjections.filter(injection => injection.section === 'sheep' && injection.type === "Injection")
   const token = localStorage.getItem("token");
 
@@ -145,6 +147,7 @@ const NewInjectionModal = ({allSheep}) => {
   console.log('allInjections : ', allInjections);
 
   const handleSubmitAddInject = async () => {
+    setIsLoading(true)
     try {
       const payload = {
         sheepId: selectedSheep, // Array of IDs
@@ -176,6 +179,8 @@ const NewInjectionModal = ({allSheep}) => {
       setOpen(false);
     } catch (error) {
       toast({ title: 'حدث خطأ', description: String(error) });
+    } finally {
+      setIsLoading(false)
     }
   };
 
@@ -310,7 +315,7 @@ const NewInjectionModal = ({allSheep}) => {
           <Button 
             type="submit" 
             onClick={handleSubmitAddInject}
-            disabled={!selectedInjection || selectedSheep.length === 0 || (selectedInjectionObj?.reputation === '6m' && !injectNumber) }
+            disabled={isLoading || !selectedInjection || selectedSheep.length === 0 || (selectedInjectionObj?.reputation === '6m' && !injectNumber) }
           >
             <Syringe className="mr-1" size={16} />
               اضافة
