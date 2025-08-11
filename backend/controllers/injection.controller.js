@@ -20,10 +20,8 @@ export const createInjection = async (req, res) => {
 
         if (injectionName === 'اسفنجة') {
             const hormoneDate = new Date(baseDate);
-            const checkPregnancyDate = new Date(baseDate);
             hormoneDate.setDate(hormoneDate.getDate() + 12);
-            checkPregnancyDate.setDate(checkPregnancyDate.getDate() + 42);
-            console.log("hormoneDate is : ", hormoneDate);
+            console.log("sheepId is : ", sheepId);
             await Task.create({
                 title: 'اعطاء الهرمون',
                 dueDate: hormoneDate,
@@ -56,12 +54,61 @@ export const createInjection = async (req, res) => {
                         $inc: { numOfIsfenjeh: 1 },
                     });
                 }
+
+                await deleteTasksForSheep(sheepIdd);
             }
 
             return res.status(201).json({
                 message: 'تمت إضافة الاسفنجة بنجاح',
             });
         }
+        if (injectionName === 'اعطاء الهرمون') {
+            const checkPregnancy = new Date(baseDate);
+            // const checkPregnancyDate = new Date(baseDate);
+            checkPregnancy.setDate(checkPregnancy.getDate() + 30);
+            // checkPregnancyDate.setDate(checkPregnancyDate.getDate() + 42);
+            console.log("checkPregnancy is : ", checkPregnancy);
+            await Task.create({
+                title: 'فحص الحمل',
+                dueDate: checkPregnancy,
+                sheepIds: sheepId,
+                type: 'pregnancy-check',
+                notes: 'فحص الحمل',
+            });
+            for (const sheepIdd of sheepId) {
+                const sheep = await Sheep.findById(sheepIdd).populate('pregnantSupplimans');
+
+                if (!sheep) continue;
+
+                if (!sheep.pregnantSupplimans || sheep.pregnantSupplimans.length === 0) {
+                    console.log("The sheep id is : " , sheepIdd)
+                    // 🆕 No previous supplimant → create new
+                    const newSupplimant = await Supplimant.create({
+                        sheepId: sheepIdd,
+                        numOfIsfenjeh: 1,
+                        numOfHermon: 1,
+                    });
+                    console.log("The newSupplimant id is : " , newSupplimant)
+
+                    await Sheep.findByIdAndUpdate(sheepIdd, {
+                        $push: { pregnantSupplimans: newSupplimant._id },
+                    });
+                } else {
+                    // ✅ Already has at least one → increment numOfIsfenjeh in the last one
+                    const lastSupplimant = sheep.pregnantSupplimans[sheep.pregnantSupplimans.length - 1];
+                    await Supplimant.findByIdAndUpdate(lastSupplimant._id, {
+                        $inc: { numOfHermon: 1 },
+                    });
+                }
+
+                await deleteTasksForHermonSheep(sheepIdd);
+            }
+
+            return res.status(201).json({
+                message: 'تمت إضافة الهرمون بنجاح',
+            });
+        }
+
         const newInjection = new InjectionModel({
             sheepId,
             injectionType,
@@ -163,3 +210,59 @@ export const getInjection = async (req, res) => {
     }
 }
 
+
+const TARGET_TITLES_AFTER_PREGNANT = ["إسفنجة", "فحص الحمل"];
+
+export const deleteTasksForSheep = async (sheepId) => {
+    console.log("The sheeps id is :" , sheepId)
+    try {
+        const tasks = await Task.find({
+            title: { $in: TARGET_TITLES_AFTER_PREGNANT },
+            sheepIds: sheepId
+        });
+        console.log("tasks is : ", tasks)
+        for (const task of tasks) {
+            if (task.sheepIds.length === 1) {
+                // Task only has this one sheep — delete whole task
+                await Task.findByIdAndDelete(task._id);
+            } else {
+                // Task has multiple sheep — remove this sheep only
+                await Task.findByIdAndUpdate(
+                    task._id,
+                    { $pull: { sheepIds: sheepId } }
+                );
+            }
+        }
+
+        console.log(`Cleaned up tasks for sheep ${sheepId}`);
+    } catch (error) {
+        console.error(`Failed to clean up tasks for sheep ${sheepId}:`, error);
+    }
+};
+
+export const deleteTasksForHermonSheep = async (sheepId) => {
+    console.log("The sheeps id is :" , sheepId)
+    try {
+        const tasks = await Task.find({
+            title: { $in: "اعطاء الهرمون" },
+            sheepIds: sheepId
+        });
+        console.log("tasks is : ", tasks)
+        for (const task of tasks) {
+            if (task.sheepIds.length === 1) {
+                // Task only has this one sheep — delete whole task
+                await Task.findByIdAndDelete(task._id);
+            } else {
+                // Task has multiple sheep — remove this sheep only
+                await Task.findByIdAndUpdate(
+                    task._id,
+                    { $pull: { sheepIds: sheepId } }
+                );
+            }
+        }
+
+        console.log(`Cleaned up tasks for sheep ${sheepId}`);
+    } catch (error) {
+        console.error(`Failed to clean up tasks for sheep ${sheepId}:`, error);
+    }
+};
