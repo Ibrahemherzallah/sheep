@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 const milkFormSchema = z.object({
   productionLiters: z.string().refine(val => !isNaN(Number(val)) && Number(val) >= 0, {
@@ -75,6 +76,34 @@ export default function Milk() {
     }
   }
 
+
+  async function deleteMilk(id: string) {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`https://thesheep.top/api/milk/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error("Failed to delete milk record");
+
+      const result = await response.json();
+      console.log("Milk record deleted:", result);
+      toast.success("تم حذف تسجيل الحليب بنجاح");
+
+      // Optional: refresh the list
+      fetchMilkRecords();
+    } catch (err) {
+      console.error(err);
+      toast.error("حدث خطأ أثناء الحذف");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); // 1st day of current month
   const collectTotalProduction = milkData.reduce((accumulator,element) => {
@@ -84,7 +113,7 @@ export default function Milk() {
     return accumulator + element?.price * element?.sold;
   }, 0);
   const collectTotalSold = milkData.reduce((accumulator,element) => {
-    return accumulator + element?.production;
+    return accumulator + element?.sold;
   }, 0);
   const collectTotalPriceAvg = milkData.reduce((accumulator,element) => {
     return collectTotalPrice / milkData.length;
@@ -218,16 +247,17 @@ export default function Milk() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b">
-                  <th className="py-3 px-2 text-right">الإيرادات</th>
-                  <th className="py-3 px-2 text-right">الإنتاج (L)</th>
-                  <th className="py-3 px-2 text-right">المباع (L)</th>
-                  <th className="py-3 px-2 text-right">السعر/L</th>
-                  <th className="py-3 px-2 text-right">التاريخ</th>
-                </tr>
+              <tr className="border-b">
+                <th className="py-3 px-2 text-right">الإيرادات</th>
+                <th className="py-3 px-2 text-right">الإنتاج (L)</th>
+                <th className="py-3 px-2 text-right">المباع (L)</th>
+                <th className="py-3 px-2 text-right">السعر/L</th>
+                <th className="py-3 px-2 text-right">التاريخ</th>
+                <th className="py-3 px-2 text-center">إجراء</th>
+              </tr>
               </thead>
               <tbody>
-                {milkData.map((record) => (
+              {milkData.map((record) => (
                   <tr key={record._id} className="border-b">
                     <td className="py-3 px-2">₪{(record?.price * record?.sold).toFixed(2)}</td>
                     <td className="py-3 px-2">{record?.production} L</td>
@@ -236,8 +266,16 @@ export default function Milk() {
                     <td className="py-3 px-2">
                       {new Date(record?.date).toISOString().split('T')[0]}
                     </td>
+                    <td className="py-3 px-2 text-center">
+                      <button
+                          onClick={() => deleteMilk(record._id)}
+                          className="text-red-600 hover:text-red-800 transition-colors"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </td>
                   </tr>
-                ))}
+              ))}
               </tbody>
             </table>
           </div>

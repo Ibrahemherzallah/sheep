@@ -23,9 +23,13 @@ export const createMilkRecord = async (req, res) => {
         const soldAmount = Number(sold);
         const unitPrice = Number(price);
         const revenue = soldAmount * unitPrice
+        console.log("quantity is: " ,quantity)
+        console.log("soldAmount is: " ,soldAmount)
+        console.log("unitPrice is: " ,unitPrice)
+        console.log("revenue is: " ,revenue)
 
         milkInventory.quantity = quantity + soldAmount;
-        milkInventory.price += soldAmount * unitPrice;
+        milkInventory.price += revenue;
 
         await milkInventory.save();
 
@@ -138,10 +142,61 @@ export const updateMilkRecord = async (req, res) => {
 export const deleteMilkRecord = async (req, res) => {
     try {
         const { id } = req.params;
-        const deleted = await MilkProduction.findByIdAndDelete(id);
-        if (!deleted) return res.status(404).json({ error: 'السجل غير موجود' });
-        res.json({ message: 'تم الحذف بنجاح' });
+
+        // 1. Find the milk record
+        const record = await MilkProduction.findById(id);
+        if (!record) {
+            return res.status(404).json({ error: "لم يتم العثور على سجل الحليب" });
+        }
+
+        const { date, sold, price } = record;
+
+        // 2. Find milk inventory
+        const milkInventory = await Inventory.findOne({ type: 'حليب', category: 'income' });
+        if (!milkInventory) {
+            return res.status(400).json({ error: 'لم يتم العثور على عنصر الحليب في الجرد' });
+        }
+
+        // 3. Revert inventory (decrease sold quantity and revenue)
+        const soldAmount = Number(sold);
+        const unitPrice = Number(price);
+        const revenue = soldAmount * unitPrice;
+
+        milkInventory.quantity = Math.max(0, Number(milkInventory.quantity) - soldAmount);
+        milkInventory.price = Math.max(0, Number(milkInventory.price) - revenue);
+
+        await milkInventory.save();
+
+        // 4. Get month/year from record date
+        const recordDate = new Date(date);
+        const month = recordDate.getMonth() + 1;
+        const year = recordDate.getFullYear();
+
+        // 5. Update income
+        let income = await Income.findOne({ month, year });
+        if (income) {
+            const resource = income.resources.find(r =>
+                r.item.toString() === milkInventory._id.toString()
+            );
+
+            if (resource) {
+                resource.price = Math.max(0, resource.price - revenue);
+            }
+
+            income.totalCost = Math.max(0, income.totalCost - revenue);
+
+            // Clean resources with 0 price
+            income.resources = income.resources.filter(r => r.price > 0);
+
+            await income.save();
+        }
+
+        // 6. Delete the milk record
+        await MilkProduction.findByIdAndDelete(id);
+
+        res.status(200).json({ message: "تم حذف سجل الحليب وتحديث البيانات" });
     } catch (err) {
-        res.status(500).json({ error: 'خطأ في حذف البيانات' });
+        console.error(err);
+        res.status(500).json({ error: "خطأ في حذف سجل الحليب" });
     }
 };
