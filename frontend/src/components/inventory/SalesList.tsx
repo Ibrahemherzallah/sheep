@@ -93,7 +93,7 @@ export const SalesList: React.FC<SalesListProps> = ({ type, sales, onDelete, onA
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                         <Calendar className="h-3 w-3" />
-                                        {format(new Date(sale.date || sale?.createdAt), 'MMM dd, yyyy')}
+                                        {format(new Date(sale.date || sale?.updatedAt), 'MMM dd, yyyy')}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
