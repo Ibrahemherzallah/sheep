@@ -637,6 +637,14 @@ const Dashboard = () => {
                                       />
                                       <span>
                                         🐑 النعجة رقم: {sheep.sheepNumber}
+                                        {sheep.badgeColor && (
+                                            <span
+                                                className={`inline-block w-3 h-3 rounded-full ms-2 ${
+                                                    sheep.badgeColor === 'أحمر' ? 'bg-red-500' : 'bg-yellow-400'
+                                                }`}
+                                                title={`علامة ${sheep.badgeColor === 'red' ? 'حمراء' : 'صفراء'}`}
+                                            />
+                                        )}
                                       </span>
                                     </div>
 

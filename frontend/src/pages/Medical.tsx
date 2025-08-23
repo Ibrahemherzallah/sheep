@@ -1001,10 +1001,21 @@ const Medical = () => {
                               </TableCell>
                               <TableCell className={`p-1`}>{event.title}</TableCell>
                               <TableCell className={`p-1`}>{event.notes || 'لا يوجد ملاحظات'}</TableCell>
-                              <TableCell className={`p-1`}
-                                         style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                                         title={event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}>
-                                {event?.sheepIds?.map((sheep) => sheep.sheepNumber).join(', ')}
+                              <TableCell
+                                  style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                  title={event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}
+                              >
+                                {event?.sheepIds?.map((sheep) => (
+                                    <span key={sheep._id} className="inline-flex items-center me-2">
+                                      {sheep.sheepNumber}
+                                      {sheep.badgeColor === 'أحمر' && (
+                                          <span
+                                              className="inline-block w-3 h-3 rounded-full ms-2 bg-red-500"
+                                              title="علامة حمراء"
+                                          />
+                                      )}
+                                    </span>
+                                ))}
                               </TableCell>
                               <TableCell className={`px-1`}>
                                 <div className={'flex gap-2'}>
@@ -1073,8 +1084,19 @@ const Medical = () => {
                               <TableCell>{event.notes}</TableCell>
                               <TableCell
                                   style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                                  title={event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}>
-                                {event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}
+                                  title={event?.sheepId?.map((sheep) => sheep.sheepNumber).join(', ')}
+                              >
+                                {event?.sheepId?.map((sheep) => (
+                                    <span key={sheep._id} className="inline-flex items-center me-2">
+                                      {sheep.sheepNumber}
+                                      {sheep.badgeColor === 'أحمر' && (
+                                          <span
+                                              className="inline-block w-3 h-3 rounded-full ms-2 bg-red-500"
+                                              title="علامة حمراء"
+                                          />
+                                      )}
+                                    </span>
+                                ))}
                               </TableCell>
                               <TableCell>
                                 <Button
