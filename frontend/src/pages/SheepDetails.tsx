@@ -70,7 +70,7 @@ const EditPregnancyDates = ({ pregnancyId, onUpdated }) => {
 
     setLoading(true);
     try {
-      await axios.put(`http://localhost:3030/api/pregnancies/${pregnancyId}/update-dates`, {
+      await axios.put(`https://thesheep.top/api/pregnancies/${pregnancyId}/update-dates`, {
         daysPregnant: Number(daysPregnant),
       });
       setOpen(false);
