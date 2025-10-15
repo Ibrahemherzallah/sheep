@@ -83,6 +83,89 @@ export const createPregnancies = async (req, res) => {
     }
 };
 
+export const updatePregnancyDates = async (req, res) => {
+    try {
+        const { pregnancyId } = req.params;
+        const { daysPregnant } = req.body; // only this field from frontend
+
+        const pregnancy = await Pregnancy.findById(pregnancyId);
+        if (!pregnancy) return res.status(404).json({ error: "Pregnancy not found" });
+
+        const sheepId = pregnancy.sheepId;
+        const sheep = await Sheep.findById(sheepId);
+        if (!sheep) return res.status(404).json({ error: "Sheep not found" });
+
+        // === calculate new dates ===
+        const today = new Date();
+        const pregnantDate = new Date(today);
+        pregnantDate.setDate(today.getDate() - daysPregnant);
+
+        const expectedBornDate = new Date(pregnantDate);
+        expectedBornDate.setDate(pregnantDate.getDate() + 150);
+
+        // === update the pregnancy ===
+        pregnancy.pregnantDate = pregnantDate;
+        pregnancy.expectedBornDate = expectedBornDate;
+        await pregnancy.save();
+
+        // === recalc related task dates ===
+        const pasteurellaDate = new Date(pregnantDate);
+        pasteurellaDate.setDate(pasteurellaDate.getDate() + 90);
+
+        console.log("pasteurellaDate : ",  pasteurellaDate)
+        const pregnancyFixDate = new Date(pregnantDate);
+        pregnancyFixDate.setDate(pregnancyFixDate.getDate() + 95);
+        console.log("pregnancyFixDate : ",  pregnancyFixDate)
+
+        const handleTaskUpdate = async (type, title, newDate) => {
+            const existingTasks = await Task.find({ type, title, sheepIds: sheepId });
+
+            for (const task of existingTasks) {
+                console.log(`Updating task [${task.title}] to date:`, newDate);
+
+                if (task.sheepIds.length === 1) {
+                    task.dueDate = newDate;
+                    await task.save();
+                } else {
+                    task.sheepIds = task.sheepIds.filter(
+                        (id) => id.toString() !== sheepId.toString()
+                    );
+                    await task.save();
+
+                    await Task.create({
+                        title,
+                        dueDate: newDate,
+                        type,
+                        sheepIds: [sheepId],
+                    });
+                }
+            }
+        };
+
+        await handleTaskUpdate("born", "تاريخ الولادة المتوقع", expectedBornDate);
+
+        await handleTaskUpdate(
+            "injection",
+            "إعطاء لقاح الباستيريلا وال فيرست ايد",
+            pasteurellaDate
+        );
+
+        await handleTaskUpdate(
+            "injection",
+            "إعطاء لقاح تثبيت الحمل",
+            pregnancyFixDate
+        );
+
+        res.json({
+            message: "تم تحديث حالة الحمل وتعديل المهام المرتبطة.",
+            updatedPregnancy: pregnancy,
+        });
+    } catch (err) {
+        console.error("Error updating pregnancy:", err);
+        res.status(500).json({ error: "حدث خطأ أثناء تحديث التواريخ." });
+    }
+};
+
 export const getAllPregnancies = async (req, res) => {
     try {
         const pregnancies = await Pregnancy.find().populate('sheepId');

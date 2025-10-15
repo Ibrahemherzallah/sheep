@@ -108,6 +108,15 @@ export const ExpensesList: React.FC<ExpensesListProps> = ({ expenses, onDelete, 
                                     >
                                         <Plus className="h-4 w-4" />
                                     </Button>
+                                    {/* Delete Button */}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                                        onClick={() => onDelete(expense._id)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             </div>
                         </Card>

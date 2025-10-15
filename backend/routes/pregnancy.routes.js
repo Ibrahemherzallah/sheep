@@ -8,13 +8,14 @@ import {
     deletePregnancy,
     updateOnePregnancy,
     updateEndMilkInfo,
-    updateMilkAmountOnly
+    updateMilkAmountOnly, updatePregnancyDates
 } from '../controllers/pregnancy.controller.js';
 import {authenticate} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 router.post('/bulk', authenticate, createPregnancies);
+router.put("/:pregnancyId/update-dates", updatePregnancyDates);
 router.get('/', getAllPregnancies);
 router.put('/update-after-birth', authenticate, updateLastPregnanciesAfterBirth);
 router.put('/update-milk', authenticate, updateMilkInfo);
