@@ -15,12 +15,108 @@ import {
   Tag,
   Users
 } from 'lucide-react';
-import {Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Checkbox, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Form, FormControl, FormField, FormItem, FormLabel, FormMessage, Input, Separator, Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, toast,} from '@/components/ui';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+  Label,
+  Separator,
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  toast,
+} from '@/components/ui';
 import {useForm} from "react-hook-form";
 import { formatDate } from "../utils/dateUtils";
 import * as React from "react";
+import axios from "axios";
 
 
+const EditPregnancyDates = ({ pregnancyId, onUpdated }) => {
+  const [open, setOpen] = useState(false);
+  const [daysPregnant, setDaysPregnant] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleUpdate = async () => {
+    if (!daysPregnant || isNaN(daysPregnant) || daysPregnant <= 0) {
+      alert("الرجاء إدخال عدد الأيام بشكل صحيح");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.put(`http://localhost:3030/api/pregnancies/${pregnancyId}/update-dates`, {
+        daysPregnant: Number(daysPregnant),
+      });
+      setOpen(false);
+      onUpdated?.();
+    } catch (err) {
+      alert("حدث خطأ أثناء تحديث التواريخ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+      <>
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+          تعديل مدة الحمل
+        </Button>
+
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle style={{textAlign:'end'}}>تعديل مدة الحمل</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div dir={'rtl'}>
+                <Label>مدة الحمل</Label>
+                <Input
+                    type="number"
+                    placeholder="مثال: 40"
+                    value={daysPregnant}
+                    onChange={(e) => setDaysPregnant(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  يتم حساب التواريخ تلقائيًا (مدة الحمل الإجمالية 150 يومًا)
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleUpdate} disabled={loading}>
+                {loading ? "جارٍ التحديث..." : "تحديث"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
+  );
+};
 
 const SheepDetails = () => {
   const [editSheep, setEditSheep] = useState(false);
@@ -576,7 +672,7 @@ const SheepDetails = () => {
                       )}
                     </div>
                     {latestPregnancy.bornDate && latestPregnancy.milkAmount === 0 && (
-                        <Button style={{ margin: '1rem' }} onClick={() => setMilkAmountModal(true)}>
+                        <Button style={{ margin: '1rem' }} onClick={() => setMilkAmountModal(true)} disabled={sheep?.status ===  'نافقة'}>
                           إدخال انتاج الحليب
                         </Button>
                     )}
@@ -873,8 +969,19 @@ const SheepDetails = () => {
               {sheep.isPregnant && (
                 <Card className="border-purple-200">
                   <CardHeader className="bg-purple-50">
-                    <CardTitle>الولادات القادمة</CardTitle>
-                    <CardDescription>تفاصيل توقع الولادة</CardDescription>
+                    <div className={'flex justify-between items-center'}>
+                      <div>
+                        <CardTitle>الولادات القادمة</CardTitle>
+                        <CardDescription>تفاصيل توقع الولادة</CardDescription>
+                      </div>
+                      <div>
+                        <EditPregnancyDates
+                            pregnancyId={latestPregnancy?._id}
+                            currentPregnantDate={latestPregnancy?.pregnantDate}
+                            currentExpectedDate={latestPregnancy?.expectedBornDate}
+                        />
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-2 gap-4">

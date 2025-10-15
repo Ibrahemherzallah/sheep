@@ -80,6 +80,12 @@ const SheepCard = ({ sheep }: { sheep: any }) => {
                       title={`علامة ${sheep.badgeColor === 'red' ? 'حمراء' : 'صفراء'}`}
                   />
               )}
+              {/* Death badge */}
+              {sheep.status === 'نافقة' && (
+                  <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full font-medium">
+                    نافقة
+                  </span>
+              )}
             </div>
           </div>
 
@@ -157,7 +163,6 @@ const SheepManagement = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const token = localStorage.getItem("token");
 
-  const filteredDrug = allDrugs.filter(drug => drug?.section === 'sheep' && drug?.type === "Medicine")
   // Forms
   const form = useForm<BirthFormData>({
     defaultValues: {
