@@ -17,3 +17,14 @@ export async function createBirthRelatedTasks(pregnancy, sheepIds) {
         sheepIds,
     });
 }
+
+
+export async function createTrahRelatedTasks(trahDate, sheepIds) {
+    await Task.create({
+        title: 'إسفنجة',
+        dueDate: addDays(trahDate.trahDate, 30),
+        type: 'injection',
+        sheepIds,
+    });
+}
+

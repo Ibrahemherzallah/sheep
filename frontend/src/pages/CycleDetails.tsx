@@ -159,7 +159,7 @@ const CycleDetails = () => {
     console.log("gender is:  " , gender)
     console.log("numberToAdd is:  " , numberToAdd)
     try {
-      const response = await fetch(`http://localhost:3030/api/cycle/add-sheep/${id}`, {
+      const response = await fetch(`https://thesheep.top/api/cycle/add-sheep/${id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

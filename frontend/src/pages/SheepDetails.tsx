@@ -13,6 +13,7 @@ import {
   Plus,
   Syringe,
   Tag,
+  Trash,
   Users
 } from 'lucide-react';
 import {
@@ -70,7 +71,7 @@ const EditPregnancyDates = ({ pregnancyId, onUpdated }) => {
 
     setLoading(true);
     try {
-      await axios.put(`http://localhost:3030/api/pregnancies/${pregnancyId}/update-dates`, {
+      await axios.put(`https://thesheep.top/api/pregnancies/${pregnancyId}/update-dates`, {
         daysPregnant: Number(daysPregnant),
       });
       setOpen(false);
@@ -81,6 +82,8 @@ const EditPregnancyDates = ({ pregnancyId, onUpdated }) => {
       setLoading(false);
     }
   };
+
+
 
   return (
       <>
@@ -126,6 +129,7 @@ const SheepDetails = () => {
   const [endMilkDateModal, setEndMilkDateModal] = useState(false)
   const [editPregnancyModal, setEditPregnancyModal] = useState(false)
   const [editDiedSheepModal, setEditDiedSheepModal] = useState(false)
+  const [deleteTrahModal, setDeleteTrahModal] = useState(false)
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [allSheep,setAllSheep] = useState([]);
@@ -143,7 +147,7 @@ const SheepDetails = () => {
   useEffect(() => {
     const fetchSheep = async () => {
       try {
-        const response = await fetch(`http://localhost:3030/api/sheep/${id}`);
+        const response = await fetch(`https://thesheep.top/api/sheep/${id}`);
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || 'فشل في جلب البيانات');
         setAllSheep(result);
@@ -158,14 +162,14 @@ const SheepDetails = () => {
   useEffect(() => {
     if (activeTab === 'injection'){
       const fetchData = async () => {
-        const res = await fetch(`http://localhost:3030/api/sheep/${id}/injection-history`);
+        const res = await fetch(`https://thesheep.top/api/sheep/${id}/injection-history`);
         const { injectionTypes, injections } = await res.json();
         setInjectionTypes(injectionTypes);
         setSheepInjections(injections);
       };
       const fetchNextInjectionTask = async () => {
         try {
-          const res = await fetch(`http://localhost:3030/api/tasks/next-injection/${id}`);
+          const res = await fetch(`https://thesheep.top/api/tasks/next-injection/${id}`);
           if (!res.ok) return;
           const data = await res.json();
           setNextTask(data);
@@ -195,7 +199,7 @@ const SheepDetails = () => {
   });
   const handleSubmitMilkAmount = async (data: MilkFormData) => {
     try {
-      const response = await fetch("http://localhost:3030/api/pregnancies/update-milk", {
+      const response = await fetch("https://thesheep.top/api/pregnancies/update-milk", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -226,7 +230,7 @@ const SheepDetails = () => {
   });
   const handleSubmitEndMilkDate = async (data: EndMilkFormData) => {
     try {
-      const response = await fetch("http://localhost:3030/api/pregnancies/update-end-milk", {
+      const response = await fetch("https://thesheep.top/api/pregnancies/update-end-milk", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -258,7 +262,7 @@ const SheepDetails = () => {
   const handleSubmitChangeMilkAmount = async (data: ChangeMilkAmountFormData) => {
     console.log("data is :" , data)
     try {
-      const response = await fetch("http://localhost:3030/api/pregnancies/update-milk-amount", {
+      const response = await fetch("https://thesheep.top/api/pregnancies/update-milk-amount", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -296,7 +300,7 @@ const SheepDetails = () => {
 
     try {
       if (tab === "death") {
-        await fetch(`http://localhost:3030/api/sheep/${id}/status`, {
+        await fetch(`https://thesheep.top/api/sheep/${id}/status`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -305,7 +309,7 @@ const SheepDetails = () => {
           body: JSON.stringify({ status: "نافقة" }),
         });
       } else if (tab === "sell") {
-        await fetch(`http://localhost:3030/api/sheep/${id}/status`, {
+        await fetch(`https://thesheep.top/api/sheep/${id}/status`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -314,7 +318,7 @@ const SheepDetails = () => {
           body: JSON.stringify({ status: "مباعة", sellPrice }),
         });
       } else if (tab === "delete") {
-        await fetch(`http://localhost:3030/api/sheep/${id}`, {
+        await fetch(`https://thesheep.top/api/sheep/${id}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -359,7 +363,7 @@ const SheepDetails = () => {
     birthDate.setDate(birthDate.getDate() - data.ageDays);
     data.birthDate = birthDate.toISOString(); // 💾 Send to backend
     try {
-      const response = await fetch(`http://localhost:3030/api/sheep/${sheep._id}`, {
+      const response = await fetch(`https://thesheep.top/api/sheep/${sheep._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -420,7 +424,7 @@ const SheepDetails = () => {
   const handleDiedSheep = async (data: EditPregnancyData) => {
     console.log("Enter frotnend")
     try {
-      const response = await fetch(`http://localhost:3030/api/pregnancies/${selectedPregnancy}`, {
+      const response = await fetch(`https://thesheep.top/api/pregnancies/${selectedPregnancy}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -466,7 +470,7 @@ const SheepDetails = () => {
   const handleEditPregnancy = async (data: EditPregnancyData) => {
     console.log("Enter frotnend")
     try {
-      const response = await fetch(`http://localhost:3030/api/pregnancies/${selectedPregnancy}`, {
+      const response = await fetch(`https://thesheep.top/api/pregnancies/${selectedPregnancy}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -515,7 +519,7 @@ const SheepDetails = () => {
     console.log("Enter frotnend data" , data)
     console.log("Enter selectedIsfenjeh data" , selectedIsfenjeh)
     try {
-      const response = await fetch(`http://localhost:3030/api/pregnantSupplimants/${selectedIsfenjeh}`, {
+      const response = await fetch(`https://thesheep.top/api/pregnantSupplimants/${selectedIsfenjeh}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -554,6 +558,35 @@ const SheepDetails = () => {
     }
   };
 
+  const handleDeleteTrah = async () => {
+    try {
+      const response = await fetch(`https://thesheep.top/api/trah/delete/${selectedPregnancy}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.message);
+
+      toast({
+        title: "تم حذف الطراح بنجاح",
+        description: "تم إزالة السجل من قاعدة البيانات"
+      });
+
+      setEditPregnancyModal(false);
+      window.location.reload();
+
+    } catch (err: any) {
+      toast({
+        title: "خطأ",
+        description: err.message || "فشل حذف الطراح",
+        variant: "destructive"
+      });
+    }
+  };
 
 
   if (loading) {
@@ -1071,6 +1104,63 @@ const SheepDetails = () => {
                 </Card>
               )}
 
+              {sheep?.trahCases?.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Baby size={18} />
+                        <span>حالات الطراح</span>
+                      </CardTitle>
+                      <CardDescription>تاريخ لجميع حالات الطراح لهذه النعجة</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead style={{textAlign:'start'}}>التاريخ</TableHead>
+                                <TableHead style={{textAlign:'start'}}>عدد الاولاد</TableHead>
+                                <TableHead style={{textAlign:'start'}}>الملاحظات</TableHead>
+                                <TableHead style={{textAlign:'start'}}>التعديل</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {sheep?.trahCases.map((record) => (
+                                  <TableRow key={record.id}>
+                                    {
+                                      record.trahDate
+                                          ?<TableCell>{new Date(record.trahDate).toISOString().split('T')[0]}</TableCell>
+                                          : 'غير متوفر'
+                                    }
+                                    <TableCell>
+                                      <div>
+                                        {record.numberOfFemaleLamb + record.numberOfMaleLamb}
+                                        <div className="text-xs text-muted-foreground mt-1">
+                                          {record.numberOfMaleLamb} ذكر ,{record.numberOfFemaleLamb} أنثى
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>{record.notes || 'لا يوجد ملاحظات'}</TableCell>
+                                    <TableCell>
+                                      <Button
+                                          onClick={() => {
+                                            setDeleteTrahModal(true);
+                                            setSelectedPregnancy(record._id);
+                                          }}
+                                          variant="outline"
+                                          className="ml-2"
+                                      >
+                                        <Trash size={18} />
+                                        <span>حذف الطراح</span>
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                    </CardContent>
+                  </Card>
+              )}
+
 
 
               <Card>
@@ -1586,6 +1676,26 @@ const SheepDetails = () => {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={deleteTrahModal} onOpenChange={setDeleteTrahModal}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تأكيد حذف الطراح</DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد أنك تريد حذف هذا السجل؟ هذا الإجراء لا يمكن التراجع عنه.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditPregnancyModal(false)}>
+              إلغاء
+            </Button>
+
+            <Button variant="destructive" onClick={handleDeleteTrah}>
+              حذف
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

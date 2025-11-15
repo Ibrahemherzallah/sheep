@@ -327,6 +327,10 @@ export const getSheepById = async (req, res) => {
                 options: { sort: { createdAt: -1 } },
             })
             .populate({
+                path: 'trahCases',
+                options: { sort: { createdAt: -1 } },
+            })
+            .populate({
                 path: 'pregnantCases',
                 options: { sort: { bornDate: -1 } },
             })

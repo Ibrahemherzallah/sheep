@@ -14,6 +14,7 @@ interface BirthsOverviewProps {
     totalBirthFeMales: number;
     totalDeadMales: number;
     totalDeathsFeMales: number;
+    trahSummary: object;
 }
 
 interface AddDeathsFormValues {
@@ -30,6 +31,7 @@ const BirthsOverview = ({
                             totalDeathsFeMales,
                             totalBirthMales,
                             totalBirthFeMales,
+                            trahSummary
                         }: BirthsOverviewProps) => {
 
     const netChange = totalBirths - totalDeaths;
@@ -49,7 +51,7 @@ const BirthsOverview = ({
 
     const handleAddDeaths = async (values: AddDeathsFormValues) => {
         try {
-            const response = await fetch("http://localhost:3030/api/died-labors/add", {
+            const response = await fetch("https://thesheep.top/api/died-labors/add", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -81,7 +83,7 @@ const BirthsOverview = ({
     return (
         <div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-4">
                 <Card dir="rtl">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">عدد الولادات الكلي</CardTitle>
@@ -123,8 +125,28 @@ const BirthsOverview = ({
                     </CardContent>
                 </Card>
 
-                <Card dir="rtl">
+                <Card dir="rtl" className="relative">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">عدد الطراح الكلي</CardTitle>
+                        <Skull className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+
+                    <CardContent>
+                        <div className={'flex justify-between'}>
+                            <div>
+                                <div className="text-2xl font-bold text-foreground">{trahSummary?.totalRecords}</div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                    {trahSummary?.totalMale} ذكر ,{trahSummary?.totalFemale} أنثى
+                                </div>
+                            </div>
+                        </div>
+                        {/* Button INSIDE the card now */}
+
+                    </CardContent>
+                </Card>
+
+                <Card dir="rtl">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 ">
                         <CardTitle className="text-sm font-medium">العدد الصافي</CardTitle>
                         <div className={`h-4 w-4 rounded-full ${netChange >= 0 ? 'bg-green-500' : 'bg-red-500'}`} />
                     </CardHeader>

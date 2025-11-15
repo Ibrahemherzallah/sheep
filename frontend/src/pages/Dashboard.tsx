@@ -16,32 +16,48 @@ const getEventIcon = (type: string) => {
   }
 };
 
-const StatCard = ({title, value, description, icon: Icon, trend,}: {
+const StatCard = ({
+                    title,
+                    value,
+                    description,
+                    icon: Icon,
+                    trend,
+                    onIconClick, // 👈 use this
+                  }: {
   title: string;
   value: string | number;
   description?: string;
   icon: React.ElementType;
   trend?: { value: number; label: string; positive?: boolean };
+  onIconClick?: () => void;
 }) => (
-  <Card>
-    <CardHeader className="flex flex-row items-center justify-between pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      <div className="bg-primary/10 p-2 rounded-full">
-        <Icon size={18} className="text-primary" />
-      </div>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
-      {description && (
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
-      )}
-      {trend && (
-        <div className={`text-xs mt-2 flex items-center ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
-          {trend.positive ? '+' : '-'}{trend.value}% {trend.label}
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div
+            className="bg-primary/10 p-2 rounded-full cursor-pointer"
+            onClick={onIconClick} // 👈 attach click handler here
+        >
+          <Icon size={18} className="text-primary" />
         </div>
-      )}
-    </CardContent>
-  </Card>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        {description && (
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        )}
+        {trend && (
+            <div
+                className={`text-xs mt-2 flex items-center ${
+                    trend.positive ? "text-green-600" : "text-red-600"
+                }`}
+            >
+              {trend.positive ? "+" : "-"}
+              {trend.value}% {trend.label}
+            </div>
+        )}
+      </CardContent>
+    </Card>
 );
 
 const Dashboard = () => {
@@ -72,6 +88,10 @@ const Dashboard = () => {
   const token = localStorage.getItem("token");
   const [selectedSheepIds, setSelectedSheepIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showUpcomingModal, setShowUpcomingModal] = useState(false);
+  const [upcomingSheep, setUpcomingSheep] = useState([]);
+  const [showSickModal, setShowSickModal] = useState(false);
+  const [sickSheep, setSickSheep] = useState([]);
 
   const toggleSheepSelection = (id: string) => {
     setSelectedSheepIds((prev) =>
@@ -359,6 +379,29 @@ const Dashboard = () => {
       return false;
     }
   };
+
+
+  const handleBabyClick = async () => {
+    try {
+      const res = await fetch("https://thesheep.top/api/dashboard/summary/listUpcomingBirth"); // your new controller
+      const data = await res.json();
+      setUpcomingSheep(data);
+      setShowUpcomingModal(true);
+    } catch (err) {
+      console.error("فشل في جلب حالات الحمل القادمة:", err);
+    }
+  };
+  const handleSickClick = async () => {
+    try {
+      const res = await fetch("https://thesheep.top/api/sheep/latest-patient-cases");
+      const data = await res.json();
+      setSickSheep(data);
+      setShowSickModal(true);
+    } catch (err) {
+      console.error("فشل في جلب حالات المرض القادمة:", err);
+    }
+  };
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
@@ -458,9 +501,22 @@ const Dashboard = () => {
         <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard title="عدد الاغنام الكلي" value={dashboardData.totalSheep} icon={Ear} trend={{ value: dashboardData.sheepGrowthPercentage, label: "من الشهر الفائت", positive: true }}/>
-            <StatCard title="الاغنام الحوامل" value={dashboardData.pregnantSheep} description={`${dashboardData.upcomingPregnancies} تلد في ال7 أيام القادمة `} icon={Baby}/>
+            <StatCard
+                title="الاغنام الحوامل"
+                value={dashboardData.pregnantSheep}
+                description={`    تلد في ال7 أيام القادمة  ` + ` ${dashboardData.upcomingPregnancies}`}
+                icon={Baby} // pass the component type, not JSX
+                onIconClick={handleBabyClick} // optional, create a prop for click inside StatCard
+            />
             <StatCard title="الدورات النشطة" value={dashboardData.activeCycles} description={`${dashboardData.totalCycles} جميع الدورات `} icon={Calendar}/>
-            <StatCard title="الحالات الصحية" value={`${dashboardData.totalSheep - dashboardData.patientSheep}نعجة سليمة `} description={`${dashboardData.patientSheep} مريضات`} icon={Activity}/>
+            <StatCard
+                title="الحالات الصحية"
+                value={`${dashboardData.totalSheep - dashboardData.patientSheep}نعجة سليمة `}
+                description={`${dashboardData.patientSheep} مريضات`}
+                icon={Activity}
+                onIconClick={handleSickClick} // optional, create a prop for click inside StatCard
+            />
+            {/*<StatCard title="الحالات الصحية" value={`${dashboardData.totalSheep - dashboardData.patientSheep}نعجة سليمة `} description={`${dashboardData.patientSheep} مريضات`} icon={Activity}/>*/}
           </div>
         </TabsContent>
         <TabsContent value="medical">
@@ -756,6 +812,56 @@ const Dashboard = () => {
             </DialogContent>
           </Dialog>
       )}
+
+
+      {showUpcomingModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h2 className="text-lg font-bold mb-4">الاغنام التي ستلد قريباً</h2>
+              <ul className="space-y-2 max-h-96 overflow-y-auto">
+                {upcomingSheep.length === 0 && (
+                    <li>لا توجد اغنام ستلد في الـ 7 أيام القادمة</li>
+                )}
+                {upcomingSheep.map((sheep) => (
+                    <li key={sheep.pregnancyId} className="border-b py-2">
+                      <p>رقم النعجة: {sheep.sheepNumber}</p>
+                    </li>
+                ))}
+              </ul>
+              <button
+                  onClick={() => setShowUpcomingModal(false)}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+      )}
+
+      {showSickModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h2 className="text-lg font-bold mb-4">الاغنام المريضةً</h2>
+              <ul className="space-y-2 max-h-96 overflow-y-auto">
+                {sickSheep.length === 0 && (
+                    <li>لا توجد اغنام مريضة</li>
+                )}
+                {sickSheep.map((sheep) => (
+                    <li key={sheep.sheepId} className="border-b py-2">
+                      <p>رقم النعجة: {sheep.sheepNumber}</p>
+                    </li>
+                ))}
+              </ul>
+              <button
+                  onClick={() => setShowSickModal(false)}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+      )}
+
     </div>
   );
 };

@@ -26,12 +26,13 @@ const Births = () => {
 
     const [monthlySummary, setMonthlySummary] = useState([]);
     const [yearlySummary, setYearlySummary] = useState([]);
+    const [trahSummary, setTrahSummary] = useState({});
 
     useEffect(() => {
         const fetchBirthsAndDeaths = async () => {
             try {
                 // Fetch total born lambs
-                const bornRes = await fetch("http://localhost:3030/api/pregnancies/total-born");
+                const bornRes = await fetch("https://thesheep.top/api/pregnancies/total-born");
                 const bornData = await bornRes.json();
 
                 setTotalBirthMales(bornData.totalMaleLambs);
@@ -39,7 +40,7 @@ const Births = () => {
                 setTotalBirths(bornData.totalMaleLambs + bornData.totalFemaleLambs);
 
                 // Fetch total dead lambs
-                const deadRes = await fetch("http://localhost:3030/api/pregnancies/total-dead");
+                const deadRes = await fetch("https://thesheep.top/api/pregnancies/total-dead");
                 const deadData = await deadRes.json();
 
                 setTotalDeadMales(deadData.totalDeadMale);
@@ -52,11 +53,11 @@ const Births = () => {
         };
         const fetchSummaries = async () => {
             try {
-                const monthlyRes = await fetch("http://localhost:3030/api/pregnancies/summary/monthly");
+                const monthlyRes = await fetch("https://thesheep.top/api/pregnancies/summary/monthly");
                 const monthlyData = await monthlyRes.json();
                 setMonthlySummary(monthlyData);
 
-                const yearlyRes = await fetch("http://localhost:3030/api/pregnancies/summary/yearly");
+                const yearlyRes = await fetch("https://thesheep.top/api/pregnancies/summary/yearly");
                 const yearlyData = await yearlyRes.json();
                 setYearlySummary(yearlyData);
 
@@ -64,7 +65,16 @@ const Births = () => {
                 console.error("Error fetching summaries:", err);
             }
         };
-
+        const fetchTrahSummaries = async () => {
+            try {
+                const res = await fetch("https://thesheep.top/api/trah/totals");
+                const data = await res.json();
+                setTrahSummary(data);
+            } catch (err) {
+                console.error("Error fetching summaries:", err);
+            }
+        };
+        fetchTrahSummaries()
         fetchSummaries();
         fetchBirthsAndDeaths();
     }, []);
@@ -79,7 +89,7 @@ const Births = () => {
                 </p>
             </div>
 
-            <BirthsOverview totalBirths={totalBirths} totalDeaths={totalDeaths} totalBirthMales={totalBirthMales} totalBirthFeMales={totalBirthFeMales} totalDeathsFeMales={totalDeadFemales} totalDeadMales={totalDeadMales}/>
+            <BirthsOverview totalBirths={totalBirths} trahSummary={trahSummary} totalDeaths={totalDeaths} totalBirthMales={totalBirthMales} totalBirthFeMales={totalBirthFeMales} totalDeathsFeMales={totalDeadFemales} totalDeadMales={totalDeadMales}/>
 
             <Card dir={'rtl'}>
                 <CardHeader>

@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import { Link } from 'react-router-dom';
-import {Baby, Calendar, Download, Filter, Plus, Search, Users} from 'lucide-react';
+import {Baby, Calendar, Download, Filter, Plus, Search, Skull, Users} from 'lucide-react';
 import { GiSheep } from 'react-icons/gi';
 import {Button, Input, Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Checkbox, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Label,} from '@/components/ui';
 import { toast } from '@/hooks/use-toast';
@@ -35,6 +35,13 @@ interface PregnantFormData {
   bornDate: string;
   notes: string;
 }
+interface TrahFormData {
+  trahDate: string;
+  numberOfMaleLamb: number;
+  numberOfFemaleLamb: number;
+  order?: number;
+  notes?: string;
+};
 interface AddSheepFormData {
   sheepNumber: number;
   sheepGender: string;
@@ -149,6 +156,7 @@ const SheepManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [addSheepDialog,setAddSheepDialog] = useState(false);
   const [birthDialogOpen, setBirthDialogOpen] = useState(false);
+  const [trahDialogOpen, setTrahDialogOpen] = useState(false);
   const [pregnantDialogOpen, setPregnantDialogOpen] = useState(false);
   const [selectedSheep, setSelectedSheep] = useState<string[]>([]);
   const [selectedSheepGender,setSelectedSheepGender] = useState('');
@@ -182,6 +190,16 @@ const SheepManagement = () => {
       notes: ''
     }
   })
+  const trahForm = useForm<TrahFormData>({
+    defaultValues: {
+      trahDate: "",
+      numberOfMaleLamb: 0,
+      numberOfFemaleLamb: 0,
+      order: undefined,
+      notes: ""
+    },
+    mode: "onChange" // optional, validate on change
+  });
   const addSheepForm = useForm<AddSheepFormData>({
     defaultValues: {
       sheepNumber: 0,
@@ -213,6 +231,7 @@ const SheepManagement = () => {
     if (activeTab === 'male' && sheep.sheepGender !== 'ذكر') return false;
     if (activeTab === 'female' && sheep.sheepGender !== 'أنثى') return false;
     if (activeTab === 'sick' && !sheep.isPatient) return false;
+    if (activeTab === 'trah' && !sheep?.trahCases?.length > 0) return false;
     if (statusFilter === 'sells' && !sheep.status === 'مباع') return false;
     if (statusFilter === 'died' && !sheep.status === 'نفوق') return false;
     return true;
@@ -243,6 +262,57 @@ const SheepManagement = () => {
     try {
       const response = await fetch('https://thesheep.top/api/pregnancies/update-after-birth', {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'حدث شيء خاطئ');
+      }
+
+      toast({
+        title: 'تم تحديث السجلات بنجاح',
+        description: `${selectedSheep.length} سجلات ولادة تم تسجيلها.`,
+      });
+
+      setBirthDialogOpen(false);
+      form.reset();
+      setSelectedSheep([]);
+      window.location.reload()
+    } catch (error: any) {
+      console.error('Failed to submit birth data:', error);
+      toast({
+        title: 'حدث خطأ',
+        description: error.message || 'تعذر حفظ سجلات الولادة.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false); // ✅ End loading
+    }
+  };
+  const handleSubmitTrah = async (data: BirthFormData) => {
+    setIsSubmitting(true); // 🔄 Start loading
+
+    const birthsArray = Object.entries(data.birthDetails).map(([sheepId, counts]) => ({
+      sheepId,
+      numberOfMaleLamb: counts.maleCount,
+      numberOfFemaleLamb: counts.femaleCount,
+    }));
+
+    const payload = {
+      trahDate: data.birthDate,
+      notes: data.notes,
+      births: birthsArray,
+    };
+
+    try {
+      const response = await fetch('https://thesheep.top/api/trah/add', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           "Authorization": `Bearer ${token}`
@@ -350,6 +420,8 @@ const SheepManagement = () => {
     }
   };
   const handleSubmitSheep = async (data: AddSheepFormData) => {
+    setIsSubmitting(true); // 🔄 Start loading
+
     const requestData = { ...data };
 
     // Convert age to birthdate
@@ -417,6 +489,8 @@ const SheepManagement = () => {
         description: error.message || 'لم يتم إضافة النعجة. حاول مرة أخرى.',
         variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false); // ✅ End loading
     }
   };
   const handleSheepSelection = (sheepId: string, checked: boolean) => {
@@ -501,6 +575,10 @@ const SheepManagement = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">إدارة الأغنام</h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button onClick={() => setTrahDialogOpen(true)} variant="outline" className="gap-1">
+            <Skull className="h-4 w-4 text-muted-foreground" />
+            <span>إضافة طراح</span>
+          </Button>
           <Button onClick={() => setPregnantDialogOpen(true)} variant="outline" className="gap-1">
             <GiSheep className="mr-1" />
             <span>إضافة حمل</span>
@@ -524,6 +602,7 @@ const SheepManagement = () => {
             <TabsTrigger value="male">الذكور</TabsTrigger>
             <TabsTrigger value="female">الاناث</TabsTrigger>
             <TabsTrigger value="sick">المرضى</TabsTrigger>
+            <TabsTrigger value="trah">الطراح</TabsTrigger>
           </TabsList>
         </Tabs>
         
@@ -584,7 +663,7 @@ const SheepManagement = () => {
               حدد الأغنام التي سوف تلد وحدد عدد المواليد
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmitBirth)} className="space-y-4" dir={'rtl'}>
               <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
@@ -598,7 +677,7 @@ const SheepManagement = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <div>
                   <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
                     <Users size={16} />
@@ -683,7 +762,127 @@ const SheepManagement = () => {
                   )}
                 />
               </div>
-              
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => {setBirthDialogOpen(false);form.reset();setSelectedSheep([]);}}>
+                  الغاء
+                </Button>
+                <Button type="submit" disabled={selectedSheep.length === 0 || isSubmitting}>
+                  {isSubmitting ? "جاري الحفظ..." : "احفظ تسجيلات الولادة"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Trah Dialog */}
+      <Dialog open={trahDialogOpen} onOpenChange={setTrahDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader style={{ textAlign: 'end' }}>
+            <DialogTitle>تسجيل حالات طراح جديدة</DialogTitle>
+            <DialogDescription>حدد الأغنام وحدد عدد المواليد</DialogDescription>
+          </DialogHeader>
+
+          <Form {...trahForm}>
+            <form onSubmit={form.handleSubmit(handleSubmitTrah)} className="space-y-4" dir={'rtl'}>
+              <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto pr-2">
+                <FormField control={form.control} name="birthDate" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>تاريخ الميلاد</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} dir={'rtl'}/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+                <div>
+                  <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <Users size={16} />
+                    حدد الأغنام التي طرحت
+                  </h3>
+                  <div className="mb-3">
+                    <Input type="text" placeholder="ادخل رقم النعجة" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full md:w-1/2"/>
+                  </div>
+
+                  {/* 🐑 Multi-selector */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3 max-h-60 overflow-y-auto">
+                    {pregnantSheep.filter(sheep =>
+                        String(sheep.sheepNumber).toLowerCase().includes(searchTerm.toLowerCase())).map((sheep) => (
+                        <div key={sheep._id} className="flex items-start space-x-2">
+                          <div className="grid gap-1.5 w-full">
+                            <label htmlFor={`sheep-${sheep._id}`} className="text-sm font-medium leading-none cursor-pointer">
+                              {sheep.sheepNumber}#
+                              {sheep.badgeColor && (
+                                  <span
+                                      className={`inline-block w-3 h-3 rounded-full ms-2 ${
+                                          sheep.badgeColor === 'أحمر' ? 'bg-red-500' : 'bg-yellow-400'
+                                      }`}
+                                      title={`علامة ${sheep.badgeColor === 'red' ? 'حمراء' : 'صفراء'}`}
+                                  />
+                              )}
+                            </label>
+
+                            {selectedSheep.includes(sheep._id) && (
+                                <div className="flex items-center gap-3 mt-1">
+                                  <div className="flex-1">
+                                    <label className="text-xs text-muted-foreground">الذكور</label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        {...form.register(`birthDetails.${sheep._id}.maleCount`, {
+                                          valueAsNumber: true,
+                                          min: 0
+                                        })}
+                                        className="h-8"
+                                    />
+                                  </div>
+                                  <div className="flex-1">
+                                    <label className="text-xs text-muted-foreground">الإناث</label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        {...form.register(`birthDetails.${sheep._id}.femaleCount`, {
+                                          valueAsNumber: true,
+                                          min: 0
+                                        })}
+                                        className="h-8"
+                                    />
+                                  </div>
+
+                                </div>
+                            )}
+                          </div>
+                          <Checkbox
+                              id={`sheep-${sheep._id}`}
+                              checked={selectedSheep.includes(sheep._id)}
+                              onCheckedChange={(checked) => handleSheepSelection(sheep._id, checked === true)}
+                          />
+                        </div>
+                    ))}
+
+                    {pregnantSheep.length === 0 && (
+                        <p className="text-sm text-muted-foreground col-span-full">لا يوجد أغنام بهذا الرقم.</p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {selectedSheep.length} الأغنام المحددة
+                </div>
+                <FormField control={form.control} name="notes" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ملاحظات</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="أي ملاحظات إضافية .." />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                )}
+                />
+              </div>
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => {setBirthDialogOpen(false);form.reset();setSelectedSheep([]);}}>
                   الغاء
@@ -773,7 +972,7 @@ const SheepManagement = () => {
                 <Button type="button" variant="outline" onClick={() => {setPregnantDialogOpen(false);form.reset();setSelectedSheep([]);}}>
                   الغاء
                 </Button>
-                <Button type="submit" disabled={selectedSheep.length === 0}>
+                <Button type="submit" disabled={selectedSheep.length === 0 || isSubmitting}>
                   {isSubmitting ? "جاري الحفظ..." : "احفظ تسجيلات الحمل"}
                 </Button>
               </DialogFooter>
@@ -962,10 +1161,9 @@ const SheepManagement = () => {
               </div>
 
               <DialogFooter>
-                <Button type="submit" disabled={!sheepNumber || !selectedSheepGender || !selectedSheepSource || !addSheepForm.watch("badgeColor")}>
-                  إضافة النعجة
+                <Button type="submit" disabled={!sheepNumber || !selectedSheepGender || !selectedSheepSource || !addSheepForm.watch("badgeColor") || isSubmitting}>
+                  {isSubmitting ? "جاري إضافة النعجة..." : "إضافة النعجة"}
                 </Button>
-
                 <Button type="button" variant="outline" onClick={() => {setAddSheepDialog(false);addSheepForm.reset()}}>
                   الغاء
                 </Button>

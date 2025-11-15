@@ -29,6 +29,8 @@ const BirthsMonthlySummary = ({ records }: BirthsMonthlySummaryProps) => {
         deaths: r.deaths,
         maleBorn: r.maleBorn,
         femaleBorn: r.femaleBorn,
+        maleTrah: r.maleTrah,
+        femaleTrah: r.femaleTrah,
         maleDied: r.maleDied,
         femaleDied: r.femaleDied,
         net: r.net
@@ -59,6 +61,7 @@ const BirthsMonthlySummary = ({ records }: BirthsMonthlySummaryProps) => {
                             <TableHead className="text-right">الشهر</TableHead>
                             <TableHead className="text-right">الولادات</TableHead>
                             <TableHead className="text-right">النفوق</TableHead>
+                            <TableHead className="text-right">الطراح</TableHead>
                             <TableHead className="text-right">الصافي</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -76,6 +79,12 @@ const BirthsMonthlySummary = ({ records }: BirthsMonthlySummaryProps) => {
                                     {data.deaths}
                                     <div className="text-xs text-muted-foreground mt-1">
                                         {data.maleDied} ذكر ,{data.femaleDied} أنثى
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right text-red-600">
+                                    {data.maleTrah + data.femaleTrah}
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                        {data.maleTrah} ذكر ,{data.femaleTrah} أنثى
                                     </div>
                                 </TableCell>
                                 <TableCell className={`text-right font-semibold ${data.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
