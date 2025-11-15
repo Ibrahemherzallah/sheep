@@ -35,6 +35,10 @@ export const dashboard = async (req, res) => {
         // ♀️ Upcoming Births (Next 7 Days)
         const upcomingPregnancies = await Pregnancy.countDocuments({
             expectedBornDate: { $gte: today, $lte: next7Days },
+            $or: [
+                { bornDate: { $exists: false } }, // bornDate does not exist
+                { bornDate: null }                // bornDate exists but is null
+            ]
         });
 
         // 🔁 Cycle Stats
@@ -68,6 +72,42 @@ export const dashboard = async (req, res) => {
     } catch (error) {
         console.error("Error fetching dashboard summary:", error);
         res.status(500).json({ error: "Server error while fetching dashboard summary" });
+    }
+};
+
+
+export const getUpcomingPregnancies = async (req, res) => {
+    try {
+        const today = new Date();
+        const next7Days = new Date(today);
+        next7Days.setDate(today.getDate() + 7);
+
+        // 1️⃣ Find pregnancy documents within next 7 days with no bornDate
+        const pregnancies = await Pregnancy.find({
+            expectedBornDate: { $gte: today, $lte: next7Days },
+            $or: [
+                { bornDate: { $exists: false } },
+                { bornDate: null }
+            ]
+        });
+
+        if (pregnancies.length === 0) {
+            return res.json([]); // No upcoming births
+        }
+
+        // 2️⃣ Extract sheep IDs
+        const sheepIds = pregnancies.map(p => p.sheepId);
+
+        // 3️⃣ Fetch the actual sheep documents
+        const sheepList = await Sheep.find({
+            _id: { $in: sheepIds }
+        }).select("sheepNumber sheepGender status isPregnant birthDate");
+
+        res.json(sheepList);
+
+    } catch (error) {
+        console.error("Error fetching upcoming births:", error);
+        res.status(500).json({ error: "Server error while fetching upcoming births" });
     }
 };
 

@@ -47,6 +47,7 @@ const BirthsYearlySummary = ({ records }: BirthsYearlySummaryProps) => {
                             <TableHead className="text-right">السنة</TableHead>
                             <TableHead className="text-right">الولادات</TableHead>
                             <TableHead className="text-right">النفوق</TableHead>
+                            <TableHead className="text-right">الطراح</TableHead>
                             <TableHead className="text-right">الصافي</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -56,7 +57,7 @@ const BirthsYearlySummary = ({ records }: BirthsYearlySummaryProps) => {
                             <TableRow key={data.year}>
                                 <TableCell className="font-medium">{data.year}</TableCell>
                                 <TableCell className="text-right text-green-600">
-                                    {Number(data.births)}
+                                    {data.maleBorn + data.femaleBorn}
                                     <div className="text-xs text-muted-foreground mt-1">
                                         {data.maleBorn} ذكر ,{data.femaleBorn} أنثى
                                     </div>
@@ -65,6 +66,12 @@ const BirthsYearlySummary = ({ records }: BirthsYearlySummaryProps) => {
                                     {Number(data.deaths)}
                                     <div className="text-xs text-muted-foreground mt-1">
                                         {data.maleDied} ذكر ,{data.femaleDied} أنثى
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right text-red-600">
+                                    {data.maleTrah + data.femaleTrah}
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                        {data.maleTrah} ذكر ,{data.femaleTrah} أنثى
                                     </div>
                                 </TableCell>
                                 <TableCell

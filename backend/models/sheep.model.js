@@ -23,6 +23,10 @@ const SheepSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Pregnancy'
     }],
+    trahCases: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'TrahCase'
+    }],
     patientCases: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Patient',
@@ -58,7 +62,7 @@ const SheepSchema = new mongoose.Schema({
     }],
     badgeColor: {
         type: String,
-        enum: ['أحمر', 'أصفر'], // red, yellow (you can use 'red'/'yellow' if you prefer)
+        enum: ['أحمر', 'أصفر'],
         required: true,
     },
     notes: {

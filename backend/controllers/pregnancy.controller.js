@@ -4,6 +4,7 @@ import Sheep from '../models/sheep.model.js';
 import Task from "../models/task.model.js";
 import Supplimant from "../models/pregnantSupplimants.model.js";
 import DiedLabor from "../models/diedLabor.model.js";
+import TrahCase from "../models/trahCases.model.js";
 
 export const createPregnancies = async (req, res) => {
     try {
@@ -509,9 +510,8 @@ export const getTotalDeadLambs = async (req, res) => {
 
 export const getMonthlySummary = async (req, res) => {
     try {
-        // 1️⃣ Pregnancy monthly summary
-        const pregSummary = await Pregnancy.aggregate([
-            { $match: { bornDate: { $ne: null } } },
+        const result = await Pregnancy.aggregate([
+            // === GROUP BORN LAMBS PER MONTH ===
             {
                 $group: {
                     _id: {
@@ -519,77 +519,81 @@ export const getMonthlySummary = async (req, res) => {
                         month: { $month: "$bornDate" }
                     },
                     maleBorn: { $sum: "$numberOfMaleLamb" },
-                    femaleBorn: { $sum: "$numberOfFemaleLamb" },
-                    maleDied: { $sum: "$numberOfMaleLambDied" },
-                    femaleDied: { $sum: "$numberOfFemaleLambDied" }
+                    femaleBorn: { $sum: "$numberOfFemaleLamb" }
                 }
-            }
-        ]);
+            },
 
-        // 2️⃣ DiedLabor monthly summary
-        const laborSummary = await DiedLabor.aggregate([
+            // === LOOKUP TRAH ===
             {
-                $group: {
-                    _id: {
-                        year: { $year: "$date" },
-                        month: { $month: "$date" }
-                    },
-                    maleDied: { $sum: "$males" },
-                    femaleDied: { $sum: "$females" }
+                $lookup: {
+                    from: "trahcases",         // <-- الصحيح
+                    let: { year: "$_id.year", month: "$_id.month" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: [{ $year: "$trahDate" }, "$$year"] },
+                                        { $eq: [{ $month: "$trahDate" }, "$$month"] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                maleTrah: { $sum: "$numberOfMaleLamb" },      // <-- الصحيح
+                                femaleTrah: { $sum: "$numberOfFemaleLamb" }   // <-- الصحيح
+                            }
+                        }
+                    ],
+                    as: "trahData"
                 }
-            }
+            },
+
+            // === FLATTEN ===
+            {
+                $addFields: {
+                    maleTrah: {
+                        $ifNull: [{ $arrayElemAt: ["$trahData.maleTrah", 0] }, 0]
+                    },
+                    femaleTrah: {
+                        $ifNull: [{ $arrayElemAt: ["$trahData.femaleTrah", 0] }, 0]
+                    }
+                }
+            },
+
+            { $project: { trahData: 0 } },
+
+            // === CALCULATED FIELDS WITHOUT IMPACTING deaths/net ===
+            {
+                $addFields: {
+                    births: { $add: ["$maleBorn", "$femaleBorn"] },
+                    deaths: 0,   // تركتها صفر لأنها ليست لها علاقة بالـ trah
+                    net: { $add: ["$maleBorn", "$femaleBorn"] }
+                }
+            },
+
+            { $sort: { "_id.year": -1, "_id.month": -1 } }
         ]);
 
-        // 3️⃣ Merge the 2 arrays
-        const summaryMap = new Map();
-
-        // Add pregnancy data
-        pregSummary.forEach(item => {
-            const key = `${item._id.year}-${item._id.month}`;
-            summaryMap.set(key, {
-                year: item._id.year,
-                month: item._id.month,
-                maleBorn: item.maleBorn,
-                femaleBorn: item.femaleBorn,
-                maleDied: item.maleDied,
-                femaleDied: item.femaleDied,
-            });
-        });
-
-        // Add labor data
-        laborSummary.forEach(item => {
-            const key = `${item._id.year}-${item._id.month}`;
-            const existing = summaryMap.get(key) || {
-                year: item._id.year,
-                month: item._id.month,
-                maleBorn: 0,
-                femaleBorn: 0,
-                maleDied: 0,
-                femaleDied: 0
-            };
-            existing.maleDied += item.maleDied;
-            existing.femaleDied += item.femaleDied;
-            summaryMap.set(key, existing);
-        });
-
-        // Convert map → array
-        const finalSummary = Array.from(summaryMap.values())
-            .map(item => ({
-                ...item,
-                births: item.maleBorn + item.femaleBorn,
-                deaths: item.maleDied + item.femaleDied,
-                net: (item.maleBorn + item.femaleBorn) - (item.maleDied + item.femaleDied)
-            }))
-            .sort((a, b) => b.year - a.year || b.month - a.month);
-
-        res.json(finalSummary);
+        res.json(result.map(item => ({
+            year: item._id.year,
+            month: item._id.month,
+            maleBorn: item.maleBorn,
+            femaleBorn: item.femaleBorn,
+            maleTrah: item.maleTrah,
+            femaleTrah: item.femaleTrah,
+            births: item.births,
+            deaths: item.deaths,
+            net: item.net
+        })));
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Server Error" });
+        res.status(500).json({ message: "Server Error" });
     }
 };
-
 
 export const getYearlySummary = async (req, res) => {
     try {
@@ -618,7 +622,19 @@ export const getYearlySummary = async (req, res) => {
             }
         ]);
 
-        // 3️⃣ Merge both results
+        // 3️⃣ Trah yearly summary
+        const trahSummary = await TrahCase.aggregate([
+            { $match: { trahDate: { $ne: null } } },
+            {
+                $group: {
+                    _id: { year: { $year: "$trahDate" } },
+                    maleTrah: { $sum: "$numberOfMaleLamb" },
+                    femaleTrah: { $sum: "$numberOfFemaleLamb" }
+                }
+            }
+        ]);
+
+        // 4️⃣ Merge all results
         const summaryMap = new Map();
 
         pregSummary.forEach(item => {
@@ -627,7 +643,9 @@ export const getYearlySummary = async (req, res) => {
                 maleBorn: item.maleBorn,
                 femaleBorn: item.femaleBorn,
                 maleDied: item.maleDied,
-                femaleDied: item.femaleDied
+                femaleDied: item.femaleDied,
+                maleTrah: 0,
+                femaleTrah: 0
             });
         });
 
@@ -637,10 +655,27 @@ export const getYearlySummary = async (req, res) => {
                 maleBorn: 0,
                 femaleBorn: 0,
                 maleDied: 0,
-                femaleDied: 0
+                femaleDied: 0,
+                maleTrah: 0,
+                femaleTrah: 0
             };
             prev.maleDied += item.maleDied;
             prev.femaleDied += item.femaleDied;
+            summaryMap.set(item._id.year, prev);
+        });
+
+        trahSummary.forEach(item => {
+            const prev = summaryMap.get(item._id.year) || {
+                year: item._id.year,
+                maleBorn: 0,
+                femaleBorn: 0,
+                maleDied: 0,
+                femaleDied: 0,
+                maleTrah: 0,
+                femaleTrah: 0
+            };
+            prev.maleTrah += item.maleTrah;
+            prev.femaleTrah += item.femaleTrah;
             summaryMap.set(item._id.year, prev);
         });
 
