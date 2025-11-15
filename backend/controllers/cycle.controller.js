@@ -117,6 +117,32 @@ export const createReport = async (req, res) => {
     }
 };
 
+export const addSheepToCycle = async (req, res) => {
+    try {
+        const { cycleId } = req.params;
+        const { gender, numberToAdd } = req.body;
+        console.log("gender is : ", gender)
+        console.log("numberToAdd is : ", numberToAdd)
+        if (!["male", "female"].includes(gender))
+            return res.status(400).json({ message: "Invalid type" });
+
+        const cycle = await Cycle.findById(cycleId);
+        if (!cycle) return res.status(404).json({ message: "Cycle not found" });
+
+        if (gender === "male") {
+            cycle.numOfMale += numberToAdd;
+        } else {
+            cycle.numOfFemale += numberToAdd;
+        }
+
+        await cycle.save();
+        res.status(200).json({ message: "Sheep added successfully", cycle });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 export const getReportsByCycleId = async (req, res) => {
     try {
         const { cycleId } = req.params;

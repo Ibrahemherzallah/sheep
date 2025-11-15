@@ -153,7 +153,7 @@ const SheepManagement = () => {
   const [selectedSheep, setSelectedSheep] = useState<string[]>([]);
   const [selectedSheepGender,setSelectedSheepGender] = useState('');
   const [selectedSheepSource,setSelectedSheepSource] = useState('');
-  const [allDrugs, setAllDrugs] = useState<Drug[]>([]); // Drug should be your interface type
+  const [allDrugs, setAllDrugs] = useState<Drug[]>([]);
   const [allSheep, setAllSheep] = useState([]);
   const [pregnantSheep, setPregnantSheep] = useState([]);
   const [nonPregnantSheep, setNonPregnantSheep] = useState([]);

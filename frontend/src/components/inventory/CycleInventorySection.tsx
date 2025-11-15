@@ -125,10 +125,31 @@ export const CycleInventorySection: React.FC<CycleInventorySectionProps> = ({exp
     const getTotalSales = (sales) => {
         return sales.reduce((total, item) => total + item.price, 0);
     };
+    const getTotalSheep = (cycleData) => {
+        if (!cycleData) return 0;
 
+        const base =
+            (cycleData.cycle?.numOfMale || 0) +
+            (cycleData.cycle?.numOfFemale || 0);
+
+        const sold = cycleData.income
+            ?.filter((i) => i.type === "خرفان مباعة")
+            .reduce((acc, i) => acc + (i.quantity || 0), 0) || 0;
+
+
+        const diedOutcome = cycleData.outcome
+            ?.filter((i) => i.type === "موت خرفان")
+            .reduce((acc, i) => acc + (i.quantity || 0), 0) || 0;
+
+        console.log("nnnnnnnnnnnnnnnn base" , base)
+        console.log("nnnnnnnnnnnnnnnn sold" , sold)
+        console.log("nnnnnnnnnnnnnnnn diedOutcome" , diedOutcome)
+        return base - sold  - diedOutcome;
+    };
     return (
         <div className="space-y-6">
             {cycles?.map((cycle) => {
+                const totalSheep = getTotalSheep(cycle);
                 console.log("the cycle is : ", cycle)
                 // const { totalExpenses, totalSales, profit } = getCycleTotals(cycle?.cycle?._id);
                 const totalExpenses = getTotalExpenses(cycle?.outcome);
@@ -169,6 +190,13 @@ export const CycleInventorySection: React.FC<CycleInventorySectionProps> = ({exp
                                             {cycle?.cycle?.status}
                                         </div>
                                     </div>
+                                </div>
+                                {/* 🐑 Total sheep display */}
+                                <div className="bg-gradient-to-tr from-green-50 to-green-100 px-4 py-2 rounded-lg shadow-inner text-center">
+                                    <p className="text-xs text-gray-600">عدد الخراف الكلي</p>
+                                    <h3 className="text-2xl font-extrabold text-green-700 mt-1">
+                                        {totalSheep}
+                                    </h3>
                                 </div>
                             </div>
                         </CardHeader>

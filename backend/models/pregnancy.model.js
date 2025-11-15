@@ -29,6 +29,18 @@ const pregnancySchema = new mongoose.Schema({
         required: false,
         default: 0,
     },
+    // 🔥 NEW PROPERTIES
+    numberOfMaleLambDied: {
+        type: Number,
+        required: false,
+        default: 0,
+    },
+
+    numberOfFemaleLambDied: {
+        type: Number,
+        required: false,
+        default: 0,
+    },
     milkAmount: {
         type: Number,
         required: false,

@@ -321,7 +321,22 @@ export const getSheepInjectionHistory = async (req, res) => {
 
 export const getSheepById = async (req, res) => {
     try {
-        const sheep = await Sheep.findById(req.params.id).populate('pregnantCases');
+        const sheep = await Sheep.findById(req.params.id)
+            .populate({
+                path: 'pregnantSupplimans',
+                options: { sort: { createdAt: -1 } },
+            })
+            .populate({
+                path: 'pregnantCases',
+                options: { sort: { bornDate: -1 } },
+            })
+            .populate({
+                path: 'patientCases',
+                populate: {
+                    path: 'drugs.drug',
+                    model: 'StockModel',
+                },
+            });
         if (!sheep) {
             return res.status(404).json({ error: 'Sheep not found' });
         }
