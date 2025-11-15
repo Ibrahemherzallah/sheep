@@ -19,6 +19,8 @@ import Profile from "@/pages/Profile.tsx";
 import Milk from "@/pages/Milk.tsx";
 import Inventory from "@/pages/Inventory.tsx";
 import StockManagement from "@/pages/StockManagement.tsx";
+import Births from "@/pages/Births";
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -47,6 +49,7 @@ function App() {
               <Route path="medicine-management" element={<MedicineManagement />} />
               <Route path="stock-management" element={<StockManagement />} />
               <Route path="milk" element={<Milk />} />
+              <Route path="births" element={<Births />} />
               <Route path="profile" element={<Profile />} />
               <Route path="inventory" element={<Inventory />} />
             </Route>

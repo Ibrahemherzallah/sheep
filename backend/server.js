@@ -20,6 +20,7 @@ import pregnantSupplimantsRoutes from './routes/pregnantSupplimans.routes.js';
 import path from 'path';
 import './scheduler/patientStatusChecker.js';
 import { fileURLToPath } from 'url';
+import diedLaborRoutes from "./routes/diedLabor.routes.js";
 const app = express();
 const PORT = process.env.PORT || 3030;
 const __filename = fileURLToPath(import.meta.url);
@@ -45,6 +46,7 @@ app.use('/api/stock', stockRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/summary', summaryRoutes);
 app.use('/api/pregnantSupplimants', pregnantSupplimantsRoutes);
+app.use("/api/died-labors", diedLaborRoutes);
 
 const staticPath = path.join(__dirname, 'static');
 app.use(express.static(staticPath));

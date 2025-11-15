@@ -1,6 +1,19 @@
 import {useEffect, useState} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {Calendar, ArrowLeft, Ear, FileText, PlusCircle, BarChart3, ListPlus, Syringe, History, Users, Heart} from 'lucide-react';
+import {
+  Calendar,
+  ArrowLeft,
+  Ear,
+  FileText,
+  PlusCircle,
+  BarChart3,
+  ListPlus,
+  Syringe,
+  History,
+  Users,
+  Heart,
+  Plus
+} from 'lucide-react';
 import {Card, CardContent, CardHeader, CardTitle, CardDescription} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
@@ -105,10 +118,14 @@ const CycleDetails = () => {
   const [nextTask,setNextTask] = useState([]);
   const [allReports, setAllReports] = useState([]);
   const [loading,setLoading] = useState(true);
+  const [sheepType, setSheepType] = useState("male");
+  const [count, setCount] = useState(0);
+  const [isAddShepDialogOpen, setIsAddShepDialogOpen] = useState(false);
+
   const filteredVitamins = allVitamins?.filter(vitamin => vitamin.type === "Vitamins" && vitamin.section === "cycle")
   const token = localStorage.getItem("token");
 
-  console.log("Tha filteredVitamins  is : " , filteredVitamins);
+  console.log("Tha cycleData  is : " , cycleData);
 
   const form = useForm<AddInject>({
     defaultValues: {
@@ -138,7 +155,41 @@ const CycleDetails = () => {
     defaultValues : {sellNumber: 0,diedNumber: 0,totalKilos: 0,priceOfKilo: 0,addToStock: 0,endDate: new Date().toISOString().split('T')[0],notes: ''}
   })
 
+  const handleAddSheep = async (gender: string, numberToAdd: number) => {
+    console.log("gender is:  " , gender)
+    console.log("numberToAdd is:  " , numberToAdd)
+    try {
+      const response = await fetch(`http://localhost:3030/api/cycle/add-sheep/${id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          gender,
+          numberToAdd: Number(numberToAdd),
+        }),
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to add sheep");
+      }
+
+      toast({
+        title: "تم التحديث",
+        description: `تمت إضافة ${numberToAdd} ${gender === 'male' ? 'ذكر' : 'أنثى'} بنجاح.`,
+      });
+      setIsAddShepDialogOpen(false);
+
+    } catch (error: any) {
+      console.error("Error adding sheep:", error);
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في تحديث عدد الخراف",
+      });
+    }
+  };
   const handleSubmitInject = async (data: AddInject) => {
     try {
       const payload = {
@@ -447,7 +498,7 @@ const CycleDetails = () => {
                     <CardHeader className="pb-2">
                       <CardDescription>إستهلاك العلف الكلي</CardDescription>
                       <CardTitle className="text-2xl">
-                        {cycleData?.reports?.reduce((sum, report) => sum + (report.numOfFeed || 0), 0)} kg
+                        {cycleData?.reports?.reduce((sum, report) => sum + (report.numOfFeed || 0), 0)} شوال
                       </CardTitle>
                     </CardHeader>
                   </Card>
@@ -456,17 +507,31 @@ const CycleDetails = () => {
                     <CardHeader className="pb-2">
                       <CardDescription>إستهلاك الحليب الكلي</CardDescription>
                       <CardTitle className="text-2xl">
-                        {cycleData?.reports?.reduce((sum, report) => sum + (report.numOfMilk || 0), 0)} L
+                        {cycleData?.reports?.reduce((sum, report) => sum + (report.numOfMilk || 0), 0)} شوال
                       </CardTitle>
                     </CardHeader>
                   </Card>
 
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardDescription>عدد الأغنام الكلي</CardDescription>
-                      <CardTitle className="text-2xl">{cycleData?.numOfFemale + cycleData?.numOfMale}</CardTitle>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {cycleData?.numOfMale}ذكر ,   {cycleData?.numOfFemale} أنثى
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardDescription>عدد الخراف الكلي</CardDescription>
+                          <CardTitle className="text-2xl">
+                            {cycleData?.numOfFemale + cycleData?.numOfMale}
+                          </CardTitle>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {cycleData?.numOfMale} ذكر , {cycleData?.numOfFemale} أنثى
+                          </div>
+                        </div>
+
+                        <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => setIsAddShepDialogOpen(true)}
+                        >
+                          <Plus className="h-2 w-2" />
+                        </Button>
                       </div>
                     </CardHeader>
                   </Card>
@@ -664,11 +729,11 @@ const CycleDetails = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                                   <div>
                                     <p className="text-sm text-muted-foreground">كمية العلف</p>
-                                    <p className="font-medium">{record.numOfFeed} kg</p>
+                                    <p className="font-medium">{record.numOfFeed} شوال </p>
                                   </div>
                                   <div>
                                     <p className="text-sm text-muted-foreground">كمية الحليب</p>
-                                    <p className="font-medium">{record.numOfMilk} L</p>
+                                    <p className="font-medium">{record.numOfMilk} شوال </p>
                                   </div>
                                   <div>
                                     <p className="text-sm text-muted-foreground">كمية القش</p>
@@ -728,6 +793,47 @@ const CycleDetails = () => {
 
         </TabsContent>
       </Tabs>
+
+      {/*   Add Sheep Dialog   */}
+      <Dialog open={isAddShepDialogOpen} onOpenChange={setIsAddShepDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]" dir="rtl">
+          <DialogHeader style={{textAlign: "start"}}>
+            <DialogTitle>إضافة خراف</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label>النوع</Label>
+              <select
+                  className="border rounded-md p-2 w-full"
+                  value={sheepType}
+                  onChange={(e) => setSheepType(e.target.value)}
+              >
+                <option value="male">ذكر</option>
+                <option value="female">أنثى</option>
+              </select>
+            </div>
+
+            <div>
+              <Label>العدد</Label>
+              <Input
+                  type="number"
+                  min="1"
+                  value={count}
+                  onChange={(e) => setCount(e.target.value)}
+                  placeholder="أدخل العدد"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="pt-4">
+            <Button variant="outline" onClick={() => setIsAddShepDialogOpen(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={() => handleAddSheep(sheepType, count)}>إضافة</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/*   Add Inject Dialog   */}
       <Dialog open={addInjectDialog} onOpenChange={setAddInjectDialog}>
         <DialogContent className="sm:max-w-[600px]" >

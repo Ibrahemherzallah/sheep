@@ -3,6 +3,7 @@ import Pregnancy from '../models/pregnancy.model.js';
 import Sheep from '../models/sheep.model.js';
 import Task from "../models/task.model.js";
 import Supplimant from "../models/pregnantSupplimants.model.js";
+import DiedLabor from "../models/diedLabor.model.js";
 
 export const createPregnancies = async (req, res) => {
     try {
@@ -271,19 +272,37 @@ export const updateMilkAmountOnly = async (req, res) => {
 
 export const updateOnePregnancy = async (req, res) => {
     try {
-        const { males, females, notes } = req.body;
+        const { males, females, notes, source } = req.body;
+        console.log("source is : ", source)
+        if(source === "edit") {
+            const updated = await Pregnancy.findByIdAndUpdate(
+                req.params.id,
+                {
+                    numberOfMaleLamb: males,
+                    numberOfFemaleLamb: females,
+                    notes,
+                },
+                { new: true }
+            );
+            res.status(200).json(updated);
 
-        const updated = await Pregnancy.findByIdAndUpdate(
-            req.params.id,
-            {
-                numberOfMaleLamb: males,
-                numberOfFemaleLamb: females,
-                notes,
-            },
-            { new: true }
-        );
+        }
+        else if(source === "died") {
+            const updated = await Pregnancy.findByIdAndUpdate(
+                req.params.id,
+                {
+                    numberOfMaleLambDied: males,
+                    numberOfFemaleLambDied: females,
+                    notes,
+                },
+                { new: true }
+            );
+            res.status(200).json(updated);
 
-        res.status(200).json(updated);
+        }
+        else {
+            res.status(500).json({ error: "فشل تعديل الولادة" });
+        }
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "فشل تعديل الولادة" });
@@ -391,7 +410,256 @@ export const deleteTasksForSheepAfterBirth = async (sheepId) => {
     }
 };
 
+export const getTotalBornLambs = async (req, res) => {
+    try {
+        const result = await Pregnancy.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalMaleLambs: { $sum: "$numberOfMaleLamb" },
+                    totalFemaleLambs: { $sum: "$numberOfFemaleLamb" }
+                }
+            }
+        ]);
+        console.log("result is :", result)
+        // If no pregnancies yet
+        if (result.length === 0) {
+            return res.json({
+                totalMaleLambs: 0,
+                totalFemaleLambs: 0
+            });
+        }
 
+        res.json(result[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+export const getTotalAliveLambs = async (req, res) => {
+    try {
+        const result = await Pregnancy.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    aliveMale: { $sum: { $subtract: ["$numberOfMaleLamb", "$deadMaleLambs"] } },
+                    aliveFemale: { $sum: { $subtract: ["$numberOfFemaleLamb", "$deadFemaleLambs"] } }
+                }
+            }
+        ]);
+
+        if (result.length === 0) {
+            return res.json({
+                aliveMale: 0,
+                aliveFemale: 0
+            });
+        }
+
+        res.json(result[0]);
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const getTotalDeadLambs = async (req, res) => {
+    try {
+        const pregResult = await Pregnancy.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalDeadMale: { $sum: "$numberOfMaleLambDied" },
+                    totalDeadFemale: { $sum: "$numberOfFemaleLambDied" }
+                }
+            }
+        ]);
+        const pregDeadMale = pregResult[0]?.totalDeadMale || 0;
+        const pregDeadFemale = pregResult[0]?.totalDeadFemale || 0;
+
+        // 2️⃣ deaths from DiedLabor
+        const laborResult = await DiedLabor.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalDeadMale: { $sum: "$males" },
+                    totalDeadFemale: { $sum: "$females" }
+                }
+            }
+        ]);
+
+        const laborDeadMale = laborResult[0]?.totalDeadMale || 0;
+        const laborDeadFemale = laborResult[0]?.totalDeadFemale || 0;
+
+
+        // 3️⃣ combine totals
+        const totalDeadMale = pregDeadMale + laborDeadMale;
+        const totalDeadFemale = pregDeadFemale + laborDeadFemale;
+
+        res.json({
+            totalDeadMale,
+            totalDeadFemale,
+            totalDeaths: totalDeadMale + totalDeadFemale
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const getMonthlySummary = async (req, res) => {
+    try {
+        // 1️⃣ Pregnancy monthly summary
+        const pregSummary = await Pregnancy.aggregate([
+            { $match: { bornDate: { $ne: null } } },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$bornDate" },
+                        month: { $month: "$bornDate" }
+                    },
+                    maleBorn: { $sum: "$numberOfMaleLamb" },
+                    femaleBorn: { $sum: "$numberOfFemaleLamb" },
+                    maleDied: { $sum: "$numberOfMaleLambDied" },
+                    femaleDied: { $sum: "$numberOfFemaleLambDied" }
+                }
+            }
+        ]);
+
+        // 2️⃣ DiedLabor monthly summary
+        const laborSummary = await DiedLabor.aggregate([
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$date" },
+                        month: { $month: "$date" }
+                    },
+                    maleDied: { $sum: "$males" },
+                    femaleDied: { $sum: "$females" }
+                }
+            }
+        ]);
+
+        // 3️⃣ Merge the 2 arrays
+        const summaryMap = new Map();
+
+        // Add pregnancy data
+        pregSummary.forEach(item => {
+            const key = `${item._id.year}-${item._id.month}`;
+            summaryMap.set(key, {
+                year: item._id.year,
+                month: item._id.month,
+                maleBorn: item.maleBorn,
+                femaleBorn: item.femaleBorn,
+                maleDied: item.maleDied,
+                femaleDied: item.femaleDied,
+            });
+        });
+
+        // Add labor data
+        laborSummary.forEach(item => {
+            const key = `${item._id.year}-${item._id.month}`;
+            const existing = summaryMap.get(key) || {
+                year: item._id.year,
+                month: item._id.month,
+                maleBorn: 0,
+                femaleBorn: 0,
+                maleDied: 0,
+                femaleDied: 0
+            };
+            existing.maleDied += item.maleDied;
+            existing.femaleDied += item.femaleDied;
+            summaryMap.set(key, existing);
+        });
+
+        // Convert map → array
+        const finalSummary = Array.from(summaryMap.values())
+            .map(item => ({
+                ...item,
+                births: item.maleBorn + item.femaleBorn,
+                deaths: item.maleDied + item.femaleDied,
+                net: (item.maleBorn + item.femaleBorn) - (item.maleDied + item.femaleDied)
+            }))
+            .sort((a, b) => b.year - a.year || b.month - a.month);
+
+        res.json(finalSummary);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Server Error" });
+    }
+};
+
+
+export const getYearlySummary = async (req, res) => {
+    try {
+        // 1️⃣ Pregnancy yearly summary
+        const pregSummary = await Pregnancy.aggregate([
+            { $match: { bornDate: { $ne: null } } },
+            {
+                $group: {
+                    _id: { year: { $year: "$bornDate" } },
+                    maleBorn: { $sum: "$numberOfMaleLamb" },
+                    femaleBorn: { $sum: "$numberOfFemaleLamb" },
+                    maleDied: { $sum: "$numberOfMaleLambDied" },
+                    femaleDied: { $sum: "$numberOfFemaleLambDied" }
+                }
+            }
+        ]);
+
+        // 2️⃣ DiedLabor yearly summary
+        const laborSummary = await DiedLabor.aggregate([
+            {
+                $group: {
+                    _id: { year: { $year: "$date" } },
+                    maleDied: { $sum: "$males" },
+                    femaleDied: { $sum: "$females" }
+                }
+            }
+        ]);
+
+        // 3️⃣ Merge both results
+        const summaryMap = new Map();
+
+        pregSummary.forEach(item => {
+            summaryMap.set(item._id.year, {
+                year: item._id.year,
+                maleBorn: item.maleBorn,
+                femaleBorn: item.femaleBorn,
+                maleDied: item.maleDied,
+                femaleDied: item.femaleDied
+            });
+        });
+
+        laborSummary.forEach(item => {
+            const prev = summaryMap.get(item._id.year) || {
+                year: item._id.year,
+                maleBorn: 0,
+                femaleBorn: 0,
+                maleDied: 0,
+                femaleDied: 0
+            };
+            prev.maleDied += item.maleDied;
+            prev.femaleDied += item.femaleDied;
+            summaryMap.set(item._id.year, prev);
+        });
+
+        const final = Array.from(summaryMap.values())
+            .map(item => ({
+                ...item,
+                births: item.maleBorn + item.femaleBorn,
+                deaths: item.maleDied + item.femaleDied,
+                net: (item.maleBorn + item.femaleBorn) - (item.maleDied + item.femaleDied)
+            }))
+            .sort((a, b) => b.year - a.year);
+
+        res.json(final);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Server Error" });
+    }
+};
 
 export const deleteTasksForSheepAfterPregnant = async (sheepId) => {
     try {
