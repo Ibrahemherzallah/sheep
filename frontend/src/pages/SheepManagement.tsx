@@ -104,7 +104,7 @@ const SheepCard = ({ sheep }: { sheep: any }) => {
             <div className="flex justify-between">
               <span className="text-muted-foreground">المصدر :</span>
               <span className="font-medium">
-              {sheep.origin === 'farm-produced' ? 'إنتاج المزرعة' : 'شراء'}
+              {sheep.source}
             </span>
             </div>
             <div className="flex justify-between">
@@ -129,10 +129,23 @@ const SheepCard = ({ sheep }: { sheep: any }) => {
               );
             })()}
 
+            {sheep.status === 'نافقة' && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">تاريخ النفوق :</span>
+                <span className="font-medium">{formatDate(sheep.updatedAt)}</span>
+              </div>
+            )}
+
             {sheep?.sellPrice > 0 && (
-                <div className="flex items-center gap-1 mt-2 text-red-700 font-medium">
-                  💰 تم بيع هذه النعجة بسعر {sheep.sellPrice} شيكل
-                </div>
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">تاريخ البيع :</span>
+                    <span className="font-medium">{formatDate(sheep.updatedAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-1 mt-2 text-red-700 font-medium">
+                    💰 تم بيع هذه النعجة بسعر {sheep.sellPrice} شيكل
+                  </div>
+                </>
             )}
           </div>
         </div>

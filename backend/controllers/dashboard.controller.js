@@ -32,14 +32,29 @@ export const dashboard = async (req, res) => {
             ? ((sheepAddedLastMonth / totalSheep) * 100).toFixed(2)
             : 0;
 
-        // ♀️ Upcoming Births (Next 7 Days)
-        const upcomingPregnancies = await Pregnancy.countDocuments({
-            expectedBornDate: { $gte: today, $lte: next7Days },
+
+        const pregnancies = await Pregnancy.find({
+            expectedBornDate: { $lte: next7Days },
             $or: [
-                { bornDate: { $exists: false } }, // bornDate does not exist
-                { bornDate: null }                // bornDate exists but is null
+                { bornDate: { $exists: false } },
+                { bornDate: null }
             ]
         });
+
+        if (pregnancies.length === 0) {
+            return res.json([]);
+        }
+
+        // 2️⃣ Extract sheep IDs
+        const sheepIds = pregnancies.map(p => p.sheepId);
+
+        // 3️⃣ Fetch the sheep documents **only those still pregnant**
+        const upcomingPregnancies = await Sheep.countDocuments({
+            _id: { $in: sheepIds },
+            isPregnant: true    // 🔥 IMPORTANT FILTER
+        })
+
+
 
         // 🔁 Cycle Stats
         const totalCycles = await Cycle.countDocuments({});
@@ -79,12 +94,16 @@ export const dashboard = async (req, res) => {
 export const getUpcomingPregnancies = async (req, res) => {
     try {
         const today = new Date();
+
+        // Next 7 days for upcoming births
         const next7Days = new Date(today);
         next7Days.setDate(today.getDate() + 7);
 
-        // 1️⃣ Find pregnancy documents within next 7 days with no bornDate
+        // 1️⃣ Find all pregnancies where:
+        // - Sheep still not born
+        // - expectedBornDate is past OR within next 7 days
         const pregnancies = await Pregnancy.find({
-            expectedBornDate: { $gte: today, $lte: next7Days },
+            expectedBornDate: { $lte: next7Days },
             $or: [
                 { bornDate: { $exists: false } },
                 { bornDate: null }
@@ -92,16 +111,17 @@ export const getUpcomingPregnancies = async (req, res) => {
         });
 
         if (pregnancies.length === 0) {
-            return res.json([]); // No upcoming births
+            return res.json([]);
         }
 
         // 2️⃣ Extract sheep IDs
         const sheepIds = pregnancies.map(p => p.sheepId);
 
-        // 3️⃣ Fetch the actual sheep documents
+        // 3️⃣ Fetch the sheep documents **only those still pregnant**
         const sheepList = await Sheep.find({
-            _id: { $in: sheepIds }
-        }).select("sheepNumber sheepGender status isPregnant birthDate");
+            _id: { $in: sheepIds },
+            isPregnant: true    // 🔥 IMPORTANT FILTER
+        })
 
         res.json(sheepList);
 
