@@ -823,8 +823,14 @@ const Dashboard = () => {
                     <li>لا توجد اغنام ستلد في الـ 7 أيام القادمة</li>
                 )}
                 {upcomingSheep.map((sheep) => (
-                    <li key={sheep.pregnancyId} className="border-b py-2">
+                    <li key={sheep.pregnancyId} className="border-b py-2 flex align-middle">
                       <p>رقم النعجة: {sheep.sheepNumber}</p>
+                      <span
+                          className={`inline-block w-3 h-3 rounded-full ms-2 ${
+                              sheep.badgeColor === 'أحمر' ? 'bg-red-500' : 'bg-yellow-400'
+                          }`}
+                          title={`علامة ${sheep.badgeColor === 'red' ? 'حمراء' : 'صفراء'}`}
+                      />
                     </li>
                 ))}
               </ul>
