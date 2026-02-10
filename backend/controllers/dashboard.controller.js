@@ -93,41 +93,39 @@ export const dashboard = async (req, res) => {
 
 export const getUpcomingPregnancies = async (req, res) => {
     try {
-        const today = new Date();
+        // Start of today (00:00)
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
 
-        // Next 7 days for upcoming births
-        const next7Days = new Date(today);
-        next7Days.setDate(today.getDate() + 7);
+        // End of day 7 (23:59:59.999)
+        const end = new Date(start);
+        end.setDate(end.getDate() + 7);
+        end.setHours(23, 59, 59, 999);
 
-        // 1️⃣ Find all pregnancies where:
-        // - Sheep still not born
-        // - expectedBornDate is past OR within next 7 days
+        // 1) Pregnancies due in the next 7 days and not yet born
         const pregnancies = await Pregnancy.find({
-            expectedBornDate: { $lte: next7Days },
-            $or: [
-                { bornDate: { $exists: false } },
-                { bornDate: null }
-            ]
-        });
+            expectedBornDate: { $gte: start, $lte: end },
+            bornDate: null,
+        }).sort({ expectedBornDate: 1 });
 
         if (pregnancies.length === 0) {
             return res.json([]);
         }
 
-        // 2️⃣ Extract sheep IDs
+        // 2) Fetch sheep that are still marked pregnant
         const sheepIds = pregnancies.map(p => p.sheepId);
 
-        // 3️⃣ Fetch the sheep documents **only those still pregnant**
         const sheepList = await Sheep.find({
             _id: { $in: sheepIds },
-            isPregnant: true    // 🔥 IMPORTANT FILTER
-        })
+            isPregnant: true,
+        });
 
-        res.json(sheepList);
-
+        return res.json(sheepList);
     } catch (error) {
         console.error("Error fetching upcoming births:", error);
-        res.status(500).json({ error: "Server error while fetching upcoming births" });
+        return res
+            .status(500)
+            .json({ error: "Server error while fetching upcoming births" });
     }
 };
 
