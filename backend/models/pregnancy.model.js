@@ -11,6 +11,11 @@ const pregnancySchema = new mongoose.Schema({
         type: Date,
         required: true,
     },
+    status: {
+        type: String,
+        enum: ["pregnant", "born", "trah"],
+        default: "pregnant"
+    },
     bornDate: {
         type: Date,
         required: false,

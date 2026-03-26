@@ -504,7 +504,7 @@ const Dashboard = () => {
             <StatCard
                 title="الاغنام الحوامل"
                 value={dashboardData.pregnantSheep}
-                description={`    تلد في ال7 أيام القادمة  ` + ` ${dashboardData.upcomingPregnancies}`}
+                description={`    تلد في ال10 أيام القادمة  ` + ` ${dashboardData.upcomingPregnancies}`}
                 icon={Baby} // pass the component type, not JSX
                 onIconClick={handleBabyClick} // optional, create a prop for click inside StatCard
             />
