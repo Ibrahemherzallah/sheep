@@ -1,9 +1,5 @@
 import express from 'express';
-import {
-    createVitamin, getVitamins, updateVitamin, deleteVitamin,
-    createDrugType, getAllDrugTypes, getDrugTypeById, updateDrugType,deleteDrugType,
-    createInjection, getInjections, updateInjection, deleteInjection
-} from '../controllers/supplement.controller.js';
+import {createVitamin, getVitamins, updateVitamin, deleteVitamin, createDrugType, getAllDrugTypes, getDrugTypeById, updateDrugType,deleteDrugType, createInjection, getInjections, updateInjection, deleteInjection} from '../controllers/supplement.controller.js';
 import {authenticate} from "../middleware/authMiddleware.js";
 
 const router = express.Router();

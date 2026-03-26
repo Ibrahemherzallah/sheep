@@ -8,20 +8,42 @@ import Supplimant from "../models/pregnantSupplimants.model.js";
 
 export const createInjection = async (req, res) => {
     try {
-        const { sheepId, injectionType, numOfInject, injectDate, notes } = req.body;
+        let { sheepId, injectionType, numOfInject, injectDate, notes } = req.body;
+
+        // Make sure sheepId is always an array
+        if (!Array.isArray(sheepId)) {
+            sheepId = sheepId ? [sheepId] : [];
+        }
+
+        if (!sheepId.length) {
+            return res.status(400).json({ error: 'يجب اختيار خروف واحد على الأقل' });
+        }
+
         const baseDate = new Date(injectDate || Date.now());
 
         const injectionTypeDoc = await StockModel.findById(injectionType);
         if (!injectionTypeDoc) {
             return res.status(400).json({ error: 'Injection type not found in stock' });
         }
-        const injectionName = injectionTypeDoc.name;
-        console.log("injectionName is : ", injectionName);
 
+        const injectionName = injectionTypeDoc.name;
+
+        // Fetch all sheep once
+        const sheepList = await Sheep.find({
+            _id: { $in: sheepId }
+        }).populate('pregnantSupplimans');
+
+        const sheepMap = new Map(
+            sheepList.map((sheep) => [String(sheep._id), sheep])
+        );
+
+        // =========================
+        // Special case: اسفنجة
+        // =========================
         if (injectionName === 'اسفنجة') {
             const hormoneDate = new Date(baseDate);
             hormoneDate.setDate(hormoneDate.getDate() + 12);
-            console.log("sheepId is : ", sheepId);
+
             await Task.create({
                 title: 'اعطاء الهرمون',
                 dueDate: hormoneDate,
@@ -29,45 +51,49 @@ export const createInjection = async (req, res) => {
                 type: 'injection',
                 notes: 'متابعة بعد 12 يوم من الاسفنجة',
             });
-            for (const sheepIdd of sheepId) {
-                const sheep = await Sheep.findById(sheepIdd).populate('pregnantSupplimans');
 
-                if (!sheep) continue;
+            await Promise.all(
+                sheepId.map(async (sheepIdd) => {
+                    const sheep = sheepMap.get(String(sheepIdd));
+                    if (!sheep) return;
 
-                if (!sheep.pregnantSupplimans || sheep.pregnantSupplimans.length === 0) {
-                    console.log("The sheep id is : " , sheepIdd)
-                    // 🆕 No previous supplimant → create new
-                    const newSupplimant = await Supplimant.create({
-                        sheepId: sheepIdd,
-                        numOfIsfenjeh: 1,
-                        numOfHermon: 0,
-                    });
-                    console.log("The newSupplimant id is : " , newSupplimant)
+                    if (!sheep.pregnantSupplimans || sheep.pregnantSupplimans.length === 0) {
+                        const newSupplimant = await Supplimant.create({
+                            sheepId: sheepIdd,
+                            numOfIsfenjeh: 1,
+                            numOfHermon: 0,
+                        });
 
-                    await Sheep.findByIdAndUpdate(sheepIdd, {
-                        $push: { pregnantSupplimans: newSupplimant._id },
-                    });
-                } else {
-                    // ✅ Already has at least one → increment numOfIsfenjeh in the last one
-                    const lastSupplimant = sheep.pregnantSupplimans[sheep.pregnantSupplimans.length - 1];
-                    await Supplimant.findByIdAndUpdate(lastSupplimant._id, {
-                        $inc: { numOfIsfenjeh: 1 },
-                    });
-                }
+                        await Sheep.updateOne(
+                            { _id: sheepIdd },
+                            { $push: { pregnantSupplimans: newSupplimant._id } }
+                        );
+                    } else {
+                        const lastSupplimant =
+                            sheep.pregnantSupplimans[sheep.pregnantSupplimans.length - 1];
 
-                await deleteTasksForSheep(sheepIdd);
-            }
+                        await Supplimant.updateOne(
+                            { _id: lastSupplimant._id },
+                            { $inc: { numOfIsfenjeh: 1 } }
+                        );
+                    }
+
+                    await deleteTasksForSheep(sheepIdd);
+                })
+            );
 
             return res.status(201).json({
                 message: 'تمت إضافة الاسفنجة بنجاح',
             });
         }
+
+        // =========================
+        // Special case: اعطاء الهرمون
+        // =========================
         if (injectionName === 'اعطاء الهرمون') {
             const checkPregnancy = new Date(baseDate);
-            // const checkPregnancyDate = new Date(baseDate);
             checkPregnancy.setDate(checkPregnancy.getDate() + 30);
-            // checkPregnancyDate.setDate(checkPregnancyDate.getDate() + 42);
-            console.log("checkPregnancy is : ", checkPregnancy);
+
             await Task.create({
                 title: 'فحص الحمل',
                 dueDate: checkPregnancy,
@@ -75,41 +101,46 @@ export const createInjection = async (req, res) => {
                 type: 'pregnancy-check',
                 notes: 'فحص الحمل',
             });
-            for (const sheepIdd of sheepId) {
-                const sheep = await Sheep.findById(sheepIdd).populate('pregnantSupplimans');
 
-                if (!sheep) continue;
+            await Promise.all(
+                sheepId.map(async (sheepIdd) => {
+                    const sheep = sheepMap.get(String(sheepIdd));
+                    if (!sheep) return;
 
-                if (!sheep.pregnantSupplimans || sheep.pregnantSupplimans.length === 0) {
-                    console.log("The sheep id is : " , sheepIdd)
-                    // 🆕 No previous supplimant → create new
-                    const newSupplimant = await Supplimant.create({
-                        sheepId: sheepIdd,
-                        numOfIsfenjeh: 1,
-                        numOfHermon: 1,
-                    });
-                    console.log("The newSupplimant id is : " , newSupplimant)
+                    if (!sheep.pregnantSupplimans || sheep.pregnantSupplimans.length === 0) {
+                        const newSupplimant = await Supplimant.create({
+                            sheepId: sheepIdd,
+                            numOfIsfenjeh: 1,
+                            numOfHermon: 1,
+                        });
 
-                    await Sheep.findByIdAndUpdate(sheepIdd, {
-                        $push: { pregnantSupplimans: newSupplimant._id },
-                    });
-                } else {
-                    // ✅ Already has at least one → increment numOfIsfenjeh in the last one
-                    const lastSupplimant = sheep.pregnantSupplimans[sheep.pregnantSupplimans.length - 1];
-                    await Supplimant.findByIdAndUpdate(lastSupplimant._id, {
-                        $inc: { numOfHermon: 1 },
-                    });
-                }
+                        await Sheep.updateOne(
+                            { _id: sheepIdd },
+                            { $push: { pregnantSupplimans: newSupplimant._id } }
+                        );
+                    } else {
+                        const lastSupplimant =
+                            sheep.pregnantSupplimans[sheep.pregnantSupplimans.length - 1];
 
-                await deleteTasksForHermonSheep(sheepIdd);
-            }
+                        await Supplimant.updateOne(
+                            { _id: lastSupplimant._id },
+                            { $inc: { numOfHermon: 1 } }
+                        );
+                    }
+
+                    await deleteTasksForHermonSheep(sheepIdd);
+                })
+            );
 
             return res.status(201).json({
                 message: 'تمت إضافة الهرمون بنجاح',
             });
         }
 
-        const newInjection = new InjectionModel({
+        // =========================
+        // Normal injection flow
+        // =========================
+        const newInjection = await InjectionModel.create({
             sheepId,
             injectionType,
             numOfInject,
@@ -117,28 +148,19 @@ export const createInjection = async (req, res) => {
             notes,
         });
 
-        await newInjection.save();
-
-        // 1. Update each sheep with the injection reference
+        // Update all sheep once
         await Sheep.updateMany(
             { _id: { $in: sheepId } },
             { $push: { injectionCases: newInjection._id } }
         );
 
-        // 2. Check for the reputation and create tasks
-
-
-        if (injectionTypeDoc?.reputation === '6m' ) {
-            const baseDate = new Date(injectDate || Date.now());
-
-            if(numOfInject === 1) {
+        // Reputation: 6 months
+        if (injectionTypeDoc?.reputation === '6m') {
+            if (numOfInject === 1) {
                 const reinject15DaysLater = new Date(baseDate);
-                console.log('baseDate : ' , baseDate);
-
                 reinject15DaysLater.setDate(reinject15DaysLater.getDate() + 15);
-                console.log('reinject15DaysLater : ' , reinject15DaysLater);
 
-                const tasks = [
+                await Task.insertMany([
                     {
                         title: ` جرعة ثانية من طعم ${injectionName}`,
                         dueDate: reinject15DaysLater,
@@ -146,21 +168,18 @@ export const createInjection = async (req, res) => {
                         type: 'injection',
                         notes: 'تطعيم متابعة بعد 15 يوم',
                     },
-                ];
-                await Task.insertMany(tasks);
+                ]);
 
-                for (const sheepIdd of sheepId) {
-                    await deleteTasksForFirstInjectionSheep(sheepIdd,injectionName);
-                }
-            }
-            else {
-                console.log('baseDate : ' , baseDate);
-
+                await Promise.all(
+                    sheepId.map((sheepIdd) =>
+                        deleteTasksForFirstInjectionSheep(sheepIdd, injectionName)
+                    )
+                );
+            } else {
                 const reinject6MonthsLater = new Date(baseDate);
                 reinject6MonthsLater.setMonth(reinject6MonthsLater.getMonth() + 6);
-                console.log('reinject6MonthsLater : ' , reinject6MonthsLater);
 
-                const tasks = [
+                await Task.insertMany([
                     {
                         title: ` جرعة أولى من دواء ${injectionName}`,
                         dueDate: reinject6MonthsLater,
@@ -168,18 +187,14 @@ export const createInjection = async (req, res) => {
                         type: 'injection',
                         notes: 'تطعيم متابعة بعد 6 أشهر',
                     },
-                ];
-                await Task.insertMany(tasks);
-
+                ]);
             }
         }
 
-
+        // Reputation: 1 year
         if (injectionTypeDoc?.reputation === '1y') {
-            const baseDate = new Date(injectDate || Date.now());
             const reInject1YearLater = new Date(baseDate);
             reInject1YearLater.setFullYear(reInject1YearLater.getFullYear() + 1);
-
 
             await Task.insertMany([
                 {
@@ -192,15 +207,16 @@ export const createInjection = async (req, res) => {
             ]);
         }
 
-
-        res.status(201).json({ message: 'تمت الإضافة بنجاح', injection: newInjection });
+        return res.status(201).json({
+            message: 'تمت الإضافة بنجاح',
+            injection: newInjection
+        });
 
     } catch (err) {
         console.error('Error adding injection:', err);
-        res.status(500).json({ error: 'فشل في إضافة الطعم' });
+        return res.status(500).json({ error: 'فشل في إضافة الطعم' });
     }
 };
-
 
 export const getInjection = async (req, res) => {
     try {

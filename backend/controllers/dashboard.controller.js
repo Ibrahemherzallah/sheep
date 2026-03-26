@@ -8,18 +8,29 @@ import ReportModel from "../models/report.model.js";
 export const dashboard = async (req, res) => {
     try {
         const today = new Date();
+
         const day10 = new Date(today);
         const day20 = new Date(today);
         const lastMonth = new Date(today);
-        const next7Days = new Date(today);
 
         day10.setDate(today.getDate() + 10);
         day20.setDate(today.getDate() + 20);
         lastMonth.setDate(today.getDate() - 30);
-        next7Days.setDate(today.getDate() + 7);
+
+        // Upcoming pregnancies range: 10 days before today -> 10 days after today
+        const pregnancyStart = new Date(today);
+        pregnancyStart.setHours(0, 0, 0, 0);
+        pregnancyStart.setDate(pregnancyStart.getDate() - 10);
+
+        const pregnancyEnd = new Date(today);
+        pregnancyEnd.setHours(23, 59, 59, 999);
+        pregnancyEnd.setDate(pregnancyEnd.getDate() + 10);
 
         // 🐑 Sheep Stats
-        const totalSheep = await Sheep.countDocuments({ status: { $nin: ['مباعة', 'نافقة'] } });
+        const totalSheep = await Sheep.countDocuments({
+            status: { $nin: ['مباعة', 'نافقة'] }
+        });
+
         const pregnantSheep = await Sheep.countDocuments({ isPregnant: true });
         const patientSheep = await Sheep.countDocuments({ isPatient: true });
 
@@ -32,29 +43,14 @@ export const dashboard = async (req, res) => {
             ? ((sheepAddedLastMonth / totalSheep) * 100).toFixed(2)
             : 0;
 
-
-        const pregnancies = await Pregnancy.find({
-            expectedBornDate: { $lte: next7Days },
-            $or: [
-                { bornDate: { $exists: false } },
-                { bornDate: null }
-            ]
+        // ✅ Match the new pregnancy logic exactly
+        const upcomingPregnancies = await Pregnancy.countDocuments({
+            expectedBornDate: {
+                $gte: pregnancyStart,
+                $lte: pregnancyEnd
+            },
+            status: "pregnant"
         });
-
-        if (pregnancies.length === 0) {
-            return res.json([]);
-        }
-
-        // 2️⃣ Extract sheep IDs
-        const sheepIds = pregnancies.map(p => p.sheepId);
-
-        // 3️⃣ Fetch the sheep documents **only those still pregnant**
-        const upcomingPregnancies = await Sheep.countDocuments({
-            _id: { $in: sheepIds },
-            isPregnant: true    // 🔥 IMPORTANT FILTER
-        })
-
-
 
         // 🔁 Cycle Stats
         const totalCycles = await Cycle.countDocuments({});
@@ -62,7 +58,7 @@ export const dashboard = async (req, res) => {
 
         // 📋 Task Time Filtering
         const veryRecentTasks = await Task.find({
-            dueDate: { $lte: day10 }, // includes overdue tasks too
+            dueDate: { $lte: day10 },
             completed: false,
         }).sort({ dueDate: 1 });
 
@@ -93,26 +89,27 @@ export const dashboard = async (req, res) => {
 
 export const getUpcomingPregnancies = async (req, res) => {
     try {
-        // Start of today (00:00)
+        // 🔹 Today start (00:00)
         const start = new Date();
         start.setHours(0, 0, 0, 0);
 
-        // End of day 7 (23:59:59.999)
-        const end = new Date(start);
-        end.setDate(end.getDate() + 7);
-        end.setHours(23, 59, 59, 999);
+        // 🔹 Go 10 days back
+        start.setDate(start.getDate() - 10);
 
-        // 1) Pregnancies due in the next 7 days and not yet born
+        // 🔹 End date = 10 days after today
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        end.setDate(end.getDate() + 10);
+
         const pregnancies = await Pregnancy.find({
             expectedBornDate: { $gte: start, $lte: end },
-            bornDate: null,
+            status: "pregnant"
         }).sort({ expectedBornDate: 1 });
 
         if (pregnancies.length === 0) {
             return res.json([]);
         }
 
-        // 2) Fetch sheep that are still marked pregnant
         const sheepIds = pregnancies.map(p => p.sheepId);
 
         const sheepList = await Sheep.find({

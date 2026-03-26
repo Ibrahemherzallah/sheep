@@ -588,10 +588,15 @@ const SheepManagement = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight">إدارة الأغنام</h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Button onClick={() => setTrahDialogOpen(true)} variant="outline" className="gap-1">
-            <Skull className="h-4 w-4 text-muted-foreground" />
-            <span>إضافة طراح</span>
-          </Button>
+          {
+              activeTab === 'trah' && (
+                  <Button onClick={() => setTrahDialogOpen(true)} variant="outline" className="gap-1">
+                    <Skull className="h-4 w-4 text-muted-foreground" />
+                    <span>إضافة طراح</span>
+                  </Button>
+              )
+          }
+
           <Button onClick={() => setPregnantDialogOpen(true)} variant="outline" className="gap-1">
             <GiSheep className="mr-1" />
             <span>إضافة حمل</span>

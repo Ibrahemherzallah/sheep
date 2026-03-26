@@ -15,13 +15,14 @@ export const addTrahCases = async (req, res) => {
         for (const birth of births) {
             const { sheepId, numberOfMaleLamb, numberOfFemaleLamb } = birth;
 
-            // 🔹 Fetch the sheep with current trahCases and pregnantCases
-            const sheep = await Sheep.findById(sheepId).populate('trahCases').populate('pregnantCases');
+            const sheep = await Sheep.findById(sheepId);
 
-            // 🔹 Determine the order automatically
+            if (!sheep) {
+                continue;
+            }
+
             const currentOrder = sheep.trahCases ? sheep.trahCases.length + 1 : 1;
 
-            // 1️⃣ Create a new TrahCase
             const newTrahCase = await TrahCase.create({
                 sheepId,
                 trahDate,
@@ -33,29 +34,39 @@ export const addTrahCases = async (req, res) => {
 
             createdTrahCases.push(newTrahCase);
 
-            // 2️⃣ Remove the last pregnancy from pregnantCases
+            let lastPregnancyId = null;
+
             if (sheep.pregnantCases && sheep.pregnantCases.length > 0) {
+                lastPregnancyId = sheep.pregnantCases[sheep.pregnantCases.length - 1];
                 sheep.pregnantCases.pop();
             }
 
-            // 3️⃣ Update sheep: add trahCase, set isPregnant to false, and update pregnantCases
             await Sheep.findByIdAndUpdate(sheepId, {
                 $push: { trahCases: newTrahCase._id },
-                $set: { isPregnant: false, pregnantCases: sheep.pregnantCases }
+                $set: {
+                    isPregnant: false,
+                    pregnantCases: sheep.pregnantCases
+                }
             });
 
-            // 4️⃣ Delete tasks after birth
+            if (lastPregnancyId) {
+                await Pregnancy.findByIdAndUpdate(lastPregnancyId, {
+                    $set: {
+                        status: "trah"
+                    }
+                });
+            }
+
             await deleteTasksForSheepAfterBirth(sheepId);
         }
 
-        // 5️⃣ Create trah-related tasks
         if (createdTrahCases.length > 0) {
             const allSheepIds = births.map(b => b.sheepId);
             await createTrahRelatedTasks({ trahDate }, allSheepIds);
         }
 
         res.status(200).json({
-            message: "Trah cases added successfully, sheep updated, pregnancies removed, and tasks managed.",
+            message: "Trah cases added successfully, sheep updated, pregnancies marked, and tasks managed.",
             data: createdTrahCases
         });
 
