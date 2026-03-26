@@ -44,13 +44,19 @@ export const dashboard = async (req, res) => {
             : 0;
 
         // ✅ Match the new pregnancy logic exactly
-        const upcomingPregnancies = await Pregnancy.countDocuments({
+        const upcomingPregnancySheepIds = await Pregnancy.distinct("sheepId", {
             expectedBornDate: {
                 $gte: pregnancyStart,
                 $lte: pregnancyEnd
             },
             status: "pregnant"
         });
+
+        const upcomingPregnancies = await Sheep.countDocuments({
+            _id: { $in: upcomingPregnancySheepIds },
+            isPregnant: true,
+        });
+
 
         // 🔁 Cycle Stats
         const totalCycles = await Cycle.countDocuments({});
