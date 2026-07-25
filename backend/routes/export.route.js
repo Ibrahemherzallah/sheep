@@ -36,12 +36,22 @@ router.get('/', async (req, res, next) => {
             Cycle.find().lean(),
             CycleInjection.find().populate('injectionType', 'name unit').lean(),
             StockModel.find().lean(),
-            MilkProduction.find().sort({ date: -1 }).lean(),
+            MilkProduction.aggregate([
+                {
+                    $group: {
+                        _id: { year: { $year: "$date" }, month: { $month: "$date" } },
+                        totalProduction: { $sum: "$production" },
+                        totalSold:       { $sum: "$sold" },
+                        totalRevenue:    { $sum: { $multiply: ["$price", "$sold"] } },
+                    }
+                },
+                { $sort: { "_id.year": -1, "_id.month": -1 } }
+            ]),
             InjectionModel.find().populate('injectionType', 'name unit').populate('sheepId', 'sheepNumber').lean(),
             Patient.find().populate('sheepId', 'sheepNumber sheepGender').lean(),
             Income.find().populate('resources.item', 'type').lean(),
             Outcome.find().populate('resources.item', 'type').lean(),
-            Task.find().lean(),
+            Task.find().populate('sheepIds', 'sheepNumber').populate('cycleId', 'name number').lean(),
         ]);
 
         const wb = new ExcelJS.Workbook();
@@ -56,8 +66,7 @@ router.get('/', async (req, res, next) => {
 
         const activeSheep = sheep.filter(s => s.status !== 'sold' && s.status !== 'dead');
         const activeCycle = cycles.find(c => c.status === 'active');
-        const totalMilkSold = milkProduction.reduce((s, m) => s + (m.sold * m.price), 0);
-
+        const totalMilkSold = milkProduction.reduce((s, m) => s + (m.totalRevenue || 0), 0);
         [
             ['تاريخ التصدير', new Date().toLocaleDateString('ar-SA')],
             [],
@@ -222,20 +231,21 @@ router.get('/', async (req, res, next) => {
         const wsMilk = wb.addWorksheet('إنتاج الحليب');
         wsMilk.views = [{ rightToLeft: true }];
         wsMilk.columns = [
-            { header: 'التاريخ',       key: 'date',       width: 16 },
-            { header: 'الإنتاج (ل)',   key: 'production', width: 16 },
-            { header: 'المباع (ل)',    key: 'sold',       width: 14 },
-            { header: 'سعر اللتر',    key: 'price',      width: 14 },
-            { header: 'الإيراد',      key: 'revenue',    width: 14 },
+            { header: 'السنة',          key: 'year',       width: 10 },
+            { header: 'الشهر',          key: 'month',      width: 10 },
+            { header: 'الإنتاج (ل)',    key: 'production', width: 16 },
+            { header: 'المباع (ل)',     key: 'sold',       width: 14 },
+            { header: 'الإيرادات (₪)',  key: 'revenue',    width: 14 },
         ];
         styleHeader(wsMilk);
+
         milkProduction.forEach(m => {
             wsMilk.addRow({
-                date:       fmt(m.date),
-                production: m.production,
-                sold:       m.sold,
-                price:      m.price,
-                revenue:    m.sold * m.price,
+                year:       m._id.year,
+                month:      m._id.month,
+                production: m.totalProduction,
+                sold:       m.totalSold,
+                revenue:    m.totalRevenue,
             });
         });
 
@@ -327,11 +337,13 @@ router.get('/', async (req, res, next) => {
         const wsTasks = wb.addWorksheet('المهام');
         wsTasks.views = [{ rightToLeft: true }];
         wsTasks.columns = [
-            { header: 'العنوان',      key: 'title',       width: 25 },
-            { header: 'الوصف',        key: 'description', width: 35 },
-            { header: 'النوع',        key: 'type',        width: 18 },
-            { header: 'تاريخ الاستحقاق', key: 'due',     width: 16 },
-            { header: 'مكتملة',       key: 'completed',   width: 10 },
+            { header: 'العنوان',         key: 'title',       width: 25 },
+            { header: 'الوصف',           key: 'description', width: 35 },
+            { header: 'النوع',           key: 'type',        width: 18 },
+            { header: 'أرقام الأغنام',   key: 'sheep',       width: 25 },
+            { header: 'الدورة',          key: 'cycle',       width: 20 },
+            { header: 'تاريخ الاستحقاق', key: 'due',         width: 16 },
+            { header: 'مكتملة',          key: 'completed',   width: 10 },
         ];
         styleHeader(wsTasks);
         const taskTypeAr = {
@@ -344,6 +356,8 @@ router.get('/', async (req, res, next) => {
                 title:       t.title,
                 description: t.description || '',
                 type:        taskTypeAr[t.type] || t.type,
+                sheep:       (t.sheepIds || []).map(s => s?.sheepNumber ?? '?').join(', ') || '—',
+                cycle:       t.cycleId ? `${t.cycleId.name} (#${t.cycleId.number})` : '—',
                 due:         fmt(t.dueDate),
                 completed:   t.completed ? 'نعم' : 'لا',
             });
