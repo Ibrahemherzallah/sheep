@@ -30,15 +30,44 @@ type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 export default function Profile() {
   const [isLoading, setIsLoading] = useState(false);
   const [userData, setUserData] = useState(JSON.parse(localStorage.getItem("user") || "{}"));
-    const [token, setToken] = useState(localStorage.getItem("token") || "");
-
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
+  const [exporting,setExporting] = useState(false)
   // Profile form
   const profileForm = useForm({
     defaultValues: {
       name: "",
     },
   });
+    const handleExport = async () => {
+        setExporting(true);
+        try {
+            const response = await fetch("https://thesheep.top/api/export", {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
+            if (!response.ok) throw new Error("Export failed");
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `farm-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            // your toast here
+            toast({
+                title: "فشل التصدير",
+                description: "حدث خطأ أثناء تصدير البيانات.",
+                variant: "destructive",
+            });
+        } finally {
+            setExporting(false);
+        }
+    };
   // Password form
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordFormSchema),
@@ -228,6 +257,10 @@ export default function Profile() {
             </Form>
           </CardContent>
         </Card>
+
+          <button className="btn-primary" disabled={exporting} onClick={handleExport}>
+              {exporting ? 'جارٍ التصدير…' : '⬇ تصدير Excel'}
+          </button>
       </div>
     </div>
   );
